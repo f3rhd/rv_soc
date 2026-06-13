@@ -7,7 +7,7 @@ module tb_top;
 
     localparam HISTORY_SIZE = 10;
     localparam I_CACHE_SIZE = 1024;
-    localparam D_CACHE_SIZE = 1 << 16;
+    localparam D_CACHE_SIZE = 1 << 10;
     localparam BTB_SIZE = 128;
     basys3_riscv_pipeline #(
         .HISTORY_SIZE(HISTORY_SIZE  /* default 10 */),
