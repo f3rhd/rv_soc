@@ -12,8 +12,8 @@ module register_file (
     (* ram_style = "distributed" *) logic [31:0] file[0:31];
 
     always_comb begin : forwarding
-        o_read_result0 = i_write_addr == i_read_addr0 ? i_write_data : file[i_read_addr0];
-        o_read_result1 = i_write_addr == i_read_addr1 ? i_write_data : file[i_read_addr1];
+        o_read_result0 = i_write_addr == i_read_addr0 & i_write_enable ? i_write_data : file[i_read_addr0];
+        o_read_result1 = i_write_addr == i_read_addr1 & i_write_enable ? i_write_data : file[i_read_addr1];
     end
     always_ff @(posedge clk) begin
         if (i_reset) begin
@@ -22,7 +22,6 @@ module register_file (
             end
         end else if (i_write_enable) begin
             if (i_write_addr != 0) begin
-                $display("RegisterFile[%h] <- %h", i_write_addr, i_write_data);
                 file[i_write_addr] <= i_write_data;
             end
         end

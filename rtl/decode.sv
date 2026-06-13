@@ -147,7 +147,7 @@ module decode #(
                 decoded_mop_next.reg_write = 1'b1;
                 decoded_mop_next.mem_read = 1'b1;
                 decoded_mop_next.extended_imm_val = {
-                    {12{i_instruction_raw[31]}}, i_instruction_raw[31:12]
+                    {20{i_instruction_raw[31]}}, i_instruction_raw[31:20]
                 };
                 case (funct3)
                     3'b000:  decoded_mop_next.operation = 7'b10_01_000;
@@ -168,8 +168,8 @@ module decode #(
                 };
                 case (funct3)
                     3'b000:  decoded_mop_next.operation = 7'b10_00_000;
-                    3'b010:  decoded_mop_next.operation = 7'b10_00_001;
-                    3'b110:  decoded_mop_next.operation = 7'b10_00_010;
+                    3'b001:  decoded_mop_next.operation = 7'b10_00_001;
+                    3'b010:  decoded_mop_next.operation = 7'b10_00_010;
                     default: decoded_mop_next.invalid = 1;
                 endcase
             end

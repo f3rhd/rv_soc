@@ -8,7 +8,7 @@ module memory #(
     output logic [31:0] o_register_write_data,
     output logic o_register_write
 );
-    (* ram_style = "block" *) logic [31:0] ram[0:SIZE-1];
+    (* ram_style = "distributed" *) logic [31:0] ram[0:SIZE-1];
     logic [31:0] translated_address;
     wire [1:0] byte_offset = ei.alu_out[1:0];
     assign translated_address = ei.alu_out >> 2;
@@ -28,26 +28,27 @@ module memory #(
         end else begin
             o_register_write       <= ei.reg_write;
             o_register_write_index <= ei.dest;
-            if (ei.reg_write) o_register_write_data <= ei.alu_out;
+            if (ei.reg_write & ~ei.mem_read & ~ei.mem_write)
+                o_register_write_data <= ei.alu_out;
             else begin
                 if (ei.mem_write) begin
                     case (ei.memory_operation)
                         // write byte
                         3'b000:
                         ram[translated_address] <= {
-                            (byte_offset[1:0] == 2'b11) ? ei.alu_out[7:0] : ram[translated_address][31:24],
-                            (byte_offset[1:0] == 2'b10) ? ei.alu_out[7:0] : ram[translated_address][23:16],
-                            (byte_offset[1:0] == 2'b01) ? ei.alu_out[7:0] : ram[translated_address][15:8],
-                            (byte_offset[1:0] == 2'b00) ? ei.alu_out[7:0] : ram[translated_address][7:0]
+                            (byte_offset[1:0] == 2'b11) ? ei.memory_write_data[7:0] : ram[translated_address][31:24],
+                            (byte_offset[1:0] == 2'b10) ? ei.memory_write_data[7:0] : ram[translated_address][23:16],
+                            (byte_offset[1:0] == 2'b01) ? ei.memory_write_data[7:0] : ram[translated_address][15:8],
+                            (byte_offset[1:0] == 2'b00) ? ei.memory_write_data[7:0] : ram[translated_address][7:0]
                         };
 
                         // write half
                         3'b001:
                         ram[translated_address] <= {
-                            byte_offset[1] ? ei.alu_out[15:8]  : ram[translated_address][31:24],
-                            byte_offset[1] ? ei.alu_out[7:0]   : ram[translated_address][23:16],
-                            byte_offset[1] ? ram[translated_address][15:8] : ei.alu_out[15:8],
-                            byte_offset[1] ? ram[translated_address][7:0]  : ei.alu_out[7:0]
+                            byte_offset[1] ? ei.memory_write_data[15:8]  : ram[translated_address][31:24],
+                            byte_offset[1] ? ei.memory_write_data[7:0]   : ram[translated_address][23:16],
+                            byte_offset[1] ? ram[translated_address][15:8] : ei.memory_write_data[15:8],
+                            byte_offset[1] ? ram[translated_address][7:0]  : ei.memory_write_data[7:0]
                         };
                         // write word
                         3'b010: ram[translated_address] <= ei.memory_write_data;

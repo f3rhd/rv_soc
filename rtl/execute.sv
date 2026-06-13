@@ -14,17 +14,16 @@ module execute (
     logic src1_match, src2_match;
     logic [31:0] src1_data, src2_data;
 
-    assign src1_match = (exi.reg_write && ~exi.mem_read && (pre_exi.decode_data.src1 == exi.dest) && (exi.dest != 5'd0));
-    assign src2_match = (exi.reg_write && ~exi.mem_read && (pre_exi.decode_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~pre_exi.decode_data.uses_imm);
+    assign src1_match = (exi.reg_write && ~exi.mem_read  && (pre_exi.decode_data.src1 == exi.dest) && (exi.dest != 5'd0));
+    assign src2_match = (exi.reg_write && ~exi.mem_read  && (pre_exi.decode_data.src2 == exi.dest) && (exi.dest != 5'd0));
 
 
     always_comb begin
         memory_operation = '0;
         alu_out = 0;
         branch_result = '0;
-        memory_write_data = src2_data;
         should_bubble = 0;
-
+        memory_write_data = 0;
         exi.predictor_update = '0;
         exi.actual_branch_result = branch_result;
         exi.pht_index = pre_exi.pht_index;
@@ -150,8 +149,9 @@ module execute (
                 endcase
             end
             2'b10: begin
-                alu_out          = src1_data + src2_data;
+                alu_out = src1_data + pre_exi.decode_data.extended_imm_val;
                 memory_operation = pre_exi.decode_data.operation[2:0];
+                memory_write_data = src2_data;
             end
             default: should_bubble = 1;
         endcase
