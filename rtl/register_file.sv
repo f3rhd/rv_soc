@@ -22,6 +22,7 @@ module register_file (
             end
         end else if (i_write_enable) begin
             if (i_write_addr != 0) begin
+                $display("RegisterFile[%h] <- %h", i_write_addr, i_write_data);
                 file[i_write_addr] <= i_write_data;
             end
         end

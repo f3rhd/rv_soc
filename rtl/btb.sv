@@ -3,9 +3,8 @@ module btb #(
     parameter SIZE = 128
 ) (
     input logic clk,
-    input logic i_read_enable,
     input logic [31:0] i_branch_addr_read,
-    execution_if.btb_consumer ei,
+    execution_if.fetch_consumer exi,
     output logic [31:0] o_target_addr,
     output logic [1:0] o_way,
     output logic o_hit
@@ -26,29 +25,27 @@ module btb #(
 
     logic [NUM_BITS_FOR_SET_ID-1:0] read_set_id;
     logic [31 - (2+NUM_BITS_FOR_SET_ID) : 0] read_tag;
-    logic [31 - (2+NUM_BITS_FOR_SET_ID) : 0] read_tag_nxt;
+    logic [31 - (2+NUM_BITS_FOR_SET_ID) : 0] read_tag_q;
     logic [NUM_BITS_FOR_SET_ID-1:0] write_set_id;
     logic [31 - (2+NUM_BITS_FOR_SET_ID) : 0] write_tag;
     logic [1:0] counter = 0;
 
-    assign write_tag = ei.branch_instruction_addr[31 : 2+NUM_BITS_FOR_SET_ID];
-    assign write_set_id = ei.branch_instruction_addr[2+NUM_BITS_FOR_SET_ID-1 : 2];
+    assign write_tag = exi.branch_instruction_addr[31 : 2+NUM_BITS_FOR_SET_ID];
+    assign write_set_id = exi.branch_instruction_addr[2+NUM_BITS_FOR_SET_ID-1 : 2];
 
     assign read_tag = i_branch_addr_read[31:2+NUM_BITS_FOR_SET_ID];
     assign read_set_id = i_branch_addr_read[2+NUM_BITS_FOR_SET_ID-1 : 2];
 
     always_ff @(posedge clk) begin
-        counter <= counter + 1;
-        if (i_read_enable) begin
-            read_tag_nxt <= read_tag;
-            for (int i = 0; i < NUM_WAYS; i++) begin
-                read_data_ways[i] <= branch_table_banks[i][read_set_id];
-            end
+        counter    <= counter + 1;
+        read_tag_q <= read_tag;
+        for (int i = 0; i < NUM_WAYS; i++) begin
+            read_data_ways[i] <= branch_table_banks[i][read_set_id];
         end
-        if (ei.btb_write) begin
-            branch_table_banks[ei.branch_addr_way][write_set_id].tag <= write_tag;
-            branch_table_banks[ei.branch_addr_way][write_set_id].target_addr <= ei.redirection_address;
-            branch_table_banks[ei.branch_addr_way][write_set_id].valid <= 1'b1;
+        if (exi.btb_write) begin
+            branch_table_banks[exi.branch_addr_way][write_set_id].tag <= write_tag;
+            branch_table_banks[exi.branch_addr_way][write_set_id].target_addr <= exi.redirection_address;
+            branch_table_banks[exi.branch_addr_way][write_set_id].valid <= 1'b1;
         end
     end
 
@@ -58,13 +55,16 @@ module btb #(
         o_target_addr = '0;
         o_way         = counter[1:0];
 
+        // If there was a hit output the way address of the hit branch.
         for (int i = 0; i < NUM_WAYS; i++) begin
-            if (read_data_ways[i].valid && (read_data_ways[i].tag == read_tag_nxt)) begin
+            if (read_data_ways[i].valid && (read_data_ways[i].tag == read_tag_q)) begin
                 o_hit         = 1'b1;
                 o_target_addr = read_data_ways[i].target_addr;
                 o_way         = i[1:0];
             end
         end
+        // Else our way is going to be picked pseudo-randomly. This may create problems in branch heavy applications.
+        // Since it introduces the possibility of overwriting existing entry even tho there were some empty entries.
     end
 
 

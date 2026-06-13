@@ -1,65 +1,73 @@
-`include "../include/fetch_interface.svh"
-`include "../include/execution_interface.svh"
 module fetch #(
-    parameter SIZE = 1024
+    parameter I_CACHE_SIZE = 1024,  // Total size in bytes
+    parameter BTB_SIZE = 128
 ) (
     input logic clk,
     input logic i_en,
     input logic i_reset,
     input logic i_output_bubble,
+    input logic [31:0] i_predictor_redirect_target,
+    input logic i_predictor_redirect,
     execution_if.fetch_consumer exi,
-    fetch_if.producer fi
+    output logic o_instruction_valid,
+    output logic [31:0] o_instruction_addr,
+    output logic [31:0] o_instruction_raw,
+    output logic [1:0] o_btb_hit_way,
+    output logic o_btb_hit
 );
-    (* ram_style = "block" *) logic [7:0] memory[0:SIZE-1];
 
-    logic [31:0] program_counter = 0;
-    logic [2:0] byte_counter = 0;
-    logic [23:0] shift_reg = 0;
+    (* ram_style = "block" *) logic [31:0] memory[0:(I_CACHE_SIZE/4)-1];
 
+    logic [31:0] program_counter;
+    logic [31:0] btb_target_addr;
+    btb #(
+        .SIZE(BTB_SIZE)
+    ) btb (
+        .clk               (clk),
+        .i_branch_addr_read(program_counter),
+        .exi               (exi),
+        .o_target_addr     (btb_target_addr),
+        .o_way             (o_btb_hit_way),
+        .o_hit             (o_btb_hit)
+    );
     always @(posedge clk) begin : pc_logic
         if (i_reset) begin
             program_counter <= 0;
-            byte_counter    <= 0;
-            shift_reg       <= 0;
-        end else if (exi.redirect & i_en) begin
-            program_counter <= exi.redirect_target;
-        end else begin
-            if (program_counter < SIZE / 4 & i_en & byte_counter == 3) begin
+        end else if (i_en) begin
+            if (exi.redirect) begin
+                program_counter <= exi.redirection_address;
+            end else if (i_predictor_redirect) begin
+                program_counter <= i_predictor_redirect_target;
+            end else if (o_btb_hit) begin
+                program_counter <= btb_target_addr;
+            end else if (program_counter < I_CACHE_SIZE - 4) begin
                 program_counter <= program_counter + 4;
             end
         end
     end
 
     always @(posedge clk) begin : out_logic
-        if (i_output_bubble) begin
-            fi.instruction_raw   <= 0;
-            fi.instruction_ready <= 0;
-            fi.pc                <= 32'hFFFFFFFF;
+        if (i_reset) begin
+            o_instruction_raw   <= 0;
+            o_instruction_valid <= 0;
+            o_instruction_addr  <= 32'hFFFFFFFF;
+        end else if (i_output_bubble | program_counter == $unsigned(
+                I_CACHE_SIZE
+            ) - 1) begin
+            o_instruction_raw   <= 0;
+            o_instruction_valid <= 0;
+            o_instruction_addr  <= 32'hFFFFFFFF;
         end else if (i_en) begin
-            fi.instruction_ready <= 0;
-            fi.pc                <= 32'hFFFFFFFF;
-            case (byte_counter)
-                2'b00: shift_reg[7:0] <= memory[program_counter];
-                2'b01: shift_reg[15:8] <= memory[program_counter+1];
-                2'b10: shift_reg[23:16] <= memory[program_counter+2];
-                2'b11: begin
-                    fi.instruction_raw <= {
-                        memory[program_counter+3], shift_reg[23:0]
-                    };
-                end
-            endcase
-            if (exi.redirect) begin
-                byte_counter       <= 0;
-                shift_reg          <= 0;
-                fi.instruction_raw <= 0;
-                fi.pc              <= 32'hFFFFFFFF;
-            end else if (byte_counter == 3) begin
-                byte_counter         <= 0;
-                fi.instruction_ready <= 1;
-                fi.pc                <= program_counter;
+            if (exi.redirect | o_btb_hit | i_predictor_redirect) begin
+                o_instruction_raw   <= 0;
+                o_instruction_valid <= 0;
+                o_instruction_addr  <= 32'hFFFFFFFF;
             end else begin
-                byte_counter <= byte_counter + 1;
+                o_instruction_raw   <= memory[program_counter[31:2]];
+                o_instruction_valid <= 1'b1;
+                o_instruction_addr  <= program_counter;
             end
         end
     end
+
 endmodule

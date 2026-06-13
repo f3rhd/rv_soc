@@ -1,8 +1,6 @@
 `ifndef EXECUTION_INTERFACE_SVH
 `define EXECUTION_INTERFACE_SVH
 interface execution_if #(parameter HISTORY_SIZE = 10);
-    logic redirect;
-    logic [31:0] redirect_target;
 
     /*
     as the name suggests
@@ -22,8 +20,9 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     */
     logic [4:0] dest;
 
+    logic redirect;
     logic actual_branch_result;
-    logic misspeculation;
+    logic predictor_update;
     logic [31:0] redirection_address;
     logic [31:0] branch_instruction_addr;
     logic [1:0] branch_addr_way;
@@ -33,6 +32,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     control bits
     */
     logic invalid;
+    logic stall_pipeline;
     logic mem_write;
     logic mem_read;
     logic reg_write;
@@ -40,13 +40,12 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
 
     modport producer(
         output redirect,
-        output redirect_target,
         output memory_write_data,
         output memory_operation,
         output alu_out,
         output dest,
         output actual_branch_result,
-        output misspeculation,
+        output predictor_update,
         output redirection_address,
         output branch_instruction_addr,
         output branch_addr_way,
@@ -55,23 +54,20 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         output mem_write,
         output mem_read,
         output reg_write,
-        output btb_write
+        output btb_write,
+        output stall_pipeline
     );
     modport predictor_consumer (
         input pht_index,
-        input misspeculation,
         input actual_branch_result,
-        input branch_instruction_addr
+        input predictor_update
     );
-    modport btb_consumer (
+    modport fetch_consumer (
+        input redirect,
         input btb_write,
         input branch_instruction_addr,
         input branch_addr_way,
         input redirection_address
-    );
-    modport fetch_consumer (
-        input redirect,
-        input redirect_target
     );
 
     modport mem_consumer (
