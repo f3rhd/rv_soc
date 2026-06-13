@@ -19,10 +19,27 @@ module tb_top;
         .reset(reset)
     );
 
+    always @(posedge clk) begin
+        if (basys3_riscv_pipeline.register_file_write_enable)
+            $display(
+                "Register File[%d] <- %d",
+                basys3_riscv_pipeline.register_file_write_addr,
+                basys3_riscv_pipeline.register_file_write_data
+            );
+        if (basys3_riscv_pipeline.memory.ei.mem_write) begin
+            $display("DCache[%d] <- [%d]",
+                     basys3_riscv_pipeline.memory.ei.alu_out,
+                     basys3_riscv_pipeline.memory.ei.memory_write_data);
+        end
+        if (basys3_riscv_pipeline.memory.ei.mem_read) begin
+            $display("Reading DCache[%d]",
+                     basys3_riscv_pipeline.memory.ei.alu_out);
+        end
+    end
     initial begin
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/tests/full_r_instruction_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/tests/memory_test.hex",
             basys3_riscv_pipeline.fetch.memory);
         reset = 1;
         repeat (2) @(posedge clk);
