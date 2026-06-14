@@ -35,11 +35,45 @@ module tb_top;
             $display("Reading DCache[%d]",
                      basys3_riscv_pipeline.memory.ei.alu_out);
         end
+        if (basys3_riscv_pipeline.stage_controller_stall_vector != 0) begin
+            $display("Stall vector : %b",
+                     basys3_riscv_pipeline.stage_controller_stall_vector);
+        end
+        if (basys3_riscv_pipeline.stage_controller_flush_vector != 0) begin
+            $display("Flush vector : %b",
+                     basys3_riscv_pipeline.stage_controller_flush_vector);
+        end
+        if (basys3_riscv_pipeline.prediction_redirect) begin
+            $display(
+                "Predictor is redirecting pc to due to dissagrement with fetch unit%d",
+                basys3_riscv_pipeline.prediction_redirect_target);
+        end
+        if (basys3_riscv_pipeline.execution_if.predictor_update) begin
+            $display("PHT[%d] <~ %d",
+                     basys3_riscv_pipeline.execution_if.pht_index,
+                     basys3_riscv_pipeline.execution_if.actual_branch_result);
+        end
+        if (basys3_riscv_pipeline.execution_if.btb_write) begin
+            $display(
+                "BranchTableBank[%d][%d] <- write_tag : %d | target_addr : %d",
+                basys3_riscv_pipeline.execution_if.branch_addr_way,
+                basys3_riscv_pipeline.fetch.btb.write_set_id,
+                basys3_riscv_pipeline.fetch.btb.write_tag,
+                basys3_riscv_pipeline.execution_if.redirection_address);
+        end
+        if (basys3_riscv_pipeline.fetch_btb_hit & basys3_riscv_pipeline.fetch_instruction_valid) begin
+            $display("Instruction[%d] was hit in btb.",
+                     basys3_riscv_pipeline.fetch_instruction_addr);
+        end
+        if (basys3_riscv_pipeline.execution_if.redirect) begin
+            $display("Execution stage is redirecting pc to address %d",
+                     basys3_riscv_pipeline.execution_if.redirection_address);
+        end
     end
     initial begin
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/tests/memory_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/tests/predict_test.hex",
             basys3_riscv_pipeline.fetch.memory);
         reset = 1;
         repeat (2) @(posedge clk);

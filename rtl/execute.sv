@@ -18,6 +18,7 @@ module execute (
     assign src2_match = (exi.reg_write && ~exi.mem_read  && (pre_exi.decode_data.src2 == exi.dest) && (exi.dest != 5'd0));
 
 
+    assign exi.actual_branch_result = branch_result;
     always_comb begin
         memory_operation = '0;
         alu_out = 0;
@@ -25,7 +26,6 @@ module execute (
         should_bubble = 0;
         memory_write_data = 0;
         exi.predictor_update = '0;
-        exi.actual_branch_result = branch_result;
         exi.pht_index = pre_exi.pht_index;
         exi.branch_addr_way = pre_exi.btb_way_hit;
         exi.btb_write = pre_exi.decode_data.btb_write & ~pre_exi.btb_was_hit & ~pre_exi.decode_data.invalid;
@@ -33,8 +33,8 @@ module execute (
         exi.redirect = '0;
         exi.branch_instruction_addr = pre_exi.decode_data.instruction_addr;
 
-        exi.stall_pipeline = ~pre_exi.decode_data.invalid & (exi.mem_read && (pre_exi.decode_data.src1 == exi.dest) && (exi.dest != 5'd0)) &
-            (exi.mem_read && (pre_exi.decode_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~pre_exi.decode_data.uses_imm);
+        exi.stall_pipeline = ~pre_exi.decode_data.invalid & exi.mem_read & (((pre_exi.decode_data.src1 == exi.dest) && (exi.dest != 5'd0)) |
+            ((pre_exi.decode_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~pre_exi.decode_data.uses_imm));
 
         src1_data = src1_match ? exi.alu_out : pre_exi.src1_data;
         src2_data = src2_match ? exi.alu_out : pre_exi.src2_data;
@@ -138,10 +138,11 @@ module execute (
                             branch_result = $unsigned(src2_data) >=
                                 $unsigned(src2_data);
                         endcase
-                        exi.redirect = (pre_exi.prediction ^ branch_result) & pre_exi.decode_data.invalid;
+                        exi.redirect = (pre_exi.prediction ^ branch_result) & ~pre_exi.decode_data.invalid;
                         exi.predictor_update = 1'b1 & ~pre_exi.decode_data.invalid;
                         if (branch_result == 1) begin
-                            exi.redirection_address = pre_exi.decode_data.instruction_addr + pre_exi.decode_data.extended_imm_val;
+                            exi.redirection_address = pre_exi.decode_data.instruction_addr + 
+                                pre_exi.decode_data.extended_imm_val;
                         end else begin
                             exi.redirection_address = pre_exi.decode_data.instruction_addr + 4;
                         end

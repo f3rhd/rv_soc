@@ -5,7 +5,7 @@
 module basys3_riscv_pipeline #(
     parameter HISTORY_SIZE = 10,
     I_CACHE_SIZE = 1024,
-    D_CACHE_SIZE = 1 << 16,
+    D_CACHE_SIZE = 1 << 10,
     BTB_SIZE = 128
 ) (
     input logic clk,
@@ -54,7 +54,7 @@ module basys3_riscv_pipeline #(
 
 
     // Stage control signals
-    logic [3:0] stage_controller_flush_vector, stage_controller_stall_vector;
+    logic [0:3] stage_controller_flush_vector, stage_controller_stall_vector;
 
 
     stage_controller stage_controller (

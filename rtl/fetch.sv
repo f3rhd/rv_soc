@@ -20,16 +20,18 @@ module fetch #(
 
     logic [31:0] program_counter;
     logic [31:0] btb_target_addr;
+    logic btb_hit;
     btb #(
         .SIZE(BTB_SIZE)
     ) btb (
-        .clk               (clk),
-        .i_branch_addr_read(program_counter),
-        .exi               (exi),
-        .o_target_addr     (btb_target_addr),
-        .o_way             (o_btb_hit_way),
-        .o_hit             (o_btb_hit)
+        .clk(clk),
+        .i_branch_addr_read(redirection ? 32'hFFFFFFFF : program_counter),
+        .exi(exi),
+        .o_target_addr(btb_target_addr),
+        .o_way(o_btb_hit_way),
+        .o_hit(btb_hit)
     );
+    assign redirection = exi.redirect | (o_btb_hit) | i_predictor_redirect;
     always @(posedge clk) begin : pc_logic
         if (i_reset) begin
             program_counter <= 0;
@@ -45,7 +47,7 @@ module fetch #(
             end
         end
     end
-
+    assign o_btb_hit = btb_hit;
     always @(posedge clk) begin : out_logic
         if (i_reset) begin
             o_instruction_raw   <= 0;
@@ -58,7 +60,7 @@ module fetch #(
             o_instruction_valid <= 0;
             o_instruction_addr  <= 32'hFFFFFFFF;
         end else if (i_en) begin
-            if (exi.redirect | o_btb_hit | i_predictor_redirect) begin
+            if (redirection) begin
                 o_instruction_raw   <= 0;
                 o_instruction_valid <= 0;
                 o_instruction_addr  <= 32'hFFFFFFFF;
