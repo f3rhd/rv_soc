@@ -10,7 +10,7 @@ module memory #(
     output logic [31:0] o_register_write_data,
     output logic o_register_write
 );
-    (* ram_style = "distributed" *) logic [31:0] ram[0:SIZE-1];
+    (* ram_style = "block" *) logic [31:0] ram[0:SIZE-1];
     wire [31:0] translated_address = ei.alu_out >> 2;
 
     logic [1:0] r_byte_offset;
@@ -20,7 +20,7 @@ module memory #(
     logic [2:0] reg_memory_op;
     logic reg_mem_read;
 
-    wire [7:0] selected_byte =         (r_byte_offset == 2'b00) ? reg_raw_word[7:0]   :
+    wire [7:0] selected_byte = (r_byte_offset == 2'b00) ? reg_raw_word[7:0]   :
         (r_byte_offset == 2'b01) ? reg_raw_word[15:8]  :
         (r_byte_offset == 2'b10) ? reg_raw_word[23:16] :
                                    reg_raw_word[31:24];
