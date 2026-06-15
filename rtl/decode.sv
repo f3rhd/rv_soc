@@ -127,10 +127,10 @@ module decode #(
                 decoded_mop_next.reg_write = 1'b1;
                 decoded_mop_next.extended_imm_val = {
                     {11{i_instruction_raw[31]}},
-                    i_instruction_addr[31],
+                    i_instruction_raw[31],
                     i_instruction_raw[19:12],
-                    i_instruction_addr[20],
-                    i_instruction_addr[30:21],
+                    i_instruction_raw[20],
+                    i_instruction_raw[30:21],
                     {1'b0}
                 };
                 decoded_mop_next.operation = 7'b01_01_001;

@@ -26,11 +26,11 @@ module execute (
         should_bubble = 0;
         memory_write_data = 0;
         exi.predictor_update = '0;
+        exi.redirection_address = '0;
+        exi.redirect = '0;
         exi.pht_index = pre_exi.pht_index;
         exi.branch_addr_way = pre_exi.btb_way_hit;
         exi.btb_write = pre_exi.decode_data.btb_write & ~pre_exi.btb_was_hit & ~pre_exi.decode_data.invalid;
-        exi.redirection_address = '0;
-        exi.redirect = '0;
         exi.branch_instruction_addr = pre_exi.decode_data.instruction_addr;
 
         exi.stall_pipeline = ~pre_exi.decode_data.invalid & exi.mem_read & (((pre_exi.decode_data.src1 == exi.dest) && (exi.dest != 5'd0)) |
@@ -102,10 +102,9 @@ module execute (
                 endcase
             end
             2'b01: begin
-                should_bubble = 1;
                 case (pre_exi.decode_data.operation[3])
                     1'b1: begin
-                        exi.redirect = 1'b1 & pre_exi.decode_data.invalid;
+                        exi.redirect = 1'b1 & ~pre_exi.decode_data.invalid;
                         alu_out      = pre_exi.decode_data.instruction_addr + 4;
                         case (pre_exi.decode_data.operation[0])
                             1'b0: begin
@@ -118,6 +117,7 @@ module execute (
                         endcase
                     end
                     1'b0: begin
+                        should_bubble = 1;
                         case (pre_exi.decode_data.operation[2:0])
                             3'b001:
                             branch_result = $signed(src1_data) ==
