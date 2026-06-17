@@ -7,13 +7,15 @@ module btb #(
     execution_if.fetch_consumer exi,
     output logic [31:0] o_target_addr,
     output logic [1:0] o_way,
-    output logic o_hit
+    output logic o_hit,
+    output logic o_hit_was_jump
 );
     localparam NUM_WAYS = 4;
     localparam NUM_SETS = SIZE / 4;
     localparam NUM_BITS_FOR_SET_ID = $clog2(SIZE / 4);
     localparam TAG_WIDTH = 32 - (2 + NUM_BITS_FOR_SET_ID);
     typedef struct packed {
+        logic                 is_jump;
         logic                 valid;
         logic [TAG_WIDTH-1:0] tag;
         logic [31:0]          target_addr;
@@ -46,14 +48,16 @@ module btb #(
             branch_table_banks[exi.branch_addr_way][write_set_id].tag <= write_tag;
             branch_table_banks[exi.branch_addr_way][write_set_id].target_addr <= exi.redirection_address;
             branch_table_banks[exi.branch_addr_way][write_set_id].valid <= 1'b1;
+            branch_table_banks[exi.branch_addr_way][write_set_id].is_jump <= exi.btb_write_jump;
         end
     end
 
 
     always_comb begin
-        o_hit         = 1'b0;
-        o_target_addr = '0;
-        o_way         = counter[1:0];
+        o_hit          = 1'b0;
+        o_target_addr  = '0;
+        o_way          = counter[1:0];
+        o_hit_was_jump = 0;
 
         // If there was a hit output the way address of the hit branch.
         for (int i = 0; i < NUM_WAYS; i++) begin
@@ -61,6 +65,9 @@ module btb #(
                 o_hit         = 1'b1;
                 o_target_addr = read_data_ways[i].target_addr;
                 o_way         = i[1:0];
+                if (read_data_ways[i].is_jump) begin
+                    o_hit_was_jump = 1;
+                end
             end
         end
         // Else our way is going to be picked pseudo-randomly. This may create problems in branch heavy applications.

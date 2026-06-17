@@ -125,6 +125,7 @@ module decode #(
             7'b1101111: begin : jal
                 decoded_mop_next.uses_imm = 1'b1;
                 decoded_mop_next.reg_write = 1'b1;
+                decoded_mop_next.btb_write = 1'b1;
                 decoded_mop_next.extended_imm_val = {
                     {11{i_instruction_raw[31]}},
                     i_instruction_raw[31],

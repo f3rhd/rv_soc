@@ -9,11 +9,12 @@ module stage_controller (
         stall_vector = 4'b0000;
         if (i_misprediction) begin
             /*
-            flush everything except execution stage
-            upon misprediction execution flushes itself already (so does the fetch by using signal exi.redirect)
+            flush everything except execution and fetch stage
             jump instructions also trigger flushing, we cant flush them as they write to registers
+            we are not flushing fetch stage since in a clock cycle where redirection is detected the next fetched instruction
+            is going to be from the calculated address
             */
-            flush_vector = 4'b1110;
+            flush_vector = 4'b0110;
             stall_vector = 3'b0000;
         end else if (i_load_stall) begin
             flush_vector = 4'b0001;  // flush execute stage

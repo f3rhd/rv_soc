@@ -21,6 +21,7 @@ module basys3_riscv_pipeline #(
     logic [31:0] fetch_instruction_raw;
     logic [1:0] fetch_btb_hit_way;
     logic fetch_btb_hit;
+    logic fetch_btb_hit_was_jump;
 
     // Prediction signals
     logic prediction_reset;
@@ -79,7 +80,8 @@ module basys3_riscv_pipeline #(
         .o_instruction_addr         (fetch_instruction_addr),
         .o_instruction_raw          (fetch_instruction_raw),
         .o_btb_hit_way              (fetch_btb_hit_way),
-        .o_btb_hit                  (fetch_btb_hit)
+        .o_btb_hit                  (fetch_btb_hit),
+        .o_btb_hit_was_jump         (fetch_btb_hit_was_jump)
     );
     prediction #(
         .HISTORY_SIZE(HISTORY_SIZE)
@@ -154,23 +156,24 @@ module basys3_riscv_pipeline #(
     );
 
     always_comb begin
-        fetch_en                 = ~stage_controller_stall_vector[0];
-        fetch_reset              = reset;
-        fetch_output_bubble      = stage_controller_flush_vector[0];
+        fetch_en = ~stage_controller_stall_vector[0];
+        fetch_reset = reset;
+        fetch_output_bubble = stage_controller_flush_vector[0];
 
 
-        prediction_reset         = reset;  // TODO : WORK ON ALTERNATIVES LATER
-        prediction_enable        = ~stage_controller_stall_vector[1];
+        prediction_reset = reset;  // TODO : WORK ON ALTERNATIVES LATER
+        prediction_enable = ~stage_controller_stall_vector[1];
         prediction_output_bubble = stage_controller_flush_vector[1] | reset;
-        prediction_predict       = fetch_btb_hit & fetch_instruction_valid;
+        // We are not going to use pht tables for our indirect jumps since they require no prediction
+        prediction_predict       = fetch_btb_hit & fetch_instruction_valid & ~fetch_btb_hit_was_jump;
 
 
-        decode_enable            = ~stage_controller_stall_vector[2];
-        decode_output_bubble     = stage_controller_flush_vector[2];
+        decode_enable = ~stage_controller_stall_vector[2];
+        decode_output_bubble = stage_controller_flush_vector[2];
 
 
-        register_file_reset      = reset;
+        register_file_reset = reset;
 
-        execution_output_bubble  = stage_controller_flush_vector[3];
+        execution_output_bubble = stage_controller_flush_vector[3];
     end
 endmodule

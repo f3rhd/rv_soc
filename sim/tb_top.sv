@@ -20,7 +20,7 @@ module tb_top;
     );
 
     always @(posedge clk) begin
-        if (basys3_riscv_pipeline.register_file_write_enable)
+        if (basys3_riscv_pipeline.register_file_write_enable && basys3_riscv_pipeline.register_file_write_addr != 0)
             $display(
                 "Register File[%d] <- %d",
                 basys3_riscv_pipeline.register_file_write_addr,
@@ -73,7 +73,7 @@ module tb_top;
     initial begin
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/tests/predict_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/tests/jump_test.hex",
             basys3_riscv_pipeline.fetch.memory);
         reset = 1;
         repeat (2) @(posedge clk);

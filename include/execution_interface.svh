@@ -27,6 +27,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     logic [31:0] branch_instruction_addr;
     logic [1:0] branch_addr_way;
     logic [HISTORY_SIZE-1:0] pht_index;
+    logic btb_write_jump;
 
     /*
     control bits
@@ -55,7 +56,8 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         output mem_read,
         output reg_write,
         output btb_write,
-        output stall_pipeline
+        output stall_pipeline,
+        output btb_write_jump
     );
     modport predictor_consumer (
         input pht_index,
@@ -65,6 +67,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     modport fetch_consumer (
         input redirect,
         input btb_write,
+        input btb_write_jump,
         input branch_instruction_addr,
         input branch_addr_way,
         input redirection_address
