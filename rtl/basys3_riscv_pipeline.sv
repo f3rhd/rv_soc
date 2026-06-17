@@ -90,6 +90,7 @@ module basys3_riscv_pipeline #(
         .i_reset                  (prediction_reset),
         .i_en                     (prediction_enable),
         .i_output_bubble          (prediction_output_bubble),
+        .i_btb_hit_was_jump       (fetch_btb_hit_was_jump),
         .i_predict                (prediction_predict),
         .i_btb_hit                (fetch_btb_hit),
         .i_btb_hit_way            (fetch_btb_hit_way),

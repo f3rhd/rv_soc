@@ -8,6 +8,7 @@ module prediction #(
     input logic i_output_bubble,
     input logic i_predict,
     input logic i_btb_hit,
+    input logic i_btb_hit_was_jump,
     input logic [1:0] i_btb_hit_way,
     input logic [31:0] i_instruction_raw,
     input logic [31:0] i_instruction_addr,
@@ -82,7 +83,7 @@ module prediction #(
     always_comb begin
         o_predictor_redirect      = 0;
         o_predictor_redirect_addr = o_instruction_addr;
-        if (o_btb_hit & i_instruction_valid) begin
+        if (o_btb_hit & i_instruction_valid & ~i_btb_hit_was_jump) begin
             if (o_prediction == 0) begin
                 o_predictor_redirect      = 1;
                 o_predictor_redirect_addr = o_instruction_addr + 4;

@@ -32,7 +32,7 @@ module execute (
         exi.branch_addr_way = pre_exi.btb_way_hit;
         exi.btb_write = pre_exi.decode_data.btb_write & ~pre_exi.btb_was_hit & ~pre_exi.decode_data.invalid;
         exi.branch_instruction_addr = pre_exi.decode_data.instruction_addr;
-        exi.btb_write_jump = 0;
+        exi.btb_write_jump = '0;
 
         exi.stall_pipeline = ~pre_exi.decode_data.invalid & exi.mem_read & (((pre_exi.decode_data.src1 == exi.dest) && (exi.dest != 5'd0)) |
             ((pre_exi.decode_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~pre_exi.decode_data.uses_imm));

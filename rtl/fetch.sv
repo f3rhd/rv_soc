@@ -73,7 +73,7 @@ module fetch #(
         end else if (i_en) begin
             o_instruction_raw   <= memory[program_pointer[31:2]];
             o_instruction_valid <= 1'b1;
-            o_instruction_addr  <= program_counter;
+            o_instruction_addr  <= program_pointer;
         end
     end
 
