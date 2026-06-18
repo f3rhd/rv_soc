@@ -70,6 +70,7 @@ module decode #(
             7'b0010011: begin
                 decoded_mop_next.uses_imm = 1'b1;
                 decoded_mop_next.reg_write = 1'b1;
+                decoded_mop_next.is_reg_to_reg_imm = 1'b1;
                 decoded_mop_next.extended_imm_val = {
                     {20{i_instruction_raw[31]}}, i_instruction_raw[31:20]
                 };

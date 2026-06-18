@@ -18,7 +18,7 @@ module stage_controller (
             stall_vector = 3'b0000;
         end else if (i_load_stall) begin
             flush_vector = 4'b0001;  // flush execute stage
-            stall_vector = 4'b1110;  // stall fetch,prediciton and decode stages
+            stall_vector = 4'b1111;  // stall all
         end
     end
 endmodule

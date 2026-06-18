@@ -8,6 +8,7 @@ typedef struct packed {
     logic [4:0] dest;
     logic [6:0] operation;
     logic uses_imm;
+    logic is_reg_to_reg_imm;
     logic invalid;
     logic reg_write;
     logic mem_write;

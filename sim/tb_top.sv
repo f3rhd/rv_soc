@@ -27,7 +27,7 @@ module tb_top;
                 basys3_riscv_pipeline.register_file_write_data
             );
         if (basys3_riscv_pipeline.memory.ei.mem_write) begin
-            $display("DCache[%d] <- [%d]",
+            $display("DCache[%d] <- %d",
                      basys3_riscv_pipeline.memory.ei.alu_out,
                      basys3_riscv_pipeline.memory.ei.memory_write_data);
         end
@@ -73,7 +73,7 @@ module tb_top;
     initial begin
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/tests/jump_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/tests/string_test.hex",
             basys3_riscv_pipeline.fetch.memory);
         reset = 1;
         repeat (2) @(posedge clk);

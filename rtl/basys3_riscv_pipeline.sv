@@ -52,6 +52,7 @@ module basys3_riscv_pipeline #(
     pre_exec_if #(.HISTORY_SIZE(HISTORY_SIZE)) pre_exec_if ();
     execution_if #(.HISTORY_SIZE(HISTORY_SIZE)) execution_if ();
     logic execution_output_bubble;
+    logic execution_stall;
 
 
     // Stage control signals
@@ -140,6 +141,7 @@ module basys3_riscv_pipeline #(
 
     execute execute (
         .clk            (clk),
+        .i_stall        (execution_stall),
         .i_output_bubble(execution_output_bubble),
         .pre_exi        (pre_exec_if),
         .exi            (execution_if)
@@ -176,5 +178,6 @@ module basys3_riscv_pipeline #(
         register_file_reset = reset;
 
         execution_output_bubble = stage_controller_flush_vector[3];
+        execution_stall = stage_controller_stall_vector[3];
     end
 endmodule
