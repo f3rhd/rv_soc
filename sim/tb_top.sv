@@ -55,25 +55,25 @@ module tb_top;
         end
         if (basys3_riscv_pipeline.execution_if.btb_write) begin
             $display(
-                "BranchTableBank[%d][%d] <- write_tag : %d | target_addr : %d",
+                "BranchTableBank[%d] <- instruction_addr : %h | target_addr : %h | is_jump : %h",
                 basys3_riscv_pipeline.execution_if.branch_addr_way,
-                basys3_riscv_pipeline.fetch.btb.write_set_id,
-                basys3_riscv_pipeline.fetch.btb.write_tag,
-                basys3_riscv_pipeline.execution_if.redirection_address);
-        end
-        if (basys3_riscv_pipeline.fetch_btb_hit & basys3_riscv_pipeline.fetch_instruction_valid) begin
-            $display("Instruction[%d] was hit in btb.",
-                     basys3_riscv_pipeline.fetch_instruction_addr);
+                basys3_riscv_pipeline.execution_if.branch_instruction_addr,
+                basys3_riscv_pipeline.execution_if.redirection_address,
+                basys3_riscv_pipeline.execution_if.btb_write_jump);
         end
         if (basys3_riscv_pipeline.execution_if.redirect) begin
             $display("Execution stage is redirecting pc to address %d",
                      basys3_riscv_pipeline.execution_if.redirection_address);
         end
+        if (basys3_riscv_pipeline.fetch_btb_hit & basys3_riscv_pipeline.fetch_instruction_valid) begin
+            $display("Instruction[%d] was hit in btb.",
+                     basys3_riscv_pipeline.fetch_instruction_addr);
+        end
     end
     initial begin
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/tests/string_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/tests/factorial_test.hex",
             basys3_riscv_pipeline.fetch.memory);
         reset = 1;
         repeat (2) @(posedge clk);

@@ -62,12 +62,10 @@ module btb #(
         // If there was a hit output the way address of the hit branch.
         for (int i = 0; i < NUM_WAYS; i++) begin
             if (read_data_ways[i].valid && (read_data_ways[i].tag == read_tag_q)) begin
-                o_hit         = 1'b1;
-                o_target_addr = read_data_ways[i].target_addr;
-                o_way         = i[1:0];
-                if (read_data_ways[i].is_jump) begin
-                    o_hit_was_jump = 1;
-                end
+                o_hit          = 1'b1;
+                o_target_addr  = read_data_ways[i].target_addr;
+                o_way          = i[1:0];
+                o_hit_was_jump = read_data_ways[i].is_jump;
             end
         end
         // Else our way is going to be picked pseudo-randomly. This may create problems in branch heavy applications.

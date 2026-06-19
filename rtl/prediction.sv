@@ -31,6 +31,7 @@ module prediction #(
     logic [HISTORY_SIZE-1:0] pht_index;
     assign pht_index = i_instruction_addr[HISTORY_SIZE-1:0] ^ global_history;
 
+    logic r_btb_hit_was_jump;
     always_ff @(posedge clk) begin
         if (i_reset) begin
             pht_table      <= '{default: 2'b00};
@@ -44,6 +45,7 @@ module prediction #(
                 o_instruction_valid <= i_instruction_valid;
                 o_btb_hit           <= i_btb_hit;
                 o_btb_hit_way       <= i_btb_hit_way;
+                r_btb_hit_was_jump  <= i_btb_hit_was_jump;
 
                 if (i_predict & i_instruction_valid) begin
                     o_prediction <= pht_table[pht_index][1];
@@ -77,13 +79,14 @@ module prediction #(
                 o_instruction_valid <= 0;
                 o_btb_hit           <= 0;
                 o_btb_hit_way       <= 0;
+                r_btb_hit_was_jump  <= 0;
             end
         end
     end
     always_comb begin
         o_predictor_redirect      = 0;
         o_predictor_redirect_addr = o_instruction_addr;
-        if (o_btb_hit & i_instruction_valid & ~i_btb_hit_was_jump) begin
+        if (o_btb_hit & i_instruction_valid & ~r_btb_hit_was_jump) begin
             if (o_prediction == 0) begin
                 o_predictor_redirect      = 1;
                 o_predictor_redirect_addr = o_instruction_addr + 4;

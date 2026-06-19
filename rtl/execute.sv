@@ -116,7 +116,7 @@ module execute (
                                 exi.redirection_address = src1_data + pre_exi.decode_data.extended_imm_val;
                             end
                             1'b1: begin
-                                exi.redirect = ~pre_exi.decode_data.invalid & ~pre_exi.btb_was_hit & ~i_stall;
+                                exi.redirect = ~pre_exi.decode_data.invalid & ~pre_exi.btb_was_hit;
                                 exi.redirection_address = pre_exi.decode_data.instruction_addr + pre_exi.decode_data.extended_imm_val;
                                 exi.btb_write_jump = 1;
                             end

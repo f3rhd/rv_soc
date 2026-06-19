@@ -1,7 +1,6 @@
 `include "../include/execution_interface.svh"
 `include "../include/execution_interface.svh"
-/*
-module memory #(
+/*module memory #(
     parameter SIZE = 2048
 ) (
     input  logic                            clk,
