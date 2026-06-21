@@ -165,7 +165,7 @@ module execute (
         endcase
     end
     always_ff @(posedge clk) begin
-        if ((should_bubble & pre_exi.decode_data.invalid) | i_output_bubble) begin
+        if (should_bubble | pre_exi.decode_data.invalid | i_output_bubble) begin
             exi.invalid           <= 1;
             exi.memory_write_data <= 0;
             exi.memory_operation  <= 0;

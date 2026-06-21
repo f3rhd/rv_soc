@@ -163,13 +163,10 @@ module basys3_riscv_pipeline #(
         fetch_reset = reset;
         fetch_output_bubble = stage_controller_flush_vector[0];
 
-
         prediction_reset = reset;  // TODO : WORK ON ALTERNATIVES LATER
         prediction_enable = ~stage_controller_stall_vector[1];
         prediction_output_bubble = stage_controller_flush_vector[1] | reset;
-        // We are not going to use pht tables for our indirect jumps since they require no prediction
-        prediction_predict       = fetch_btb_hit & fetch_instruction_valid & ~fetch_btb_hit_was_jump;
-
+        prediction_predict       = fetch_btb_hit & fetch_instruction_valid & ~fetch_btb_hit_was_jump; // We are not going to use pht tables for our indirect jumps since they require no prediction
 
         decode_enable = ~stage_controller_stall_vector[2];
         decode_output_bubble = stage_controller_flush_vector[2];
