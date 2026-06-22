@@ -1,4 +1,4 @@
-`include "../include/pre_exec_interface.svh"
+`include "../../include/pre_exec_interface.svh"
 module decode #(
     parameter HISTORY_SIZE = 10
 ) (

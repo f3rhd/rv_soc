@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
-module tb_top;
+`include "../include/bootloader_interface.svh"
+`include "../include/graphics_interface.svh"
+module tb_basys3_riscv_processor;
     logic clk = 0;
     logic reset = 0;
     always #5 clk = ~clk;
@@ -9,14 +11,18 @@ module tb_top;
     localparam I_CACHE_SIZE = 1024;
     localparam D_CACHE_SIZE = 1 << 10;
     localparam BTB_SIZE = 128;
-    basys3_riscv_pipeline #(
+    bootloader_if bootloader_if ();
+    graphics_if graphcis_if ();
+    basys3_riscv_processor #(
         .HISTORY_SIZE(HISTORY_SIZE  /* default 10 */),
         .I_CACHE_SIZE(I_CACHE_SIZE  /* default 1024 */),
         .D_CACHE_SIZE(D_CACHE_SIZE  /* default 1 << 16 */),
         .BTB_SIZE    (BTB_SIZE  /* default 128 */)
     ) basys3_riscv_pipeline (
-        .clk  (clk),
-        .reset(reset)
+        .clk(clk),
+        .reset(reset),
+        .bootloader_if(bootloader_if),
+        .graphics_if(graphics_if)
     );
 
     always @(posedge clk) begin
@@ -70,15 +76,29 @@ module tb_top;
                      basys3_riscv_pipeline.fetch_instruction_addr);
         end
     end
+
     initial begin
 
         $readmemh(
             "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/tests/factorial_test.hex",
-            basys3_riscv_pipeline.fetch.memory);
-        reset = 1;
+            basys3_riscv_pipeline.fetch.instructions);
+
+        graphics_if.init_done           = 1;
+        reset                           = 1;
+        bootloader_if.fetch_begin       = 0;
+        bootloader_if.instruction       = 0;
+        bootloader_if.instruction_ready = 0;
+
         repeat (2) @(posedge clk);
-        reset = 0;
+        reset                           = 0;
+
+        bootloader_if.fetch_begin       = 1;
+        bootloader_if.instruction       = 0;
+        bootloader_if.instruction_ready = 0;
+
+        @(posedge clk);
         #2;
+        bootloader_if.fetch_begin = 0;
         $stop;
     end
 endmodule

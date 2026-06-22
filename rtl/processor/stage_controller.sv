@@ -1,6 +1,7 @@
 module stage_controller (
     input logic i_misprediction,
     input logic i_load_stall,
+    input logic i_graphics_instruction_buffer_is_full,
     output logic [0:3] flush_vector,
     output logic [0:3] stall_vector
 );
@@ -11,14 +12,17 @@ module stage_controller (
             /*
             flush everything except execution and fetch stage
             jump instructions also trigger flushing, we cant flush them as they write to registers
-            we are not flushing fetch stage since in a clock cycle where redirection is detected the next fetched instruction
-            is going to be from the calculated address
+            we are not flushing fetch stage since in a clock cycle where redirection is detected the next instruction
+            is going to be fetched from calculated target address
             */
             flush_vector = 4'b0110;
             stall_vector = 3'b0000;
         end else if (i_load_stall) begin
             flush_vector = 4'b0001;  // flush execute stage
-            stall_vector = 4'b1111;  // stall all
+            stall_vector = 4'b1110;  // stall all
+        end else if (i_graphics_instruction_buffer_is_full) begin
+            flush_vector = 4'b0000;
+            stall_vector = 4'b1111;
         end
     end
 endmodule

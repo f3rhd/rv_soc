@@ -1,15 +1,19 @@
-`include "../include/execution_interface.svh"
-`include "../include/pre_exec_interface.svh"
-`include "../include/decode_output.svh"
+`include "../../include/execution_interface.svh"
+`include "../../include/pre_exec_interface.svh"
+`include "../../include/decode_output.svh"
+`include "../../include/bootloader_interface.svh"
+`include "../../include/graphics_interface.svh"
 
-module basys3_riscv_pipeline #(
+module basys3_riscv_processor #(
     parameter HISTORY_SIZE = 10,
     I_CACHE_SIZE = 1024,
     D_CACHE_SIZE = 1 << 10,
     BTB_SIZE = 128
 ) (
     input logic clk,
-    input logic reset
+    input logic reset,
+    bootloader_if.processor bootloader_if,
+    graphics_if.processor graphics_if
 );
 
     // Fetch signals
@@ -61,9 +65,10 @@ module basys3_riscv_pipeline #(
 
     stage_controller stage_controller (
         .i_misprediction(execution_if.redirect),
-        .i_load_stall   (execution_if.stall_pipeline),
-        .flush_vector   (stage_controller_flush_vector),
-        .stall_vector   (stage_controller_stall_vector)
+        .i_load_stall(execution_if.stall_pipeline),
+        .i_graphics_instruction_buffer_is_full(graphics_if.graphics_instruction_buffer_is_full),
+        .flush_vector(stage_controller_flush_vector),
+        .stall_vector(stage_controller_stall_vector)
     );
 
     fetch #(
@@ -76,6 +81,8 @@ module basys3_riscv_pipeline #(
         .i_output_bubble            (fetch_output_bubble),
         .i_predictor_redirect_target(prediction_redirect_target),
         .i_predictor_redirect       (prediction_redirect),
+        .i_graphics_init_done       (graphics_if.graphics_init_done),
+        .bootloaderi                (bootloader_if),
         .exi                        (execution_if),
         .o_instruction_valid        (fetch_instruction_valid),
         .o_instruction_addr         (fetch_instruction_addr),
@@ -153,6 +160,7 @@ module basys3_riscv_pipeline #(
     ) memory (
         .clk                   (clk),
         .ei                    (execution_if),
+        .graphicsi             (graphics_if),
         .o_register_write_index(register_file_write_addr),
         .o_register_write_data (register_file_write_data),
         .o_register_write      (register_file_write_enable)

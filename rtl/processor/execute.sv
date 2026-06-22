@@ -1,5 +1,5 @@
-`include "../include/pre_exec_interface.svh"
-`include "../include/execution_interface.svh"
+`include "../../include/pre_exec_interface.svh"
+`include "../../include/execution_interface.svh"
 module execute (
     input logic clk,
     /*unlike stall behavior of other stages execution's is rather different
