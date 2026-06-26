@@ -34,7 +34,6 @@ module prediction #(
     logic r_btb_hit_was_jump;
     always_ff @(posedge clk) begin
         if (i_reset) begin
-            pht_table      <= '{default: 2'b00};
             global_history <= 0;
             o_prediction   <= 0;
             o_pht_index    <= 0;

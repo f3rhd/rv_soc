@@ -1,9 +1,9 @@
 `ifndef GRAPHICS_INTERFACE_SVH
 `define GRAPHICS_INTERFACE_SVH
 interface graphics_if;
-    logic [31:0] graphics_instruction;
+    logic [32:0] graphics_instruction;
     logic graphics_instruction_write;
-    logic graphics_instruction_buffer_is_full;
+    logic graphics_instruction_write_fail;
     logic graphics_init_done;
     logic graphics_init;
     logic display_sck;
@@ -16,7 +16,7 @@ interface graphics_if;
         input graphics_instruction,
         input graphics_instruction_write,
         input graphics_init,
-        output graphics_instruction_buffer_is_full,
+        output graphics_instruction_write_fail,
         output graphics_init_done,
         output display_sck,
         output display_sda,
@@ -25,7 +25,7 @@ interface graphics_if;
         output display_cs
     );
     modport processor (
-        input graphics_instruction_buffer_is_full,
+        input graphics_instruction_write_fail,
         input graphics_init_done,
         output graphics_instruction,
         output graphics_instruction_write

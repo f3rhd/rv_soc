@@ -51,7 +51,7 @@ module bootloader #(
         if (i_reset) begin
             bootloader_if.instruction       <= 0;
             bootloader_if.instruction_ready <= 0;
-            bootloader_if.fetch_begin       <= 0;
+            bootloader_if.program_load_done <= 0;
             program_size                    <= 0;
             program_size_byte_counter       <= 0;
             sent_instruction_counter        <= 0;
@@ -66,7 +66,6 @@ module bootloader #(
                     sent_instruction_counter        <= 0;
                     bootloader_if.instruction       <= 0;
                     bootloader_if.instruction_ready <= 0;
-                    bootloader_if.fetch_begin       <= 0;
                     if (bootloader_if.bootloader_begin) begin
                         tx_begin <= 1;
                         tx_data  <= BOOT_SIGNAL;
@@ -90,8 +89,8 @@ module bootloader #(
                     bootloader_if.instruction_ready <= 0;
 
                     if (sent_instruction_counter >= program_size) begin
-                        bootloader_if.fetch_begin <= 1;
-                        state                     <= IDLE;
+                        bootloader_if.program_load_done <= 1;
+                        state                           <= IDLE;
                     end else if (rx_byte_ready) begin
                         bootloader_if.instruction[(3-instruction_byte_counter)*8 +: 8] <= rx_byte_out;
                         if (instruction_byte_counter == 3) begin

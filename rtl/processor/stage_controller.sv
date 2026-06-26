@@ -1,7 +1,7 @@
 module stage_controller (
     input logic i_misprediction,
     input logic i_load_stall,
-    input logic i_graphics_instruction_buffer_is_full,
+    input logic i_graphics_instruction_write_fail,
     output logic [0:3] flush_vector,
     output logic [0:3] stall_vector
 );
@@ -20,7 +20,7 @@ module stage_controller (
         end else if (i_load_stall) begin
             flush_vector = 4'b0001;  // flush execute stage
             stall_vector = 4'b1110;  // stall all
-        end else if (i_graphics_instruction_buffer_is_full) begin
+        end else if (i_graphics_instruction_write_fail) begin
             flush_vector = 4'b0000;
             stall_vector = 4'b1111;
         end

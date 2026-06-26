@@ -11,7 +11,8 @@ module memory #(
     output logic [31:0] o_register_write_data,
     output logic o_register_write
 );
-    localparam unsigned GRAPHICS_ADDRESS = 32'hFFFFFFFF; // @Temporary : May change it later 
+    localparam unsigned GRAPHICS_PIXEL_DATA_ADDRESS = 32'hFFFFFFFF; // @Temporary : May change it later 
+    localparam unsigned GRAPHICS_COMMAND_DATA_ADDRESS = 32'hFFFFFFF0; // @Temporary : May change it later
 
     (* ram_style = "block" *) logic [0:31] ram[0:SIZE-1];
     wire [31:0] translated_address = ei.alu_out >> 2;
@@ -74,8 +75,11 @@ module memory #(
                 if (ei.mem_write) begin
                     graphicsi.graphics_instruction       <= 0;
                     graphicsi.graphics_instruction_write <= 1'b0;
-                    if (ei.alu_out == GRAPHICS_ADDRESS) begin
-                        graphicsi.graphics_instruction <= ei.memory_write_data;
+                    if (ei.alu_out == GRAPHICS_COMMAND_DATA_ADDRESS || ei.alu_out == GRAPHICS_PIXEL_DATA_ADDRESS) begin
+                        graphicsi.graphics_instruction <= {
+                            ei.alu_out == GRAPHICS_COMMAND_DATA_ADDRESS ? 1'b1 : 1'b0,
+                            ei.memory_write_data
+                        };
                         graphicsi.graphics_instruction_write <= 1'b1;
                     end else begin
                         if (byte_en[0]) begin

@@ -3,7 +3,7 @@
 interface bootloader_if;
     logic [31:0] instruction;
     logic instruction_ready;
-    logic fetch_begin;
+    logic program_load_done;
     logic bootloader_begin;
     logic rx;
     logic tx;
@@ -11,7 +11,7 @@ interface bootloader_if;
     modport bootloader (
         output instruction,
         output instruction_ready,
-        output fetch_begin,
+        output program_load_done,
         input bootloader_begin,
         input rx,
         output tx
@@ -19,7 +19,7 @@ interface bootloader_if;
     modport processor (
         input instruction,
         input instruction_ready,
-        input fetch_begin
+        input program_load_done 
     );
 endinterface
 `endif

@@ -69,7 +69,7 @@ module fetch #(
                         instructions[program_counter] <= bootloaderi.instruction;
                         program_counter <= program_counter + 1;
                     end
-                    if (bootloaderi.fetch_begin & i_graphics_init_done) begin
+                    if (bootloaderi.program_load_done & i_graphics_init_done) begin
                         program_counter <= 0;
                         state           <= FETCH;
                     end

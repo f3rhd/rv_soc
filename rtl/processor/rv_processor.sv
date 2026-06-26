@@ -4,7 +4,7 @@
 `include "../../include/bootloader_interface.svh"
 `include "../../include/graphics_interface.svh"
 
-module basys3_riscv_processor #(
+module rv_processor #(
     parameter HISTORY_SIZE = 10,
     I_CACHE_SIZE = 1024,
     D_CACHE_SIZE = 1 << 10,
@@ -66,7 +66,7 @@ module basys3_riscv_processor #(
     stage_controller stage_controller (
         .i_misprediction(execution_if.redirect),
         .i_load_stall(execution_if.stall_pipeline),
-        .i_graphics_instruction_buffer_is_full(graphics_if.graphics_instruction_buffer_is_full),
+        .i_graphics_instruction_write_fail(graphics_if.graphics_instruction_write_fail),
         .flush_vector(stage_controller_flush_vector),
         .stall_vector(stage_controller_stall_vector)
     );
