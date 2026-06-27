@@ -77,7 +77,7 @@ module tb_rv_processor;
     initial begin
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/tests/factorial_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/factorial_test.hex",
             rv_processor.fetch.instructions);
 
         graphics_if.graphics_init_done  = 1;
@@ -99,3 +99,6 @@ module tb_rv_processor;
         $stop;
     end
 endmodule
+/*
+add_wave {{/tb_rv_processor/rv_processor/execute/exi/stall_pipeline}} {{/tb_rv_processor/rv_processor/execute/exi/reg_write}} {{/tb_rv_processor/rv_processor/execute/exi/redirection_address}} {{/tb_rv_processor/rv_processor/execute/exi/redirect}} {{/tb_rv_processor/rv_processor/execute/exi/predictor_update}} {{/tb_rv_processor/rv_processor/execute/exi/pht_index}} {{/tb_rv_processor/rv_processor/execute/exi/memory_write_data}} {{/tb_rv_processor/rv_processor/execute/exi/memory_operation}} {{/tb_rv_processor/rv_processor/execute/exi/mem_write}} {{/tb_rv_processor/rv_processor/execute/exi/mem_read}} {{/tb_rv_processor/rv_processor/execute/exi/invalid}} {{/tb_rv_processor/rv_processor/execute/exi/dest}} {{/tb_rv_processor/rv_processor/execute/exi/btb_write}} {{/tb_rv_processor/rv_processor/execute/exi/branch_instruction_addr}} {{/tb_rv_processor/rv_processor/execute/exi/branch_addr_way}} {{/tb_rv_processor/rv_processor/execute/exi/alu_out}} {{/tb_rv_processor/rv_processor/execute/exi/actual_branch_result}} {{/tb_rv_processor/rv_processor/decode/pre_exec_if/src2_data}} {{/tb_rv_processor/rv_processor/decode/pre_exec_if/src1_data}} {{/tb_rv_processor/rv_processor/decode/pre_exec_if/prediction}} {{/tb_rv_processor/rv_processor/decode/pre_exec_if/pht_index}} {{/tb_rv_processor/rv_processor/decode/pre_exec_if/decode_data}} {{/tb_rv_processor/rv_processor/decode/pre_exec_if/btb_way_hit}} {{/tb_rv_processor/rv_processor/decode/pre_exec_if/btb_was_hit}} rv_processor
+*/
