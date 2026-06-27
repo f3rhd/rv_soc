@@ -26,7 +26,7 @@ module prediction #(
 );
 
 
-    (* ram_style = "distributed" *) logic [1:0] pht_table[0:2**HISTORY_SIZE-1];
+    logic [1:0] pht_table[0:2**HISTORY_SIZE-1];
     logic [HISTORY_SIZE-1:0] global_history = 0;
     logic [HISTORY_SIZE-1:0] pht_index;
     assign pht_index = i_instruction_addr[HISTORY_SIZE-1:0] ^ global_history;
@@ -34,6 +34,7 @@ module prediction #(
     logic r_btb_hit_was_jump;
     always_ff @(posedge clk) begin
         if (i_reset) begin
+            pht_table      <= '{default: 2'b00};
             global_history <= 0;
             o_prediction   <= 0;
             o_pht_index    <= 0;

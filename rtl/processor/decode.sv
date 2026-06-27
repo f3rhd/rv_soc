@@ -22,6 +22,7 @@ module decode #(
     assign is_alu_instruction = (op == 7'b0010011) || (op == 7'b0110011);
     always_comb begin
         decoded_mop_next                  = '0;
+        alu_base_op                       = 0;
         decoded_mop_next.instruction_addr = i_instruction_addr;
         decoded_mop_next.src1             = i_instruction_raw[19:15];
         decoded_mop_next.src2             = i_instruction_raw[24:20];

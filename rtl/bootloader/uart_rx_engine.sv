@@ -68,6 +68,7 @@ module uart_rx_engine #(
                         end
                     end
                 end
+                default: state <= IDLE;
             endcase
         end
     end

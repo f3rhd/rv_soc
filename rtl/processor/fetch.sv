@@ -96,6 +96,11 @@ module fetch #(
                         end
                     end
                 end
+                default: begin
+                    o_instruction_raw   <= 0;
+                    o_instruction_valid <= 0;
+                    o_instruction_addr  <= 32'hFFFFFFFF;
+                end
             endcase
         end
     end

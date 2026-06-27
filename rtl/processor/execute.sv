@@ -144,6 +144,8 @@ module execute (
                             3'b110:
                             branch_result = $unsigned(src2_data) >=
                                 $unsigned(src2_data);
+                            default: begin
+                            end
                         endcase
                         exi.redirect = (pre_exi.prediction ^ branch_result) & ~pre_exi.decode_data.invalid & ~i_stall;
                         exi.predictor_update = 1'b1 & ~pre_exi.decode_data.invalid & ~i_stall;
@@ -153,6 +155,9 @@ module execute (
                         end else begin
                             exi.redirection_address = pre_exi.decode_data.instruction_addr + 4;
                         end
+                    end
+                    default: begin
+                        should_bubble = 1;
                     end
                 endcase
             end

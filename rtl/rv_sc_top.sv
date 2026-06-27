@@ -18,10 +18,10 @@ module rv_sc_top (
 );
     localparam unsigned SYSTEM_CLK_HZ = 100_000_000;
     localparam unsigned BAUD_RATE = 115200;
-    localparam unsigned HISTORY_SIZE = 10;
+    localparam unsigned HISTORY_SIZE = 5;
     localparam unsigned I_CACHE_SIZE = 1024 * 4;
     localparam unsigned D_CACHE_SIZE = 1 << 10;
-    localparam unsigned BTB_SIZE = 128;
+    localparam unsigned BTB_SIZE = 16;
 
     bootloader_if bootloaderi ();
     graphics_if graphicsi ();
@@ -75,7 +75,7 @@ module rv_sc_top (
     );
     seven_seg_display seven_seg_display (
         .clk  (clk),
-        .rst_n(reset),
+        .reset(reset_edge),
         .in   (graphicsi.graphics_init_done & bootloaderi.program_load_done),
         .o_seg(seg),
         .o_an (an)

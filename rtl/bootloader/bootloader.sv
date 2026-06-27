@@ -102,6 +102,7 @@ module bootloader #(
                         end
                     end
                 end
+                default: state <= IDLE;
             endcase
         end
     end

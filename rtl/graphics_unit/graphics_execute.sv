@@ -308,6 +308,7 @@ module graphics_execute (
                             graphics_state <= EXECUTE;
                             exec_state     <= EXEC_KIND_DO_NOTHING;
                         end
+                        default: graphics_state <= IDLE;
                     endcase
                 end
                 EXECUTE: begin
@@ -336,6 +337,8 @@ module graphics_execute (
                                         exec_state <= EXEC_KIND_RASET_OR_CASET;
                                         RASET:
                                         exec_state <= EXEC_KIND_RASET_OR_CASET;
+                                        INVALID:
+                                        exec_state <= EXEC_KIND_DO_NOTHING;
                                         default:
                                         exec_state <= EXEC_KIND_DO_NOTHING;
                                     endcase
@@ -414,8 +417,10 @@ module graphics_execute (
                                 exec_state        <= send_byte_return;
                             end
                         end
+                        default: exec_state <= EXEC_KIND_DO_NOTHING;
                     endcase
                 end
+                default: graphics_state <= IDLE;
             endcase
         end
     end

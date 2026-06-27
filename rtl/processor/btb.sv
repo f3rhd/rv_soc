@@ -21,8 +21,12 @@ module btb #(
         logic [31:0]          target_addr;
     } btb_entry_t;
 
-    (* ram_style = "block" *)
-    btb_entry_t branch_table_banks[0:NUM_WAYS-1][0:NUM_SETS-1];
+    /*(* ram_style = "block" *)*/ btb_entry_t branch_table_bank0[0:NUM_SETS-1];
+    /*(* ram_style = "block" *)*/ btb_entry_t branch_table_bank1[0:NUM_SETS-1];
+    /*(* ram_style = "block" *)*/ btb_entry_t branch_table_bank2[0:NUM_SETS-1];
+    /*(* ram_style = "block" *)*/ btb_entry_t branch_table_bank3[0:NUM_SETS-1];
+
+
     btb_entry_t read_data_ways[0:NUM_WAYS-1];
 
     logic [NUM_BITS_FOR_SET_ID-1:0] read_set_id;
@@ -39,16 +43,49 @@ module btb #(
     assign read_set_id = i_branch_addr_read[2+NUM_BITS_FOR_SET_ID-1 : 2];
 
     always_ff @(posedge clk) begin
-        counter    <= counter + 1;
-        read_tag_q <= read_tag;
-        for (int i = 0; i < NUM_WAYS; i++) begin
-            read_data_ways[i] <= branch_table_banks[i][read_set_id];
-        end
+        counter           <= counter + 1;
+        read_tag_q        <= read_tag;
+        read_data_ways[0] <= branch_table_bank0[read_set_id];
+        read_data_ways[1] <= branch_table_bank1[read_set_id];
+        read_data_ways[2] <= branch_table_bank2[read_set_id];
+        read_data_ways[3] <= branch_table_bank3[read_set_id];
         if (exi.btb_write) begin
-            branch_table_banks[exi.branch_addr_way][write_set_id].tag <= write_tag;
-            branch_table_banks[exi.branch_addr_way][write_set_id].target_addr <= exi.redirection_address;
-            branch_table_banks[exi.branch_addr_way][write_set_id].valid <= 1'b1;
-            branch_table_banks[exi.branch_addr_way][write_set_id].is_jump <= exi.btb_write_jump;
+            case (exi.branch_addr_way)
+                2'b00: begin
+                    branch_table_bank0[write_set_id] <= '{
+                        is_jump : exi.btb_write_jump,
+                        valid : 1'b1,
+                        tag : write_tag,
+                        target_addr : exi.redirection_address
+                    };
+                end
+                2'b01: begin
+                    branch_table_bank1[write_set_id] <= '{
+                        is_jump : exi.btb_write_jump,
+                        valid : 1'b1,
+                        tag : write_tag,
+                        target_addr : exi.redirection_address
+                    };
+                end
+                2'b10: begin
+                    branch_table_bank2[write_set_id] <= '{
+                        is_jump : exi.btb_write_jump,
+                        valid : 1'b1,
+                        tag : write_tag,
+                        target_addr : exi.redirection_address
+                    };
+                end
+                2'b11: begin
+                    branch_table_bank3[write_set_id] <= '{
+                        is_jump : exi.btb_write_jump,
+                        valid : 1'b1,
+                        tag : write_tag,
+                        target_addr : exi.redirection_address
+                    };
+                end
+                default: begin
+                end
+            endcase
         end
     end
 

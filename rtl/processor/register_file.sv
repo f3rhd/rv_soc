@@ -9,7 +9,7 @@ module register_file (
     output logic [31:0] o_read_result0,
     output logic [31:0] o_read_result1
 );
-    (* ram_style = "distributed" *) logic [31:0] file[0:31];
+    logic [31:0] file[0:31];
 
     always_comb begin : forwarding
         o_read_result0 = i_write_addr == i_read_addr0 & i_write_enable ? i_write_data : file[i_read_addr0];
