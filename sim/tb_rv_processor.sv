@@ -25,7 +25,7 @@ module tb_rv_processor;
         .graphics_if(graphics_if)
     );
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (rv_processor.register_file_write_enable && rv_processor.register_file_write_addr != 0)
             $display(
                 "Register File[%d] <- %d",
@@ -77,7 +77,7 @@ module tb_rv_processor;
     initial begin
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/factorial_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/branch_test.hex",
             rv_processor.fetch.instructions);
 
         graphics_if.graphics_init_done  = 1;
