@@ -67,7 +67,8 @@ module rv_processor #(
     stage_controller stage_controller (
         .clk(clk),
         .i_misprediction(execution_if.redirect),
-        .i_load_stall(execution_if.stall_pipeline),
+        .i_load_stall_type0(execution_if.stall_pipeline_type0),
+        .i_load_stall_type1(execution_if.stall_pipeline_type1),
         .i_graphics_instruction_write_fail(graphics_if.graphics_instruction_write_fail),
         .flush_vector(stage_controller_flush_vector),
         .stall_vector(stage_controller_stall_vector)
@@ -151,6 +152,7 @@ module rv_processor #(
         .clk                (clk),
         .i_stall            (execution_stall),
         .i_output_bubble    (execution_output_bubble),
+        .i_decode_out       (decode_out_),
         .i_register_read_out(register_read_),
         .exi                (execution_if)
     );

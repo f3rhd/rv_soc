@@ -77,7 +77,7 @@ module tb_rv_processor;
     initial begin
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/load_stall_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/factorial_test.hex",
             rv_processor.fetch.instructions);
 
         graphics_if.graphics_init_done  = 1;

@@ -1,5 +1,6 @@
 `include "../../include/execution_interface.svh"
 `include "../../include/register.svh"
+`include "../../include/decode_output.svh"
 module execute #(
     parameter HISTORY_SIZE = 10
 ) (
@@ -9,6 +10,7 @@ module execute #(
     we have to disable redirection for one cycle as operand that is going to be use for comparison is not ready yet*/
     input logic i_stall,
     input logic i_output_bubble,
+    input decode_output_t i_decode_out, // has the signals needed for triggering type1 stall
     input register_read_output_t i_register_read_out,
     execution_if.producer exi
 );
@@ -41,7 +43,8 @@ module execute #(
     assign src1_match = (exi.reg_write && ~exi.mem_read  && (instruction_data.src1 == exi.dest) && (exi.dest != 5'd0));
     assign src2_match = (exi.reg_write && ~exi.mem_read  && (instruction_data.src2 == exi.dest) && (exi.dest != 5'd0));
 
-
+    assign exi.stall_pipeline_type1 = ~i_decode_out.instruction_data.invalid & exi.mem_read & (((i_decode_out.instruction_data.src1 == exi.dest) && (exi.dest != 5'd0)) |
+            ((i_decode_out.instruction_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~i_decode_out.instruction_data.is_reg_to_reg_imm ));
     always_comb begin
         memory_operation = '0;
         alu_out = 0;
@@ -86,40 +89,40 @@ module execute #(
                     // LUI
                     5'b01100: alu_out = src2_data;
                     //MUL
-                    //5'b01110: alu_out = src1_data * src2_data;
-                    //// MULH (Signed * Signed)
-                    //5'b01111:
-                    //alu_out = 64'($signed(src1_data) * $signed(src2_data)) >>
-                    //    32;
+                    5'b01110: alu_out = src1_data * src2_data;
+                    // MULH (Signed * Signed)
+                    5'b01111:
+                    alu_out = 64'($signed(src1_data) * $signed(src2_data)) >>
+                        32;
 
-                    //// MULHSU (Signed * Unsigned)
-                    //5'b10000:
-                    //alu_out = (65'($signed({{32{src1_data[31]}}, src1_data}) *
-                    //               $signed({33'b0, src2_data}))) >> 32;
+                    // MULHSU (Signed * Unsigned)
+                    5'b10000:
+                    alu_out = (65'($signed({{32{src1_data[31]}}, src1_data}) *
+                                   $signed({33'b0, src2_data}))) >> 32;
 
-                    //// MULHU (Unsigned * Unsigned)
-                    //5'b10001: alu_out = (64'(src1_data) * 64'(src2_data)) >> 32;
+                    // MULHU (Unsigned * Unsigned)
+                    5'b10001: alu_out = (64'(src1_data) * 64'(src2_data)) >> 32;
 
-                    //5'b10010:
-                    //alu_out = (src2_data == 32'h0) ? 32'hFFFF_FFFF :
-                    //            (src1_data == 32'h8000_0000 &&
-                    //            src2_data == 32'hFFFF_FFFF)  ? 32'h8000_0000 :
-                    //            $signed(src1_data) / $signed(src2_data);
+                    5'b10010:
+                    alu_out = (src2_data == 32'h0) ? 32'hFFFF_FFFF :
+                                (src1_data == 32'h8000_0000 &&
+                                src2_data == 32'hFFFF_FFFF)  ? 32'h8000_0000 :
+                                $signed(src1_data) / $signed(src2_data);
 
-                    //// DIVU (Unsigned)
-                    //5'b10011:
-                    //alu_out = (src2_data == 32'h0) ? 32'hFFFF_FFFF :
-                    //            src1_data / src2_data;
+                    // DIVU (Unsigned)
+                    5'b10011:
+                    alu_out = (src2_data == 32'h0) ? 32'hFFFF_FFFF :
+                                src1_data / src2_data;
 
-                    //5'b10100:
-                    //alu_out = (src2_data == 32'h0) ? src1_data :
-                    //            (src1_data == 32'h8000_0000 &&
-                    //            src2_data == 32'hFFFF_FFFF)  ? 32'h0 :
-                    //            $signed(src1_data) % $signed(src2_data);
+                    5'b10100:
+                    alu_out = (src2_data == 32'h0) ? src1_data :
+                                (src1_data == 32'h8000_0000 &&
+                                src2_data == 32'hFFFF_FFFF)  ? 32'h0 :
+                                $signed(src1_data) % $signed(src2_data);
 
-                    //5'b10101:
-                    //alu_out = (src2_data == 32'h0) ? src1_data :
-                    //           src1_data % src2_data;
+                    5'b10101:
+                    alu_out = (src2_data == 32'h0) ? src1_data :
+                               src1_data % src2_data;
                     default: alu_out = 0;
                 endcase
             end

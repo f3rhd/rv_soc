@@ -17,7 +17,7 @@ module register_file (
     decoded_instruction_t instruction_data_out;
     assign instruction_data_in = i_decode_out.instruction_data;
     assign instruction_data_out = o_register_read.decode_data.instruction_data;
-    assign exi.stall_pipeline = ~instruction_data_in.invalid & instruction_data_out.mem_read & (((instruction_data_in.src1 == instruction_data_out.dest) && (instruction_data_out.dest != 5'd0)) |
+    assign exi.stall_pipeline_type0 = ~instruction_data_in.invalid & instruction_data_out.mem_read & (((instruction_data_in.src1 == instruction_data_out.dest) && (instruction_data_out.dest != 5'd0)) |
             ((instruction_data_in.src2 == instruction_data_out.dest) && (instruction_data_out.dest != 5'd0) && ~instruction_data_in.is_reg_to_reg_imm ));
 
     always_ff @(posedge clk) begin

@@ -33,7 +33,8 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     control bits
     */
     logic invalid;
-    logic stall_pipeline;
+    logic stall_pipeline_type0;
+    logic stall_pipeline_type1;
     logic mem_write;
     logic mem_read;
     logic reg_write;
@@ -56,7 +57,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         output mem_read,
         output reg_write,
         output btb_write,
-        output stall_pipeline,
+        output stall_pipeline_type1,
         output btb_write_jump
     );
     modport register_read (
@@ -64,7 +65,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         input alu_out,
         input reg_write,
         input mem_read,
-        output stall_pipeline
+        output stall_pipeline_type0
     );
     modport predictor_consumer (
         input pht_index,
