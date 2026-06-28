@@ -1,15 +1,14 @@
 `include "../../include/execution_interface.svh"
 `include "../../include/execution_interface.svh"
 `include "../../include/graphics_interface.svh"
+`include "../../include/register.svh"
 module memory #(
     parameter SIZE = 2048
 ) (
     input logic clk,
     execution_if.mem_consumer ei,
     graphics_if.processor graphicsi,
-    output logic [4:0] o_register_write_index,
-    output logic [31:0] o_register_write_data,
-    output logic o_register_write
+    output register_write_data_t o_register_write
 );
     localparam unsigned GRAPHICS_PIXEL_DATA_ADDRESS = 32'hFFFFFFFF; // @Temporary : May change it later 
     localparam unsigned GRAPHICS_COMMAND_DATA_ADDRESS = 32'hFFFFFFF0; // @Temporary : May change it later
@@ -59,15 +58,15 @@ module memory #(
     end
     always_ff @(posedge clk) begin
         if (ei.invalid) begin
-            o_register_write_index <= 0;
-            o_register_write       <= 0;
-            alu_is_reg_write       <= 0;
-            reg_mem_read           <= 0;
+            o_register_write.write_addr   <= 0;
+            o_register_write.write_enable <= 0;
+            alu_is_reg_write              <= 0;
+            reg_mem_read                  <= 0;
         end else begin
-            o_register_write       <= ei.reg_write;
-            o_register_write_index <= ei.dest;
-            alu_is_reg_write       <= 0;
-            reg_mem_read           <= 0;
+            o_register_write.write_enable <= ei.reg_write;
+            o_register_write.write_addr   <= ei.dest;
+            alu_is_reg_write              <= 0;
+            reg_mem_read                  <= 0;
             if (ei.reg_write & ~ei.mem_read & ~ei.mem_write) begin
                 alu_is_reg_write <= 1;
                 reg_alu_out      <= ei.alu_out;
@@ -106,38 +105,40 @@ module memory #(
     end
     always_comb begin
         if (alu_is_reg_write) begin
-            o_register_write_data = reg_alu_out;
+            o_register_write.write_data = reg_alu_out;
         end else if (reg_mem_read) begin
             case (reg_memory_op)
                 // load byte (signed)
                 3'b000:
-                o_register_write_data = {{24{selected_byte[7]}}, selected_byte};
+                o_register_write.write_data = {
+                    {24{selected_byte[7]}}, selected_byte
+                };
                 // load half (signed)
                 3'b001:
-                o_register_write_data = {
+                o_register_write.write_data = {
                     {16{selected_half[7]}},
                     selected_half[7:0],
                     selected_half[15:8]
                 };
                 // load word
                 3'b010:
-                o_register_write_data = {
+                o_register_write.write_data = {
                     reg_raw_word[7:0],
                     reg_raw_word[15:8],
                     reg_raw_word[23:16],
                     reg_raw_word[31:24]
                 };
                 // load byte unsigned
-                3'b011: o_register_write_data = {24'b0, selected_byte};
+                3'b011: o_register_write.write_data = {24'b0, selected_byte};
                 // load half unsigned
                 3'b100:
-                o_register_write_data = {
+                o_register_write.write_data = {
                     16'b0, selected_half[7:0], selected_half[15:8]
                 };
-                default: o_register_write_data = 32'b0;
+                default: o_register_write.write_data = 33'b0;
             endcase
         end else begin
-            o_register_write_data = 32'b0;
+            o_register_write.write_data = 33'b0;
         end
     end
 endmodule

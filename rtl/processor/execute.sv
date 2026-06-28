@@ -1,5 +1,5 @@
-`include "../../include/pre_exec_interface.svh"
 `include "../../include/execution_interface.svh"
+`include "../../include/register.svh"
 module execute #(
     parameter HISTORY_SIZE = 10
 ) (
@@ -9,7 +9,7 @@ module execute #(
     we have to disable redirection for one cycle as operand that is going to be use for comparison is not ready yet*/
     input logic i_stall,
     input logic i_output_bubble,
-    pre_exec_if.consumer pre_exi,
+    input register_read_output_t i_register_read_out,
     execution_if.producer exi
 );
     logic [31:0] alu_out;
@@ -19,9 +19,6 @@ module execute #(
     //logic should_bubble;
     logic src1_match, src2_match;
     logic [31:0] src1_data, src2_data;
-
-    assign src1_match = (exi.reg_write && ~exi.mem_read  && (pre_exi.decode_data.src1 == exi.dest) && (exi.dest != 5'd0));
-    assign src2_match = (exi.reg_write && ~exi.mem_read  && (pre_exi.decode_data.src2 == exi.dest) && (exi.dest != 5'd0));
 
 
     logic predictor_update;
@@ -33,6 +30,18 @@ module execute #(
     logic [31:0] branch_instruction_addr;
     logic btb_write_jump;
 
+    decoded_instruction_t instruction_data;
+    register_read_data_t read_data;
+    prediction_data_t prediction_data;
+
+    assign prediction_data = i_register_read_out.decode_data.prediction_data;
+    assign instruction_data = i_register_read_out.decode_data.instruction_data;
+    assign read_data = i_register_read_out.read_data;
+
+    assign src1_match = (exi.reg_write && ~exi.mem_read  && (instruction_data.src1 == exi.dest) && (exi.dest != 5'd0));
+    assign src2_match = (exi.reg_write && ~exi.mem_read  && (instruction_data.src2 == exi.dest) && (exi.dest != 5'd0));
+
+
     always_comb begin
         memory_operation = '0;
         alu_out = 0;
@@ -42,21 +51,19 @@ module execute #(
         predictor_update = '0;
         redirection_address = '0;
         redirect = '0;
-        pht_index = pre_exi.pht_index;
-        branch_addr_way = pre_exi.btb_way_hit;
-        btb_write = pre_exi.decode_data.btb_write & ~pre_exi.btb_was_hit & ~pre_exi.decode_data.invalid;
-        branch_instruction_addr = pre_exi.decode_data.instruction_addr;
+        pht_index = prediction_data.pht_index;
+        branch_addr_way = prediction_data.btb_way_hit;
+        btb_write = instruction_data.btb_write & ~prediction_data.btb_was_hit & ~instruction_data.invalid;
+        branch_instruction_addr = instruction_data.instruction_addr;
         btb_write_jump = '0;
 
-        exi.stall_pipeline = ~pre_exi.decode_data.invalid & exi.mem_read & (((pre_exi.decode_data.src1 == exi.dest) && (exi.dest != 5'd0)) |
-            ((pre_exi.decode_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~pre_exi.decode_data.is_reg_to_reg_imm ));
 
-        src1_data = src1_match ? exi.alu_out : pre_exi.src1_data;
-        src2_data = src2_match ? exi.alu_out : pre_exi.src2_data;
-        case (pre_exi.decode_data.operation[6:5])
+        src1_data = src1_match ? exi.alu_out : read_data.src1_data;
+        src2_data = src2_match ? exi.alu_out : read_data.src2_data;
+        case (instruction_data.operation[6:5])
             2'b00: begin
-                src2_data = pre_exi.decode_data.uses_imm ? pre_exi.decode_data.extended_imm_val : src2_data;
-                case (pre_exi.decode_data.operation[4:0])
+                src2_data = instruction_data.uses_imm ? instruction_data.extended_imm_val : src2_data;
+                case (instruction_data.operation[4:0])
                     5'b00001: alu_out = src1_data + src2_data;
                     5'b00010: alu_out = src1_data - src2_data;
                     5'b00011: alu_out = src1_data << src2_data[4:0];
@@ -75,7 +82,7 @@ module execute #(
                     5'b01010: alu_out = src1_data & src2_data;
                     // AUIPC
                     5'b01011:
-                    alu_out = pre_exi.decode_data.instruction_addr + src2_data;
+                    alu_out = instruction_data.instruction_addr + src2_data;
                     // LUI
                     5'b01100: alu_out = src2_data;
                     //MUL
@@ -117,17 +124,17 @@ module execute #(
                 endcase
             end
             2'b01: begin
-                case (pre_exi.decode_data.operation[3])
+                case (instruction_data.operation[3])
                     1'b1: begin
-                        alu_out = pre_exi.decode_data.instruction_addr + 4;
-                        case (pre_exi.decode_data.operation[0])
+                        alu_out = instruction_data.instruction_addr + 4;
+                        case (instruction_data.operation[0])
                             1'b0: begin
-                                redirect = 1'b1 & ~pre_exi.decode_data.invalid & ~i_stall;
-                                redirection_address = src1_data + pre_exi.decode_data.extended_imm_val;
+                                redirect = 1'b1 & ~instruction_data.invalid & ~i_stall;
+                                redirection_address = src1_data + instruction_data.extended_imm_val;
                             end
                             1'b1: begin
-                                redirect = ~pre_exi.decode_data.invalid & ~pre_exi.btb_was_hit;
-                                redirection_address = pre_exi.decode_data.instruction_addr + pre_exi.decode_data.extended_imm_val;
+                                redirect = ~instruction_data.invalid & ~prediction_data.btb_was_hit;
+                                redirection_address = instruction_data.instruction_addr + instruction_data.extended_imm_val;
                                 btb_write_jump = 1;
                             end
                             default: exi.redirection_address = 32'hFFFFFFFF;
@@ -135,7 +142,7 @@ module execute #(
                     end
                     1'b0: begin
 
-                        case (pre_exi.decode_data.operation[2:0])
+                        case (instruction_data.operation[2:0])
                             3'b001:
                             branch_result = $signed(src1_data) ==
                                 $signed(src2_data);
@@ -157,13 +164,13 @@ module execute #(
                             default: begin
                             end
                         endcase
-                        redirect = (pre_exi.prediction ^ branch_result) & ~pre_exi.decode_data.invalid & ~i_stall;
-                        predictor_update = 1'b1 & ~pre_exi.decode_data.invalid & ~i_stall;
+                        redirect = (prediction_data.prediction ^ branch_result) & ~instruction_data.invalid & ~i_stall;
+                        predictor_update = 1'b1 & ~instruction_data.invalid & ~i_stall;
                         if (branch_result == 1) begin
-                            redirection_address = pre_exi.decode_data.instruction_addr + 
-                                pre_exi.decode_data.extended_imm_val;
+                            redirection_address = instruction_data.instruction_addr + 
+                                instruction_data.extended_imm_val;
                         end else begin
-                            redirection_address = pre_exi.decode_data.instruction_addr + 4;
+                            redirection_address = instruction_data.instruction_addr + 4;
                         end
                     end
                     default: begin
@@ -172,8 +179,8 @@ module execute #(
                 endcase
             end
             2'b10: begin
-                alu_out = src1_data + pre_exi.decode_data.extended_imm_val;
-                memory_operation = pre_exi.decode_data.operation[2:0];
+                alu_out = src1_data + instruction_data.extended_imm_val;
+                memory_operation = instruction_data.operation[2:0];
                 memory_write_data = src2_data;
             end
             default: begin
@@ -181,7 +188,7 @@ module execute #(
         endcase
     end
     always_ff @(posedge clk) begin
-        if (pre_exi.decode_data.invalid | i_output_bubble) begin
+        if (instruction_data.invalid | i_output_bubble) begin
             exi.invalid                 <= 1;
             exi.memory_write_data       <= 0;
             exi.memory_operation        <= 0;
@@ -203,11 +210,11 @@ module execute #(
             exi.memory_write_data       <= memory_write_data;
             exi.memory_operation        <= memory_operation;
             exi.alu_out                 <= alu_out;
-            exi.dest                    <= pre_exi.decode_data.dest;
-            exi.invalid                 <= pre_exi.decode_data.invalid;
-            exi.mem_write               <= pre_exi.decode_data.mem_write;
-            exi.mem_read                <= pre_exi.decode_data.mem_read;
-            exi.reg_write               <= pre_exi.decode_data.reg_write;
+            exi.dest                    <= instruction_data.dest;
+            exi.invalid                 <= instruction_data.invalid;
+            exi.mem_write               <= instruction_data.mem_write;
+            exi.mem_read                <= instruction_data.mem_read;
+            exi.reg_write               <= instruction_data.reg_write;
             exi.predictor_update        <= predictor_update;
             exi.redirection_address     <= redirection_address;
             exi.redirect                <= redirect;

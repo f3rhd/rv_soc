@@ -14,6 +14,16 @@ typedef struct packed {
     logic mem_write;
     logic mem_read;
     logic btb_write;
+} decoded_instruction_t;
+typedef struct packed {
+    logic [9:0] pht_index;
+    logic btb_was_hit;
+    logic [1:0] btb_way_hit;
+    logic prediction;
+} prediction_data_t;
+typedef struct packed {
+    decoded_instruction_t instruction_data;
+    prediction_data_t     prediction_data;
 } decode_output_t;
 /*
     For optimization we are going to use use bit splitting

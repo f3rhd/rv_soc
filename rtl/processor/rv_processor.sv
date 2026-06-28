@@ -1,6 +1,6 @@
 `include "../../include/execution_interface.svh"
-`include "../../include/pre_exec_interface.svh"
 `include "../../include/decode_output.svh"
+`include "../../include/register.svh"
 `include "../../include/bootloader_interface.svh"
 `include "../../include/graphics_interface.svh"
 
@@ -45,25 +45,27 @@ module rv_processor #(
     // Decode signals
     logic decode_enable;
     logic decode_output_bubble;
+    decode_output_t decode_out_;
 
     // Register file signals
+    register_write_data_t register_write_;
+    register_read_output_t register_read_;
+    logic register_read_enable;
+    logic register_read_output_bubble;
     logic register_file_reset;
-    logic register_file_write_enable;
-    logic [4:0] register_file_write_addr;
-    logic [31:0] register_file_write_data;
 
     // Execution signals
-    pre_exec_if #(.HISTORY_SIZE(HISTORY_SIZE)) pre_exec_if ();
     execution_if #(.HISTORY_SIZE(HISTORY_SIZE)) execution_if ();
     logic execution_output_bubble;
     logic execution_stall;
 
 
     // Stage control signals
-    logic [0:3] stage_controller_flush_vector, stage_controller_stall_vector;
+    logic [0:4] stage_controller_flush_vector, stage_controller_stall_vector;
 
 
     stage_controller stage_controller (
+        .clk(clk),
         .i_misprediction(execution_if.redirect),
         .i_load_stall(execution_if.stall_pipeline),
         .i_graphics_instruction_write_fail(graphics_if.graphics_instruction_write_fail),
@@ -130,40 +132,37 @@ module rv_processor #(
         .i_predictor_pht_index (prediction_pht_index),
         .i_instruction_raw     (prediction_instruction_raw),
         .i_instruction_addr    (prediction_instruction_addr),
-        .pre_exec_if           (pre_exec_if)
+        .o_decode              (decode_out_)
     );
 
 
     register_file register_file (
-        .clk           (clk),
-        .i_reset       (register_file_reset),
-        .i_write_enable(register_file_write_enable),
-        .i_write_addr  (register_file_write_addr),
-        .i_write_data  (register_file_write_data),
-        .i_read_addr0  (pre_exec_if.decode_data.src1),
-        .i_read_addr1  (pre_exec_if.decode_data.src2),
-        .o_read_result0(pre_exec_if.src1_data),
-        .o_read_result1(pre_exec_if.src2_data)
+        .clk             (clk),
+        .i_en            (register_read_enable),
+        .i_output_bubble (register_read_output_bubble),
+        .i_reset         (register_file_reset),
+        .i_register_write(register_write_),
+        .i_decode_out    (decode_out_),
+        .exi             (execution_if),
+        .o_register_read (register_read_)
     );
 
     execute execute (
-        .clk            (clk),
-        .i_stall        (execution_stall),
-        .i_output_bubble(execution_output_bubble),
-        .pre_exi        (pre_exec_if),
-        .exi            (execution_if)
+        .clk                (clk),
+        .i_stall            (execution_stall),
+        .i_output_bubble    (execution_output_bubble),
+        .i_register_read_out(register_read_),
+        .exi                (execution_if)
     );
 
 
     memory #(
         .SIZE(D_CACHE_SIZE)
     ) memory (
-        .clk                   (clk),
-        .ei                    (execution_if),
-        .graphicsi             (graphics_if),
-        .o_register_write_index(register_file_write_addr),
-        .o_register_write_data (register_file_write_data),
-        .o_register_write      (register_file_write_enable)
+        .clk             (clk),
+        .ei              (execution_if),
+        .graphicsi       (graphics_if),
+        .o_register_write(register_write_)
     );
 
     always_comb begin
@@ -181,6 +180,8 @@ module rv_processor #(
 
 
         register_file_reset = reset;
+        register_read_enable = ~stage_controller_stall_vector[4];
+        register_read_output_bubble = stage_controller_flush_vector[4];
 
         execution_output_bubble = stage_controller_flush_vector[3];
         execution_stall = stage_controller_stall_vector[3];

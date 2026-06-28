@@ -26,11 +26,11 @@ module tb_rv_processor;
     );
 
     always_ff @(posedge clk) begin
-        if (rv_processor.register_file_write_enable && rv_processor.register_file_write_addr != 0)
+        if (rv_processor.register_write_.write_enable && rv_processor.register_write_.write_addr != 0)
             $display(
                 "Register File[%d] <- %d",
-                rv_processor.register_file_write_addr,
-                rv_processor.register_file_write_data
+                rv_processor.register_write_.write_addr,
+                rv_processor.register_write_.write_data
             );
         if (rv_processor.memory.ei.mem_write) begin
             $display("DCache[%d] <- %d", rv_processor.memory.ei.alu_out,
@@ -77,7 +77,7 @@ module tb_rv_processor;
     initial begin
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/branch_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/load_stall_test.hex",
             rv_processor.fetch.instructions);
 
         graphics_if.graphics_init_done  = 1;

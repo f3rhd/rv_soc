@@ -59,6 +59,13 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         output stall_pipeline,
         output btb_write_jump
     );
+    modport register_read (
+        input dest,
+        input alu_out,
+        input reg_write,
+        input mem_read,
+        output stall_pipeline
+    );
     modport predictor_consumer (
         input pht_index,
         input actual_branch_result,
