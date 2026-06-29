@@ -1,11 +1,14 @@
 `include "../../include/graphics_interface.svh"
 `include "graphics_decode_output.svh"
-module graphics_unit (
+module graphics_unit #(
+    parameter unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 256 * 4,
+    parameter unsigned SYSTEM_CLK_HZ = 100_000_000,
+    parameter unsigned SPI_CLK_HZ = 25_000_000
+) (
     input logic clk,
     input logic i_reset,
     graphics_if.graphics_unit graphics_if
 );
-    localparam unsigned BUFFER_SIZE = 512 * 4;
 
     logic instruction_buffer_advance_head;
     logic [32:0] instruction_buffer_instruction;
@@ -21,7 +24,7 @@ module graphics_unit (
         local_gfx_reset <= i_reset;
     end
     graphics_instruction_buffer #(
-        .BUFFER_SIZE(BUFFER_SIZE  /* default 256 * 4 */)
+        .BUFFER_SIZE(GRAPHICS_INSTRUCTION_BUFFER_SIZE  /* default 256 * 4 */)
     ) graphics_instruction_buffer (
         .clk                   (clk),
         .i_reset               (local_gfx_reset),
@@ -35,13 +38,16 @@ module graphics_unit (
 
     graphics_decode graphics_decode (
         .clk                (clk),
-        .i_output_bubble    (decode_output_bubble),
+        .i_output_bubble    (decode_output_bubble | local_gfx_reset),
         .i_instruction      (instruction_buffer_instruction),
         .i_instruction_valid(instruction_buffer_instruction_is_valid),
         .decode_output      (decode_output)
     );
 
-    graphics_execute graphics_execute (
+    graphics_execute #(
+        .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ /* default 100_000_000 */),
+        .SPI_CLK_HZ   (SPI_CLK_HZ /* default 25_000_000 */)
+    ) graphics_execute (
         .clk               (clk),
         .i_boot            (graphics_if.graphics_init),
         .i_reset           (local_gfx_reset),

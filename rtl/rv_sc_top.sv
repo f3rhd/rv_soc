@@ -14,14 +14,18 @@ module rv_sc_top (
     output logic cs,
     // 7 segment display ports 
     output logic [6:0] seg,
-    output logic [3:0] an
+    output logic [3:0] an,
+    // leds
+    output logic [15:0] led
 );
     localparam unsigned SYSTEM_CLK_HZ = 100_000_000;
+    localparam unsigned GRAPHICS_SPI_CLK_HZ = 25_000_000;
     localparam unsigned BAUD_RATE = 115200;
     localparam unsigned HISTORY_SIZE = 5;
     localparam unsigned I_CACHE_SIZE = 1024 * 4;
     localparam unsigned D_CACHE_SIZE = 1 << 10;
     localparam unsigned BTB_SIZE = 16;
+    localparam unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 8192 * 4;
 
     bootloader_if bootloaderi ();
     graphics_if graphicsi ();
@@ -37,6 +41,7 @@ module rv_sc_top (
     assign graphicsi.graphics_init      = boot_edge;
     assign bootloaderi.rx               = rx;
     assign tx                           = bootloaderi.tx;
+    assign led                          = rv_processor.register_file.file[17];
 
     button_edge_detect button_edge_detect_boot (
         .clk   (clk),
@@ -68,7 +73,11 @@ module rv_sc_top (
         .bootloader_if(bootloaderi),
         .graphics_if  (graphicsi)
     );
-    graphics_unit graphics_unit (
+    graphics_unit #(
+        .GRAPHICS_INSTRUCTION_BUFFER_SIZE(GRAPHICS_INSTRUCTION_BUFFER_SIZE /* default 256 * 4 */),
+        .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
+        .SPI_CLK_HZ(GRAPHICS_SPI_CLK_HZ  /* default 25_000_000 */)
+    ) graphics_unit (
         .clk        (clk),
         .i_reset    (reset_edge),
         .graphics_if(graphicsi)

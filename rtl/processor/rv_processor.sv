@@ -57,7 +57,7 @@ module rv_processor #(
     // Execution signals
     execution_if #(.HISTORY_SIZE(HISTORY_SIZE)) execution_if ();
     logic execution_output_bubble;
-    logic execution_stall;
+    logic execution_enable;
 
 
     // Stage control signals
@@ -150,7 +150,7 @@ module rv_processor #(
 
     execute execute (
         .clk                (clk),
-        .i_stall            (execution_stall),
+        .i_en               (execution_enable),
         .i_output_bubble    (execution_output_bubble),
         .i_decode_out       (decode_out_),
         .i_register_read_out(register_read_),
@@ -186,6 +186,6 @@ module rv_processor #(
         register_read_output_bubble = stage_controller_flush_vector[4];
 
         execution_output_bubble = stage_controller_flush_vector[3];
-        execution_stall = stage_controller_stall_vector[3];
+        execution_enable = ~stage_controller_stall_vector[3];
     end
 endmodule

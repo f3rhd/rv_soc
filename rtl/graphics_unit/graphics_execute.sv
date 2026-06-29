@@ -1,5 +1,8 @@
 `include "graphics_decode_output.svh"
-module graphics_execute (
+module graphics_execute #(
+    parameter unsigned SYSTEM_CLK_HZ = 100_000_000,
+    parameter unsigned SPI_CLK_HZ = 25_000_000
+) (
     input logic clk,
     input logic i_boot,
     input logic i_reset,
@@ -14,8 +17,6 @@ module graphics_execute (
 );
 
     localparam unsigned DATA_WIDTH = 8;
-    localparam unsigned SYSTEM_CLK_HZ = 100_000_000;
-    localparam unsigned SPI_CLK_HZ = 25_000_000;
     localparam unsigned TICKS_PER_MS = SYSTEM_CLK_HZ / 1000;
     localparam unsigned TICK_BITS = $clog2(TICKS_PER_MS);
 
