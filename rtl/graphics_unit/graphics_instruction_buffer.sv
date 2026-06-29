@@ -8,7 +8,7 @@ module graphics_instruction_buffer #(
     input logic i_advance_head,
     output logic [32:0] o_instruction,
     output logic o_instruction_is_valid,
-    output logic o_write_fail
+    output logic o_buffer_is_full
 );
     localparam unsigned INSTRUCTION_BUFFER_BOTTOM_INDEX = BUFFER_SIZE / 4 - 1;
 
@@ -22,11 +22,10 @@ module graphics_instruction_buffer #(
     logic [32:0] read_entry;
     logic instruction_is_valid;
 
-    //  THIS WORKS WHEN BUFFER SIZE IS POWER OF 2
-    assign buffer_is_full         = tail + 1'b1 == head;
     assign o_instruction          = read_entry;
     assign o_instruction_is_valid = instruction_is_valid;
-    assign o_write_fail           = buffer_is_full & !i_advance_head;
+    //  THIS WORKS WHEN BUFFER SIZE IS POWER OF 2
+    assign o_buffer_is_full       = tail + 1'b1 == head & !i_advance_head;
 
     always_ff @(posedge clk) begin
         if (i_reset) begin
@@ -49,7 +48,7 @@ module graphics_instruction_buffer #(
             end
 
             if (i_instruction_write) begin : write
-                if (buffer_is_full && !i_advance_head) begin
+                if (o_buffer_is_full) begin
                 end else begin
                     instruction_buffer[tail] <= i_instruction;
                     entry_valid_vector[tail] <= 1'b1;

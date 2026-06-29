@@ -33,7 +33,7 @@ module graphics_unit #(
         .i_advance_head        (instruction_buffer_advance_head),
         .o_instruction         (instruction_buffer_instruction),
         .o_instruction_is_valid(instruction_buffer_instruction_is_valid),
-        .o_write_fail          (graphics_if.graphics_instruction_write_fail)
+        .o_buffer_is_full      (graphics_if.graphics_buffer_is_full)
     );
 
     graphics_decode graphics_decode (
