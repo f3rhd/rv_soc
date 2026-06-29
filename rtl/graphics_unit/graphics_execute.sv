@@ -319,7 +319,9 @@ module graphics_execute (
                             o_cs               <= 1;
                             sent_byte_counter  <= 0;
                             r_decode           <= '0;
-                            if (decode_result.valid) begin
+                            if (o_execute_complete) begin
+                                // do nothing for 1 cycle
+                            end else if (decode_result.valid) begin
                                 r_decode <= decode_result;
                                 // Enable chip select
                                 o_cs     <= 0;
