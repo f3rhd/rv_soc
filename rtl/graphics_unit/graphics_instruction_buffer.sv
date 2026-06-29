@@ -18,7 +18,7 @@ module graphics_instruction_buffer #(
 
     logic [$clog2(INSTRUCTION_BUFFER_BOTTOM_INDEX + 1) - 1:0] head;
     logic [$clog2(INSTRUCTION_BUFFER_BOTTOM_INDEX + 1) - 1:0] tail;
-    logic [INSTRUCTION_BUFFER_BOTTOM_INDEX:0] entry_valid_vector;
+    logic [0 : INSTRUCTION_BUFFER_BOTTOM_INDEX] entry_valid_vector;
     logic [32:0] read_entry;
     logic instruction_is_valid;
 

@@ -8,7 +8,7 @@ module tb_graphics_instruction_buffer;
     logic i_advance_head = 0;
     logic [32:0] o_instruction;
     logic o_instruction_is_valid;
-    logic o_write_fail;
+    logic o_buffer_full;
     logic [1:0] head;
     logic [1:0] tail;
 
@@ -24,7 +24,7 @@ module tb_graphics_instruction_buffer;
         .i_advance_head        (i_advance_head),
         .o_instruction         (o_instruction),
         .o_instruction_is_valid(o_instruction_is_valid),
-        .o_write_fail          (o_write_fail)
+        .o_buffer_is_full      (o_buffer_full)
     );
     assign head = graphics_instruction_buffer.head;
     assign tail = graphics_instruction_buffer.tail;
