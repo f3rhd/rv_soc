@@ -8,7 +8,7 @@ module execute #(
     /*unlike stall behavior of other stages execution's is rather different
     when there is a dependency between a load and following branch/jump instruction
     we have to disable redirection for one cycle as operand that is going to be use for comparison is not ready yet*/
-    input logic i_stall,
+    input logic i_en,
     input logic i_output_bubble,
     input decode_output_t i_decode_out, // has the signals needed for triggering type1 stall
     input register_read_output_t i_register_read_out,
@@ -89,40 +89,40 @@ module execute #(
                     // LUI
                     5'b01100: alu_out = src2_data;
                     //MUL
-                    5'b01110: alu_out = src1_data * src2_data;
-                    // MULH (Signed * Signed)
-                    5'b01111:
-                    alu_out = 64'($signed(src1_data) * $signed(src2_data)) >>
-                        32;
+                    //5'b01110: alu_out = src1_data * src2_data;
+                    //// MULH (Signed * Signed)
+                    //5'b01111:
+                    //alu_out = 64'($signed(src1_data) * $signed(src2_data)) >>
+                    //    32;
 
-                    // MULHSU (Signed * Unsigned)
-                    5'b10000:
-                    alu_out = (65'($signed({{32{src1_data[31]}}, src1_data}) *
-                                   $signed({33'b0, src2_data}))) >> 32;
+                    //// MULHSU (Signed * Unsigned)
+                    //5'b10000:
+                    //alu_out = (65'($signed({{32{src1_data[31]}}, src1_data}) *
+                    //               $signed({33'b0, src2_data}))) >> 32;
 
-                    // MULHU (Unsigned * Unsigned)
-                    5'b10001: alu_out = (64'(src1_data) * 64'(src2_data)) >> 32;
+                    //// MULHU (Unsigned * Unsigned)
+                    //5'b10001: alu_out = (64'(src1_data) * 64'(src2_data)) >> 32;
 
-                    5'b10010:
-                    alu_out = (src2_data == 32'h0) ? 32'hFFFF_FFFF :
-                                (src1_data == 32'h8000_0000 &&
-                                src2_data == 32'hFFFF_FFFF)  ? 32'h8000_0000 :
-                                $signed(src1_data) / $signed(src2_data);
+                    //5'b10010:
+                    //alu_out = (src2_data == 32'h0) ? 32'hFFFF_FFFF :
+                    //            (src1_data == 32'h8000_0000 &&
+                    //            src2_data == 32'hFFFF_FFFF)  ? 32'h8000_0000 :
+                    //            $signed(src1_data) / $signed(src2_data);
 
-                    // DIVU (Unsigned)
-                    5'b10011:
-                    alu_out = (src2_data == 32'h0) ? 32'hFFFF_FFFF :
-                                src1_data / src2_data;
+                    //// DIVU (Unsigned)
+                    //5'b10011:
+                    //alu_out = (src2_data == 32'h0) ? 32'hFFFF_FFFF :
+                    //            src1_data / src2_data;
 
-                    5'b10100:
-                    alu_out = (src2_data == 32'h0) ? src1_data :
-                                (src1_data == 32'h8000_0000 &&
-                                src2_data == 32'hFFFF_FFFF)  ? 32'h0 :
-                                $signed(src1_data) % $signed(src2_data);
+                    //5'b10100:
+                    //alu_out = (src2_data == 32'h0) ? src1_data :
+                    //            (src1_data == 32'h8000_0000 &&
+                    //            src2_data == 32'hFFFF_FFFF)  ? 32'h0 :
+                    //            $signed(src1_data) % $signed(src2_data);
 
-                    5'b10101:
-                    alu_out = (src2_data == 32'h0) ? src1_data :
-                               src1_data % src2_data;
+                    //5'b10101:
+                    //alu_out = (src2_data == 32'h0) ? src1_data :
+                    //           src1_data % src2_data;
                     default: alu_out = 0;
                 endcase
             end
@@ -132,7 +132,7 @@ module execute #(
                         alu_out = instruction_data.instruction_addr + 4;
                         case (instruction_data.operation[0])
                             1'b0: begin
-                                redirect = 1'b1 & ~instruction_data.invalid & ~i_stall;
+                                redirect = 1'b1 & ~instruction_data.invalid & i_en;
                                 redirection_address = src1_data + instruction_data.extended_imm_val;
                             end
                             1'b1: begin
@@ -167,8 +167,8 @@ module execute #(
                             default: begin
                             end
                         endcase
-                        redirect = (prediction_data.prediction ^ branch_result) & ~instruction_data.invalid & ~i_stall;
-                        predictor_update = 1'b1 & ~instruction_data.invalid & ~i_stall;
+                        redirect = (prediction_data.prediction ^ branch_result) & ~instruction_data.invalid & i_en;
+                        predictor_update = 1'b1 & ~instruction_data.invalid & i_en;
                         if (branch_result == 1) begin
                             redirection_address = instruction_data.instruction_addr + 
                                 instruction_data.extended_imm_val;
@@ -209,7 +209,7 @@ module execute #(
             exi.branch_instruction_addr <= 0;
             exi.btb_write_jump          <= 0;
             exi.actual_branch_result    <= 0;
-        end else begin
+        end else if (i_en) begin
             exi.memory_write_data       <= memory_write_data;
             exi.memory_operation        <= memory_operation;
             exi.alu_out                 <= alu_out;
