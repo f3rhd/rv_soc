@@ -47,9 +47,9 @@ module tb_rv_processor;
             $display("Flush vector : %b",
                      rv_processor.stage_controller_flush_vector);
         end
-        if (rv_processor.prediction_redirect) begin
+        if (rv_processor.prediction_redirect & rv_processor.prediction_enable) begin
             $display(
-                "Predictor is redirecting pc to due to dissagrement with fetch unit%d",
+                "Predictor redirected pc to due to dissagrement with fetch unit%d",
                 rv_processor.prediction_redirect_target);
         end
         if (rv_processor.execution_if.predictor_update) begin
@@ -58,18 +58,18 @@ module tb_rv_processor;
         end
         if (rv_processor.execution_if.btb_write) begin
             $display(
-                "BranchTableBank[%d] <- instruction_addr : %h | target_addr : %h | is_jump : %h",
+                "BranchTableBank[%d] <- instruction_addr : 0x%h | target_addr : 0x%h | is_jump : 0x%h",
                 rv_processor.execution_if.branch_addr_way,
                 rv_processor.execution_if.branch_instruction_addr,
                 rv_processor.execution_if.redirection_address,
                 rv_processor.execution_if.btb_write_jump);
         end
         if (rv_processor.execution_if.redirect) begin
-            $display("Execution stage is redirecting pc to address %d",
+            $display("Execution stage redirected pc to the address 0x%h",
                      rv_processor.execution_if.redirection_address);
         end
         if (rv_processor.fetch_btb_hit & rv_processor.fetch_instruction_valid) begin
-            $display("Instruction[%d] was hit in btb.",
+            $display("Instruction[0x%h] hit btb.",
                      rv_processor.fetch_instruction_addr);
         end
     end
