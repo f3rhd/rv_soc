@@ -379,7 +379,7 @@ module graphics_execute #(
                                     end else begin
                                         // Low bytes
                                         if (sent_byte_counter == 2) begin
-                                            tx_data <= r_decode.instruction[24:17];
+                                            tx_data <= r_decode.instruction[23:16];
                                         end else
                                             tx_data <= r_decode.instruction[15:8];
                                     end
