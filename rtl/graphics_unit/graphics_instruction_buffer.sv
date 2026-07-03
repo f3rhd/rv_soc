@@ -13,6 +13,7 @@ module graphics_instruction_buffer #(
     localparam unsigned INSTRUCTION_BUFFER_BOTTOM_INDEX = BUFFER_SIZE / 4 - 1;
 
 
+    // @Incomplete : For some reason vivado doesn't infer this as bram
     (* ram_style = "block" *)
     logic [32:0] instruction_buffer[0 : INSTRUCTION_BUFFER_BOTTOM_INDEX];
 
@@ -25,13 +26,12 @@ module graphics_instruction_buffer #(
     assign o_instruction          = read_entry;
     assign o_instruction_is_valid = instruction_is_valid;
     //  THIS WORKS WHEN BUFFER SIZE IS POWER OF 2
-    assign o_buffer_is_full       = tail + 1'b1 == head & !i_advance_head;
+    assign o_buffer_is_full       = tail + 1'b1 == head && !i_advance_head;
 
     always_ff @(posedge clk) begin
         if (i_reset) begin
             head                 <= 0;
             tail                 <= 0;
-            read_entry           <= 0;
             entry_valid_vector   <= 0;
             instruction_is_valid <= 0;
         end else begin
@@ -44,16 +44,12 @@ module graphics_instruction_buffer #(
                 entry_valid_vector[head] <= 0;
                 head                     <= head + 1;
                 instruction_is_valid     <= 0;
-                read_entry               <= '0;
             end
 
-            if (i_instruction_write) begin : write
-                if (o_buffer_is_full) begin
-                end else begin
-                    instruction_buffer[tail] <= i_instruction;
-                    entry_valid_vector[tail] <= 1'b1;
-                    tail                     <= tail + 1'b1;
-                end
+            if (i_instruction_write & !o_buffer_is_full) begin : write
+                instruction_buffer[tail] <= i_instruction;
+                entry_valid_vector[tail] <= 1'b1;
+                tail                     <= tail + 1'b1;
             end
         end
     end

@@ -10,8 +10,8 @@ module memory #(
     graphics_if.processor graphicsi,
     output register_write_data_t o_register_write
 );
-    localparam unsigned GRAPHICS_PIXEL_DATA_ADDRESS = 32'hFFFFFFFF; // @Temporary : May change it later 
-    localparam unsigned GRAPHICS_COMMAND_DATA_ADDRESS = 32'hFFFFFFF0; // @Temporary : May change it later
+    localparam unsigned GRAPHICS_PIXEL_DATA_ADDRESS = 32'hFFFFFFFF;
+    localparam unsigned GRAPHICS_COMMAND_DATA_ADDRESS = 32'hFFFFFFF0;
 
     (* ram_style = "block" *) logic [0:31] ram[0:SIZE-1];
     wire [31:0] translated_address = ei.alu_out >> 2;

@@ -389,7 +389,6 @@ module graphics_execute #(
 
                         EXEC_KIND_RAMWR: begin
                             // RAMWR doesnt require any arguments
-                            // o_dc is set to 0 before transitioning to this graphics_state, you can set it to 1 here as well, it wont matter much
                             tx_data          <= r_decode.instruction[31:24];
                             tx_start         <= 1;
                             exec_state       <= EXEC_KIND_SEND_BYTE;
@@ -403,7 +402,6 @@ module graphics_execute #(
                             end
                         end
                         EXEC_KIND_SEND_RAW_PIXEL: begin
-                            // o_dc is set to 1 before transitioning to this graphics_state, you can set it to 1 here as well, it wont matter much
                             tx_data <= r_decode.instruction[(3-sent_byte_counter)*8 +: 8];
                             tx_start <= 1;
                             exec_state <= EXEC_KIND_SEND_BYTE;
