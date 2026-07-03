@@ -58,22 +58,24 @@ module memory #(
     end
     always_ff @(posedge clk) begin
         if (ei.invalid) begin
-            o_register_write.write_addr   <= 0;
-            o_register_write.write_enable <= 0;
-            alu_is_reg_write              <= 0;
-            reg_mem_read                  <= 0;
+            o_register_write.write_addr          <= 0;
+            o_register_write.write_enable        <= 0;
+            alu_is_reg_write                     <= 0;
+            reg_mem_read                         <= 0;
+            graphicsi.graphics_instruction       <= 0;
+            graphicsi.graphics_instruction_write <= 1'b0;
         end else begin
-            o_register_write.write_enable <= ei.reg_write;
-            o_register_write.write_addr   <= ei.dest;
-            alu_is_reg_write              <= 0;
-            reg_mem_read                  <= 0;
+            o_register_write.write_enable        <= ei.reg_write;
+            o_register_write.write_addr          <= ei.dest;
+            alu_is_reg_write                     <= 0;
+            reg_mem_read                         <= 0;
+            graphicsi.graphics_instruction       <= 0;
+            graphicsi.graphics_instruction_write <= 1'b0;
             if (ei.reg_write & ~ei.mem_read & ~ei.mem_write) begin
                 alu_is_reg_write <= 1;
                 reg_alu_out      <= ei.alu_out;
             end else begin
                 if (ei.mem_write) begin
-                    graphicsi.graphics_instruction       <= 0;
-                    graphicsi.graphics_instruction_write <= 1'b0;
                     if (ei.alu_out == GRAPHICS_COMMAND_DATA_ADDRESS || ei.alu_out == GRAPHICS_PIXEL_DATA_ADDRESS) begin
                         graphicsi.graphics_instruction <= {
                             ei.alu_out == GRAPHICS_COMMAND_DATA_ADDRESS ? 1'b1 : 1'b0,
