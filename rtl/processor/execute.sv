@@ -43,8 +43,11 @@ module execute #(
     assign src1_match = (exi.reg_write && ~exi.mem_read  && (instruction_data.src1 == exi.dest) && (exi.dest != 5'd0));
     assign src2_match = (exi.reg_write && ~exi.mem_read  && (instruction_data.src2 == exi.dest) && (exi.dest != 5'd0));
 
-    assign exi.stall_pipeline_type1 = ~i_decode_out.instruction_data.invalid & exi.mem_read & (((i_decode_out.instruction_data.src1 == exi.dest) && (exi.dest != 5'd0)) |
-            ((i_decode_out.instruction_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~i_decode_out.instruction_data.is_reg_to_reg_imm ));
+    assign exi.stall_pipeline_type1 = ~i_decode_out.instruction_data.invalid & exi.mem_read & (
+        ((i_decode_out.instruction_data.src1 == exi.dest) && (exi.dest != 5'd0)) 
+        |
+        ((i_decode_out.instruction_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~i_decode_out.instruction_data.is_reg_to_reg_imm )
+    );
     always_comb begin
         memory_operation = '0;
         alu_out = 0;
