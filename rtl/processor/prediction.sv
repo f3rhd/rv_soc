@@ -69,16 +69,15 @@ module prediction #(
                     global_history[HISTORY_SIZE-2:0], exi.actual_branch_result
                 };
             end
-            if (i_output_bubble) begin
+            // If we are redirecting this cycle output bubble next cycle
+            if (i_output_bubble | o_predictor_redirect) begin
                 o_btb_hit           <= 0;
                 o_btb_hit_way       <= 0;
                 o_instruction_raw   <= 0;
-                o_instruction_addr  <= 32'hFFFFFFFF;
+                o_instruction_addr  <= 0;
                 o_pht_index         <= 0;
                 o_prediction        <= 0;
                 o_instruction_valid <= 0;
-                o_btb_hit           <= 0;
-                o_btb_hit_way       <= 0;
                 r_btb_hit_was_jump  <= 0;
             end
         end
