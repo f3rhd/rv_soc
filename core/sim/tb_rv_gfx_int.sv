@@ -9,8 +9,8 @@ module tb_rv_gfx_int;
     graphics_if graphics_if ();
     rv_processor #(
         .HISTORY_SIZE(10  /* default 10 */),
-        .I_CACHE_SIZE(1024  /* default 1024 */),
-        .D_CACHE_SIZE(1 << 10  /* default 1 << 10 */),
+        .I_CACHE_SIZE(1024 * 16  /* default 1024 */),
+        .D_CACHE_SIZE(1024 * 32  /* default 1 << 10 */),
         .BTB_SIZE    (16  /* default 128 */)
     ) rv_processor (
         .clk          (clk),
@@ -43,7 +43,7 @@ module tb_rv_gfx_int;
                      rv_processor.memory.ei.memory_write_data);
         end
         if (rv_processor.memory.ei.mem_read) begin
-            $display("[Time: %0t] Reading DCache[%d]", $time,
+            $display("[Time: %0t] Reading DCache[0x%h]", $time,
                      rv_processor.memory.ei.alu_out);
         end
         if (rv_processor.stage_controller_stall_vector != 0) begin
@@ -87,7 +87,7 @@ module tb_rv_gfx_int;
     end
     initial begin
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/red_display.hex",
             rv_processor.fetch.instructions);
 
         graphics_unit.graphics_execute.graphics_state = graphics_unit.graphics_execute.EXECUTE;
