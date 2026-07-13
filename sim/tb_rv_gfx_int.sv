@@ -84,16 +84,12 @@ module tb_rv_gfx_int;
             $display("[Time: %0t] Instruction[0x%h] hit btb.", $time,
                      rv_processor.fetch_instruction_addr);
         end
-        if (rv_processor.register_write_.write_data == 32'hF800F800) begin
-            $display("[Time: %0t] AND I SAID OOP", $time);
-        end
     end
     initial begin
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/graphics_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c_test.hex",
             rv_processor.fetch.instructions);
 
-        graphics_if.graphics_init_done = 1;
         graphics_unit.graphics_execute.graphics_state = graphics_unit.graphics_execute.EXECUTE;
         reset = 1;
         bootloader_if.program_load_done = 0;
@@ -101,15 +97,17 @@ module tb_rv_gfx_int;
         bootloader_if.instruction_ready = 0;
 
         repeat (2) @(posedge clk);
+        #1;
         reset                           = 0;
 
         bootloader_if.program_load_done = 1;
         bootloader_if.instruction       = 0;
         bootloader_if.instruction_ready = 0;
+        rv_processor.fetch.program_size = 32'hFFFFFFFF;
+        graphics_if.graphics_init_done  = 1;
 
         @(posedge clk);
         #2;
-        bootloader_if.program_load_done = 0;
         $stop;
     end
 endmodule
