@@ -90,7 +90,7 @@ module tb_rv_gfx_int;
     end
     initial begin
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/foo.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/graphics_test.hex",
             rv_processor.fetch.instructions);
 
         graphics_if.graphics_init_done = 1;
