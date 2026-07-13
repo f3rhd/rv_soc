@@ -13,7 +13,12 @@ module memory #(
     localparam unsigned GRAPHICS_PIXEL_DATA_ADDRESS = 32'hFFFFFFFF;
     localparam unsigned GRAPHICS_COMMAND_DATA_ADDRESS = 32'hFFFFFFF0;
 
-    (* ram_style = "block" *) logic [0:31] ram[0:SIZE-1];
+`ifdef VIVADO
+    (* ram_style = "block" *)
+`elsif QUARTUS
+    (* ramstyle = "block" *)
+`endif
+    logic [0:31] ram[0:SIZE-1];
     wire [31:0] translated_address = ei.alu_out >> 2;
 
     logic [1:0] r_byte_offset;

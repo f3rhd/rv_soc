@@ -20,7 +20,13 @@ module fetch #(
     output logic o_btb_hit_was_jump
 );
 
-    (* ram_style = "block" *) logic [31:0] instructions[0:(I_CACHE_SIZE/4)-1];
+
+`ifdef VIVADO
+    (* ram_style = "block" *)
+`elsif QUARTUS
+    (* ramstyle = "block" *)
+`endif
+    logic [31:0] instructions[0:(I_CACHE_SIZE/4)-1];
 
     logic [31:0] program_pointer;
     logic [31:0] program_counter;

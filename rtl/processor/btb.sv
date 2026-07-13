@@ -21,10 +21,10 @@ module btb #(
         logic [31:0]          target_addr;
     } btb_entry_t;
 
-    /*(* ram_style = "block" *)*/ btb_entry_t branch_table_bank0[0:NUM_SETS-1];
-    /*(* ram_style = "block" *)*/ btb_entry_t branch_table_bank1[0:NUM_SETS-1];
-    /*(* ram_style = "block" *)*/ btb_entry_t branch_table_bank2[0:NUM_SETS-1];
-    /*(* ram_style = "block" *)*/ btb_entry_t branch_table_bank3[0:NUM_SETS-1];
+    btb_entry_t branch_table_bank0[0:NUM_SETS-1];
+    btb_entry_t branch_table_bank1[0:NUM_SETS-1];
+    btb_entry_t branch_table_bank2[0:NUM_SETS-1];
+    btb_entry_t branch_table_bank3[0:NUM_SETS-1];
 
 
     btb_entry_t read_data_ways[0:NUM_WAYS-1];

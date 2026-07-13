@@ -13,7 +13,11 @@ module graphics_instruction_buffer #(
     localparam unsigned INSTRUCTION_BUFFER_BOTTOM_INDEX = BUFFER_SIZE / 4 - 1;
 
 
+`ifdef VIVADO
     (* ram_style = "block" *)
+`elsif QUARTUS
+    (* ramstyle = "block" *)
+`endif
     logic [32:0] instruction_buffer[0 : INSTRUCTION_BUFFER_BOTTOM_INDEX];
 
     logic [$clog2(INSTRUCTION_BUFFER_BOTTOM_INDEX + 1) - 1:0] head;
