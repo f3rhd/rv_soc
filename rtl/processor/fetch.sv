@@ -25,6 +25,7 @@ module fetch #(
     logic [31:0] program_pointer;
     logic [31:0] program_counter;
     logic [31:0] btb_target_addr;
+    logic [31:0] program_size;
     typedef enum logic {
         LOAD,
         FETCH
@@ -60,7 +61,8 @@ module fetch #(
             program_counter     <= 0;
             o_instruction_raw   <= 0;
             o_instruction_valid <= 0;
-            o_instruction_addr  <= 32'hFFFFFFFF;
+            o_instruction_addr  <= 32'h0;
+            program_size        <= 0;
             state               <= LOAD;
         end else begin
             case (state)
@@ -68,6 +70,7 @@ module fetch #(
                     if (bootloaderi.instruction_ready) begin
                         instructions[program_counter] <= bootloaderi.instruction;
                         program_counter <= program_counter + 1;
+                        program_size <= program_size + 4;
                     end
                     if (bootloaderi.program_load_done & i_graphics_init_done) begin
                         program_counter <= 0;
@@ -82,13 +85,13 @@ module fetch #(
                             program_counter <= i_predictor_redirect_target + 4;
                         end else if (o_btb_hit) begin
                             program_counter <= btb_target_addr + 4;
-                        end else if (program_counter < I_CACHE_SIZE) begin
+                        end else if (program_counter < program_size) begin
                             program_counter <= program_counter + 4;
                         end
-                        if (i_output_bubble | program_counter == I_CACHE_SIZE) begin
+                        if (i_output_bubble | program_counter == program_size) begin
                             o_instruction_raw   <= 0;
                             o_instruction_valid <= 0;
-                            o_instruction_addr  <= 32'hFFFFFFFF;
+                            o_instruction_addr  <= 32'h0;
                         end else begin
                             o_instruction_raw <= instructions[program_pointer[31:2]];
                             o_instruction_valid <= 1'b1;
@@ -99,7 +102,7 @@ module fetch #(
                 default: begin
                     o_instruction_raw   <= 0;
                     o_instruction_valid <= 0;
-                    o_instruction_addr  <= 32'hFFFFFFFF;
+                    o_instruction_addr  <= 32'h0;
                 end
             endcase
         end

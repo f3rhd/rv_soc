@@ -23,7 +23,7 @@ module bootloader #(
     logic [31:0] program_size;
     logic [2:0] program_size_byte_counter;
 
-    logic [31:0] sent_instruction_counter;
+    logic [31:0] sent_instruction_bytes_counter;
 
     logic [7:0] tx_data;
     uart_rx_engine #(
@@ -54,7 +54,7 @@ module bootloader #(
             bootloader_if.program_load_done <= 0;
             program_size                    <= 0;
             program_size_byte_counter       <= 0;
-            sent_instruction_counter        <= 0;
+            sent_instruction_bytes_counter  <= 0;
             state                           <= IDLE;
         end else begin
             case (state)
@@ -63,7 +63,7 @@ module bootloader #(
                     instruction_byte_counter        <= 0;
                     program_size                    <= 0;
                     program_size_byte_counter       <= 0;
-                    sent_instruction_counter        <= 0;
+                    sent_instruction_bytes_counter  <= 0;
                     bootloader_if.instruction       <= 0;
                     bootloader_if.instruction_ready <= 0;
                     if (bootloader_if.bootloader_begin) begin
@@ -88,7 +88,7 @@ module bootloader #(
                     tx_begin                        <= 0;
                     bootloader_if.instruction_ready <= 0;
 
-                    if (sent_instruction_counter >= program_size) begin
+                    if (sent_instruction_bytes_counter >= program_size) begin
                         bootloader_if.program_load_done <= 1;
                         state                           <= IDLE;
                     end else if (rx_byte_ready) begin
@@ -96,7 +96,7 @@ module bootloader #(
                         if (instruction_byte_counter == 3) begin
                             instruction_byte_counter <= 0;
                             bootloader_if.instruction_ready <= 1;
-                            sent_instruction_counter <= sent_instruction_counter + 4;
+                            sent_instruction_bytes_counter <= sent_instruction_bytes_counter + 4;
                         end else begin
                             instruction_byte_counter <= instruction_byte_counter + 1;
                         end

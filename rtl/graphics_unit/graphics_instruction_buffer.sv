@@ -13,42 +13,44 @@ module graphics_instruction_buffer #(
     localparam unsigned INSTRUCTION_BUFFER_BOTTOM_INDEX = BUFFER_SIZE / 4 - 1;
 
 
-    // @Incomplete : For some reason vivado doesn't infer this as bram
     (* ram_style = "block" *)
     logic [32:0] instruction_buffer[0 : INSTRUCTION_BUFFER_BOTTOM_INDEX];
 
     logic [$clog2(INSTRUCTION_BUFFER_BOTTOM_INDEX + 1) - 1:0] head;
     logic [$clog2(INSTRUCTION_BUFFER_BOTTOM_INDEX + 1) - 1:0] tail;
-    logic [0 : INSTRUCTION_BUFFER_BOTTOM_INDEX] entry_valid_vector;
+
     logic [32:0] read_entry;
-    logic instruction_is_valid;
+    logic [$clog2(BUFFER_SIZE):0] fill_count;
 
     assign o_instruction          = read_entry;
-    assign o_instruction_is_valid = instruction_is_valid;
-    //  THIS WORKS WHEN BUFFER SIZE IS POWER OF 2
-    assign o_buffer_is_full       = tail + 1'b1 == head && !i_advance_head;
+    assign o_buffer_is_full       = (fill_count == BUFFER_SIZE);
+    assign o_instruction_is_valid = (fill_count != 0);
 
     always_ff @(posedge clk) begin
         if (i_reset) begin
-            head                 <= 0;
-            tail                 <= 0;
-            entry_valid_vector   <= 0;
-            instruction_is_valid <= 0;
+            fill_count <= 0;
         end else begin
-
-            read_entry           <= instruction_buffer[head];
-
-            instruction_is_valid <= entry_valid_vector[head];
-
+            case ({
+                i_instruction_write & !o_buffer_is_full,
+                i_advance_head & (fill_count != 0)
+            })
+                2'b10:   fill_count <= fill_count + 1;
+                2'b01:   fill_count <= fill_count - 1;
+                default: fill_count <= fill_count;
+            endcase
+        end
+    end
+    always_ff @(posedge clk) begin
+        if (i_reset) begin
+            head <= 0;
+            tail <= 0;
+        end else begin
+            read_entry <= instruction_buffer[head];
             if (i_advance_head) begin
-                entry_valid_vector[head] <= 0;
-                head                     <= head + 1;
-                instruction_is_valid     <= 0;
+                head <= head + 1;
             end
-
             if (i_instruction_write & !o_buffer_is_full) begin : write
                 instruction_buffer[tail] <= i_instruction;
-                entry_valid_vector[tail] <= 1'b1;
                 tail                     <= tail + 1'b1;
             end
         end

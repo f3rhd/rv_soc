@@ -20,6 +20,14 @@ module uart_rx_engine #(
     logic [$clog2(CLKS_PER_BIT)-1:0] baud_counter = 0;
     rtx_state state = IDLE;
 
+    logic [1:0] rx_sync;
+    logic rx_s;
+
+    always_ff @(posedge clk) begin
+        rx_sync <= {rx_sync[0], i_rx};
+    end
+    assign rx_s = rx_sync[1];
+
     always_ff @(posedge clk) begin
         if (i_reset) begin
             received_bit_counter <= 0;
@@ -35,7 +43,7 @@ module uart_rx_engine #(
                     baud_counter         <= 0;
                     o_byte_out           <= 0;
                     o_byte_ready         <= 0;
-                    if (i_rx == 0) begin
+                    if (rx_s == 0) begin
                         state <= READING_PHASE_1;
                     end
                 end
@@ -44,7 +52,7 @@ module uart_rx_engine #(
                         phase1_counter <= phase1_counter + 1;
                     end else begin
                         o_byte_out           <= o_byte_out >> 1;
-                        o_byte_out[7]        <= i_rx;
+                        o_byte_out[7]        <= rx_s;
                         phase1_counter       <= 0;
                         received_bit_counter <= received_bit_counter + 1;
                         state                <= READING_PHASE_2;
@@ -58,7 +66,7 @@ module uart_rx_engine #(
                             baud_counter         <= 0;
                             received_bit_counter <= received_bit_counter + 1;
                             o_byte_out           <= o_byte_out >> 1;
-                            o_byte_out[7]        <= i_rx;
+                            o_byte_out[7]        <= rx_s;
                         end else if (received_bit_counter == 8) begin
                             baud_counter         <= 0;
                             received_bit_counter <= received_bit_counter + 1;
