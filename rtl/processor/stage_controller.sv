@@ -13,8 +13,8 @@ module stage_controller (
     */
     /*
         i1,i2,i3 -- i3 is load instruction
-        load stall type0 is triggered when a load instruction is followed by dependent instrucion (dependency exists between i3 & i2)
-        meanwhile load stall type1 is triggered when dependency exists between i3 & i1
+        load stall type0 is triggered in read stage when a load instruction is followed by dependent instrucion (dependency exists between i3 & i2) 
+        meanwhile load stall type1 is triggered in execution stage when dependency exists between i3 & i1
     */
     logic r_stall;
     always_comb begin

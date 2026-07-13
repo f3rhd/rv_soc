@@ -34,10 +34,18 @@ module prediction #(
     logic r_btb_hit_was_jump;
     always_ff @(posedge clk) begin
         if (i_reset) begin
-            pht_table      <= '{default: 2'b00};
-            global_history <= 0;
-            o_prediction   <= 0;
-            o_pht_index    <= 0;
+            pht_table           <= '{default: 2'b00};
+            global_history      <= 0;
+            o_prediction        <= 0;
+            o_pht_index         <= 0;
+            o_btb_hit           <= 0;
+            o_btb_hit_way       <= 0;
+            o_instruction_raw   <= 0;
+            o_instruction_addr  <= 0;
+            o_pht_index         <= 0;
+            o_prediction        <= 0;
+            o_instruction_valid <= 0;
+            r_btb_hit_was_jump  <= 0;
         end else begin
             if (i_en) begin
                 o_instruction_raw   <= i_instruction_raw;
