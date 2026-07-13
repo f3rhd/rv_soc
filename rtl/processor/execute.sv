@@ -162,10 +162,10 @@ module execute #(
                             branch_result = $signed(src1_data) >=
                                 $signed(src2_data);
                             3'b101:
-                            branch_result = $unsigned(src2_data) <
+                            branch_result = $unsigned(src1_data) <
                                 $unsigned(src2_data);
                             3'b110:
-                            branch_result = $unsigned(src2_data) >=
+                            branch_result = $unsigned(src1_data) >=
                                 $unsigned(src2_data);
                             default: begin
                             end
