@@ -1,0 +1,39 @@
+BasedOnStyle: LLVM
+
+# General
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 80
+
+# Braces
+BreakBeforeBraces: Attach
+
+# Pointers / references
+PointerAlignment: Left
+ReferenceAlignment: Pointer
+
+# Function declarations
+BinPackParameters: false
+BinPackArguments: false
+
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+
+PenaltyBreakBeforeFirstCallParameter: 1
+
+# Constructor initializers
+BreakConstructorInitializers: BeforeComma
+
+# Misc
+AlignAfterOpenBracket: BlockIndent
+ContinuationIndentWidth: 4
+
+# Keep things readable
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+
+# Short things
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortBlocksOnASingleLine: Never
