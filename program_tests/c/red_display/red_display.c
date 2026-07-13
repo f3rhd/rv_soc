@@ -4,8 +4,8 @@
 int main() {
     int screen_size = 128*160;
     while(1) {
-        st7735_set_rectangle(0,0,128,160 );
-        st7735_stream_pixel(0x07E007E0, screen_size / 2);        
+        st7735_set_rectangle(0,128,0,160 );
+        st7735_stream_pixel(0x001F001F, screen_size / 2);        
     }
     return 0;
 }
