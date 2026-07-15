@@ -3,6 +3,7 @@ module btb #(
     parameter SIZE = 128
 ) (
     input logic clk,
+    input logic i_reset,
     input logic [31:0] i_branch_addr_read,
     execution_if.fetch_consumer exi,
     output logic [31:0] o_target_addr,
@@ -43,49 +44,58 @@ module btb #(
     assign read_set_id = i_branch_addr_read[2+NUM_BITS_FOR_SET_ID-1 : 2];
 
     always_ff @(posedge clk) begin
-        counter           <= counter + 1;
-        read_tag_q        <= read_tag;
-        read_data_ways[0] <= branch_table_bank0[read_set_id];
-        read_data_ways[1] <= branch_table_bank1[read_set_id];
-        read_data_ways[2] <= branch_table_bank2[read_set_id];
-        read_data_ways[3] <= branch_table_bank3[read_set_id];
-        if (exi.btb_write) begin
-            case (exi.branch_addr_way)
-                2'b00: begin
-                    branch_table_bank0[write_set_id] <= '{
-                        is_jump : exi.btb_write_jump,
-                        valid : 1'b1,
-                        tag : write_tag,
-                        target_addr : exi.redirection_address
-                    };
-                end
-                2'b01: begin
-                    branch_table_bank1[write_set_id] <= '{
-                        is_jump : exi.btb_write_jump,
-                        valid : 1'b1,
-                        tag : write_tag,
-                        target_addr : exi.redirection_address
-                    };
-                end
-                2'b10: begin
-                    branch_table_bank2[write_set_id] <= '{
-                        is_jump : exi.btb_write_jump,
-                        valid : 1'b1,
-                        tag : write_tag,
-                        target_addr : exi.redirection_address
-                    };
-                end
-                2'b11: begin
-                    branch_table_bank3[write_set_id] <= '{
-                        is_jump : exi.btb_write_jump,
-                        valid : 1'b1,
-                        tag : write_tag,
-                        target_addr : exi.redirection_address
-                    };
-                end
-                default: begin
-                end
-            endcase
+        if (i_reset) begin
+            for (int i = 0; i < NUM_SETS; i++) begin
+                branch_table_bank0[i] <= 0;
+                branch_table_bank1[i] <= 0;
+                branch_table_bank2[i] <= 0;
+                branch_table_bank3[i] <= 0;
+            end
+        end else begin
+            counter           <= counter + 1;
+            read_tag_q        <= read_tag;
+            read_data_ways[0] <= branch_table_bank0[read_set_id];
+            read_data_ways[1] <= branch_table_bank1[read_set_id];
+            read_data_ways[2] <= branch_table_bank2[read_set_id];
+            read_data_ways[3] <= branch_table_bank3[read_set_id];
+            if (exi.btb_write) begin
+                case (exi.branch_addr_way)
+                    2'b00: begin
+                        branch_table_bank0[write_set_id] <= '{
+                            is_jump : exi.btb_write_jump,
+                            valid : 1'b1,
+                            tag : write_tag,
+                            target_addr : exi.redirection_address
+                        };
+                    end
+                    2'b01: begin
+                        branch_table_bank1[write_set_id] <= '{
+                            is_jump : exi.btb_write_jump,
+                            valid : 1'b1,
+                            tag : write_tag,
+                            target_addr : exi.redirection_address
+                        };
+                    end
+                    2'b10: begin
+                        branch_table_bank2[write_set_id] <= '{
+                            is_jump : exi.btb_write_jump,
+                            valid : 1'b1,
+                            tag : write_tag,
+                            target_addr : exi.redirection_address
+                        };
+                    end
+                    2'b11: begin
+                        branch_table_bank3[write_set_id] <= '{
+                            is_jump : exi.btb_write_jump,
+                            valid : 1'b1,
+                            tag : write_tag,
+                            target_addr : exi.redirection_address
+                        };
+                    end
+                    default: begin
+                    end
+                endcase
+            end
         end
     end
 
