@@ -32,6 +32,7 @@ module fetch #(
     logic [31:0] program_counter;
     logic [31:0] btb_target_addr;
     logic [31:0] program_size;
+    logic end_of_program;
     typedef enum logic {
         LOAD,
         FETCH
@@ -61,6 +62,7 @@ module fetch #(
             program_pointer = program_counter;
         end
     end
+    assign end_of_program = program_pointer > program_size - 4;
 
     always_ff @(posedge clk) begin
 
@@ -85,25 +87,15 @@ module fetch #(
                     end
                 end
                 FETCH: begin
-                    if (i_en) begin
-                        if (exi.redirect) begin
-                            program_counter <= exi.redirection_address + 4;
-                        end else if (i_predictor_redirect) begin
-                            program_counter <= i_predictor_redirect_target + 4;
-                        end else if (o_btb_hit) begin
-                            program_counter <= btb_target_addr + 4;
-                        end else if (program_counter < program_size) begin
-                            program_counter <= program_counter + 4;
-                        end
-                        if (i_output_bubble | program_counter == program_size) begin
-                            o_instruction_raw   <= 0;
-                            o_instruction_valid <= 0;
-                            o_instruction_addr  <= 32'h0;
-                        end else begin
-                            o_instruction_raw <= instructions[program_pointer[31:2]];
-                            o_instruction_valid <= 1'b1;
-                            o_instruction_addr <= program_pointer;
-                        end
+                    if (i_en & !end_of_program) begin
+                        program_counter <= program_pointer + 4;
+                        o_instruction_raw <= instructions[program_pointer[31:2]];
+                        o_instruction_valid <= 1'b1;
+                        o_instruction_addr <= program_pointer;
+                    end else if (i_output_bubble | end_of_program) begin
+                        o_instruction_raw   <= 0;
+                        o_instruction_valid <= 0;
+                        o_instruction_addr  <= 32'h0;
                     end
                 end
                 default: begin
