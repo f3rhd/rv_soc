@@ -152,7 +152,7 @@ module graphics_execute #(
         init_rom[i++] = {2'b00, 8'h3A};  // COLMOD 16-bit
         init_rom[i++] = {2'b01, 8'h05};
         init_rom[i++] = {2'b00, 8'h36};  // MADCTL — BGR order
-        init_rom[i++] = {2'b01, 8'hC8};
+        init_rom[i++] = {2'b01, 8'h08};
         init_rom[i++] = {2'b00, 8'h2A};  // CASET 0..127
         init_rom[i++] = {2'b01, 8'h00};
         init_rom[i++] = {2'b01, 8'h00};
