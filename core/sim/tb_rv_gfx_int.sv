@@ -19,7 +19,7 @@ module tb_rv_gfx_int;
         .graphics_if  (graphics_if)
     );
     graphics_unit #(
-        .GRAPHICS_INSTRUCTION_BUFFER_SIZE(64 * 4  /* default 256 * 4 */),
+        .GRAPHICS_INSTRUCTION_BUFFER_SIZE(10240 * 4  /* default 256 * 4 */),
         .SYSTEM_CLK_HZ(100_000_000  /* default 100_000_000 */),
         .SPI_CLK_HZ(50_000_000  /* default 25_000_000 */)
     ) graphics_unit (
@@ -50,8 +50,12 @@ module tb_rv_gfx_int;
             $display("[Time: %0t] Stall vector : %b", $time,
                      rv_processor.stage_controller_stall_vector);
         end
-        if(graphics_if.graphics_buffer_full & rv_processor.memory.ei.mem_write) begin
-            $display("[Time: %0t] GFX instruction write failed", $time);
+        if(rv_processor.memory.ei.mem_write & (rv_processor.memory.ei.alu_out == 32'hFFFFFFFF || rv_processor.memory.ei.alu_out == 32'hFFFFFFF0)) begin
+            if (graphics_if.graphics_buffer_full) begin
+                $display("[Time: %0t] GFX instruction write failed", $time);
+            end else begin
+                $display("[Time: %0t] GFX instruction write success", $time);
+            end
         end
         if (rv_processor.stage_controller_flush_vector != 0) begin
             $display("[Time: %0t] Flush vector : %b", $time,
@@ -87,27 +91,26 @@ module tb_rv_gfx_int;
     end
     initial begin
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/red_display.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/assembly/string_test.hex",
             rv_processor.fetch.instructions);
 
-        graphics_unit.graphics_execute.graphics_state = graphics_unit.graphics_execute.EXECUTE;
-        reset = 1;
+        reset                           = 1;
         bootloader_if.program_load_done = 0;
-        bootloader_if.instruction = 0;
+        bootloader_if.instruction       = 0;
         bootloader_if.instruction_ready = 0;
 
         repeat (2) @(posedge clk);
         #1;
-        reset                           = 0;
-
-        bootloader_if.program_load_done = 1;
-        bootloader_if.instruction       = 0;
-        bootloader_if.instruction_ready = 0;
-        rv_processor.fetch.program_size = 32'hFFFFFFFF;
-        graphics_if.graphics_init_done  = 1;
-
+        reset = 0;
         @(posedge clk);
         #2;
+        graphics_unit.graphics_execute.graphics_state = graphics_unit.graphics_execute.EXECUTE;
+        graphics_unit.graphics_execute.exec_state = graphics_unit.graphics_execute.EXEC_KIND_DO_NOTHING;
+        bootloader_if.program_load_done = 1;
+        bootloader_if.instruction = 0;
+        bootloader_if.instruction_ready = 0;
+        //rv_processor.fetch.program_size = 32'hFFFFFFFF;
+        graphics_if.graphics_init_done = 1;
         $stop;
     end
 endmodule
