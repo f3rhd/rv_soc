@@ -1,4 +1,4 @@
-.reset_vector: li  sp, 1023
+.reset_vector: li  sp, 1024
 	j	    main
 reverse:addi    sp,sp,-48
 	sw      ra,44(sp)
