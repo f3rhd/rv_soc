@@ -132,7 +132,7 @@ module execute #(
             2'b01: begin
                 case (instruction_data.operation[3])
                     1'b1: begin
-                        alu_out = instruction_data.instruction_addr + 4;
+                        alu_out = instruction_data.instruction_addr + 1;
                         case (instruction_data.operation[0])
                             1'b0: begin
                                 redirect = 1'b1 & ~instruction_data.invalid & i_en;
@@ -140,7 +140,7 @@ module execute #(
                             end
                             1'b1: begin
                                 redirect = ~instruction_data.invalid & ~prediction_data.btb_was_hit;
-                                redirection_address = instruction_data.instruction_addr + instruction_data.extended_imm_val;
+                                redirection_address = instruction_data.instruction_addr + instruction_data.extended_imm_val ;
                                 btb_write_jump = 1;
                             end
                             default: exi.redirection_address = 32'hFFFFFFFF;
@@ -173,10 +173,9 @@ module execute #(
                         redirect = (prediction_data.prediction ^ branch_result) & ~instruction_data.invalid & i_en;
                         predictor_update = 1'b1 & ~instruction_data.invalid & i_en;
                         if (branch_result == 1) begin
-                            redirection_address = instruction_data.instruction_addr + 
-                                instruction_data.extended_imm_val;
+                            redirection_address = instruction_data.instruction_addr + instruction_data.extended_imm_val;
                         end else begin
-                            redirection_address = instruction_data.instruction_addr + 4;
+                            redirection_address = instruction_data.instruction_addr + 1;
                         end
                     end
                     default: begin

@@ -1,6 +1,7 @@
 `include "../../include/decode_output.svh"
 module decode #(
-    parameter HISTORY_SIZE = 10
+    parameter HISTORY_SIZE  = 10,
+    parameter ADDRESS_WIDTH = 20
 ) (
     input logic clk,
     input logic i_enable,
@@ -11,7 +12,7 @@ module decode #(
     input logic [HISTORY_SIZE-1:0] i_predictor_pht_index,
     input logic [1:0] i_btb_way_hit,
     input logic [31:0] i_instruction_raw,
-    input logic [31:0] i_instruction_addr,
+    input logic [ADDRESS_WIDTH-1:0] i_instruction_addr,
     output decode_output_t o_decode
 );
     decode_output_t decoded_mop_next;
@@ -19,6 +20,7 @@ module decode #(
     logic [2:0] funct3;
     logic [6:0] op;
     logic [6:0] alu_base_op;
+    logic is_alu_instruction;
     assign is_alu_instruction = (op == 7'b0010011) || (op == 7'b0110011);
     always_comb begin
         alu_base_op = 0;
@@ -27,7 +29,9 @@ module decode #(
         decoded_mop_next.prediction_data.prediction = i_predictor_prediction;
         decoded_mop_next.prediction_data.pht_index = i_predictor_pht_index;
         decoded_mop_next.prediction_data.btb_way_hit = i_btb_way_hit;
-        decoded_mop_next.instruction_data.instruction_addr = i_instruction_addr;
+        decoded_mop_next.instruction_data.instruction_addr = {
+            {(32 - ADDRESS_WIDTH) {1'b0}}, i_instruction_addr
+        };
         decoded_mop_next.instruction_data.src1 = i_instruction_raw[19:15];
         decoded_mop_next.instruction_data.src2 = i_instruction_raw[24:20];
         decoded_mop_next.instruction_data.dest = i_instruction_raw[11:7];
@@ -109,13 +113,12 @@ module decode #(
                 decoded_mop_next.instruction_data.btb_write = 1'b1;
                 decoded_mop_next.instruction_data.uses_imm = 1'b1;
                 decoded_mop_next.instruction_data.extended_imm_val = {
-                    {19{i_instruction_raw[31]}},
+                    {21{i_instruction_raw[31]}},
                     {
                         i_instruction_raw[31],
                         i_instruction_raw[7],
                         i_instruction_raw[30:25],
-                        i_instruction_raw[11:8],
-                        {1'b0}
+                        i_instruction_raw[11:9]
                     }
                 };
                 case (funct3)
@@ -139,12 +142,11 @@ module decode #(
                 decoded_mop_next.instruction_data.reg_write = 1'b1;
                 decoded_mop_next.instruction_data.btb_write = 1'b1;
                 decoded_mop_next.instruction_data.extended_imm_val = {
-                    {11{i_instruction_raw[31]}},
+                    {13{i_instruction_raw[31]}},
                     i_instruction_raw[31],
                     i_instruction_raw[19:12],
                     i_instruction_raw[20],
-                    i_instruction_raw[30:21],
-                    {1'b0}
+                    i_instruction_raw[30:22]
                 };
                 decoded_mop_next.instruction_data.operation = 7'b01_01_001;
             end
@@ -152,7 +154,7 @@ module decode #(
                 decoded_mop_next.instruction_data.uses_imm = 1'b1;
                 decoded_mop_next.instruction_data.reg_write = 1'b1;
                 decoded_mop_next.instruction_data.extended_imm_val = {
-                    {20{i_instruction_raw[31]}}, i_instruction_raw[31:20]
+                    {22{i_instruction_raw[31]}}, i_instruction_raw[31:22]
                 };
                 decoded_mop_next.instruction_data.operation = 7'b01_01_000;
             end

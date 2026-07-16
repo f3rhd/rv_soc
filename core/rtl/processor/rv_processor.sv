@@ -16,12 +16,13 @@ module rv_processor #(
     graphics_if.processor graphics_if
 );
 
+    localparam ADDRESS_WIDTH = $clog2(I_CACHE_SIZE / 4);
     // Fetch signals
     logic fetch_en;
     logic fetch_reset;
     logic fetch_output_bubble;
     logic fetch_instruction_valid;
-    logic [31:0] fetch_instruction_addr;
+    logic [ADDRESS_WIDTH-1:0] fetch_instruction_addr;
     logic [31:0] fetch_instruction_raw;
     logic [1:0] fetch_btb_hit_way;
     logic fetch_btb_hit;
@@ -38,9 +39,9 @@ module rv_processor #(
     logic prediction_instruction_valid;
     logic [HISTORY_SIZE -1:0] prediction_pht_index;
     logic [1:0] prediction_btb_hit_way;
-    logic [31:0] prediction_redirect_target;
+    logic [ADDRESS_WIDTH-1:0] prediction_redirect_target;
     logic [31:0] prediction_instruction_raw;
-    logic [31:0] prediction_instruction_addr;
+    logic [ADDRESS_WIDTH-1:0] prediction_instruction_addr;
 
     // Decode signals
     logic decode_enable;
@@ -95,7 +96,8 @@ module rv_processor #(
         .o_btb_hit_was_jump         (fetch_btb_hit_was_jump)
     );
     prediction #(
-        .HISTORY_SIZE(HISTORY_SIZE)
+        .HISTORY_SIZE (HISTORY_SIZE),
+        .ADDRESS_WIDTH(ADDRESS_WIDTH)
     ) prediction (
         .clk                      (clk),
         .i_reset                  (prediction_reset),
@@ -121,7 +123,8 @@ module rv_processor #(
     );
 
     decode #(
-        .HISTORY_SIZE(HISTORY_SIZE  /* default 10 */)
+        .HISTORY_SIZE (HISTORY_SIZE  /* default 10 */),
+        .ADDRESS_WIDTH(ADDRESS_WIDTH)
     ) decode (
         .clk                   (clk),
         .i_enable              (decode_enable),

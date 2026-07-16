@@ -1,6 +1,7 @@
 `include "../../include/execution_interface.svh"
 module prediction #(
-    parameter HISTORY_SIZE = 10
+    parameter HISTORY_SIZE  = 10,
+    parameter ADDRESS_WIDTH = 31
 ) (
     input logic clk,
     input logic i_reset,
@@ -11,7 +12,7 @@ module prediction #(
     input logic i_btb_hit_was_jump,
     input logic [1:0] i_btb_hit_way,
     input logic [31:0] i_instruction_raw,
-    input logic [31:0] i_instruction_addr,
+    input logic [ADDRESS_WIDTH-1:0] i_instruction_addr,
     input logic i_instruction_valid,
     execution_if.predictor_consumer exi,
     output logic o_prediction,
@@ -19,9 +20,9 @@ module prediction #(
     output logic o_btb_hit,
     output logic [1:0] o_btb_hit_way,
     output logic o_predictor_redirect,
-    output logic [31:0] o_predictor_redirect_addr,
+    output logic [ADDRESS_WIDTH-1:0] o_predictor_redirect_addr,
     output logic [31:0] o_instruction_raw,
-    output logic [31:0] o_instruction_addr,
+    output logic [ADDRESS_WIDTH-1:0] o_instruction_addr,
     output logic o_instruction_valid
 );
 
@@ -96,7 +97,7 @@ module prediction #(
         if (o_btb_hit & i_instruction_valid & ~r_btb_hit_was_jump) begin
             if (o_prediction == 0) begin
                 o_predictor_redirect      = 1;
-                o_predictor_redirect_addr = o_instruction_addr + 4;
+                o_predictor_redirect_addr = o_instruction_addr + 1;
             end
         end
     end
