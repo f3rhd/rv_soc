@@ -18,7 +18,6 @@ module execute #(
     logic branch_result;
     logic [2:0] memory_operation;
     logic [31:0] memory_write_data;
-    //logic should_bubble;
     logic src1_match, src2_match;
     logic [31:0] src1_data, src2_data;
 
@@ -27,7 +26,6 @@ module execute #(
     logic [31:0] redirection_address;
     logic redirect;
     logic [HISTORY_SIZE - 1 : 0] pht_index;
-    logic [1:0] branch_addr_way;
     logic btb_write;
     logic [31:0] branch_instruction_addr;
     logic btb_write_jump;
@@ -58,7 +56,6 @@ module execute #(
         redirection_address = '0;
         redirect = '0;
         pht_index = prediction_data.pht_index;
-        branch_addr_way = prediction_data.btb_way_hit;
         btb_write = instruction_data.btb_write & ~prediction_data.btb_was_hit & ~instruction_data.invalid;
         branch_instruction_addr = instruction_data.instruction_addr;
         btb_write_jump = '0;
@@ -206,7 +203,6 @@ module execute #(
             exi.redirection_address     <= 0;
             exi.redirect                <= 0;
             exi.pht_index               <= 0;
-            exi.branch_addr_way         <= 0;
             exi.btb_write               <= 0;
             exi.branch_instruction_addr <= 0;
             exi.btb_write_jump          <= 0;
@@ -224,7 +220,6 @@ module execute #(
             exi.redirection_address     <= redirection_address;
             exi.redirect                <= redirect;
             exi.pht_index               <= pht_index;
-            exi.branch_addr_way         <= branch_addr_way;
             exi.btb_write               <= btb_write;
             exi.branch_instruction_addr <= branch_instruction_addr;
             exi.btb_write_jump          <= btb_write_jump;

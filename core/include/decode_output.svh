@@ -18,7 +18,6 @@ typedef struct packed {
 typedef struct packed {
     logic [9:0] pht_index;
     logic btb_was_hit;
-    logic [1:0] btb_way_hit;
     logic prediction;
 } prediction_data_t;
 typedef struct packed {

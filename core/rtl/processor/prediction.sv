@@ -10,7 +10,6 @@ module prediction #(
     input logic i_predict,
     input logic i_btb_hit,
     input logic i_btb_hit_was_jump,
-    input logic [1:0] i_btb_hit_way,
     input logic [31:0] i_instruction_raw,
     input logic [ADDRESS_WIDTH-1:0] i_instruction_addr,
     input logic i_instruction_valid,
@@ -18,7 +17,6 @@ module prediction #(
     output logic o_prediction,
     output logic [HISTORY_SIZE-1:0] o_pht_index,
     output logic o_btb_hit,
-    output logic [1:0] o_btb_hit_way,
     output logic o_predictor_redirect,
     output logic [ADDRESS_WIDTH-1:0] o_predictor_redirect_addr,
     output logic [31:0] o_instruction_raw,
@@ -40,7 +38,6 @@ module prediction #(
             o_prediction        <= 0;
             o_pht_index         <= 0;
             o_btb_hit           <= 0;
-            o_btb_hit_way       <= 0;
             o_instruction_raw   <= 0;
             o_instruction_addr  <= 0;
             o_pht_index         <= 0;
@@ -53,7 +50,6 @@ module prediction #(
                 o_instruction_addr  <= i_instruction_addr;
                 o_instruction_valid <= i_instruction_valid;
                 o_btb_hit           <= i_btb_hit;
-                o_btb_hit_way       <= i_btb_hit_way;
                 r_btb_hit_was_jump  <= i_btb_hit_was_jump;
 
                 if (i_predict & i_instruction_valid) begin
@@ -81,7 +77,6 @@ module prediction #(
             // If we are redirecting this cycle output bubble next cycle
             if (i_output_bubble | o_predictor_redirect) begin
                 o_btb_hit           <= 0;
-                o_btb_hit_way       <= 0;
                 o_instruction_raw   <= 0;
                 o_instruction_addr  <= 0;
                 o_pht_index         <= 0;

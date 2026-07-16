@@ -24,7 +24,6 @@ module rv_processor #(
     logic fetch_instruction_valid;
     logic [ADDRESS_WIDTH-1:0] fetch_instruction_addr;
     logic [31:0] fetch_instruction_raw;
-    logic [1:0] fetch_btb_hit_way;
     logic fetch_btb_hit;
     logic fetch_btb_hit_was_jump;
 
@@ -38,7 +37,6 @@ module rv_processor #(
     logic prediction_redirect;
     logic prediction_instruction_valid;
     logic [HISTORY_SIZE -1:0] prediction_pht_index;
-    logic [1:0] prediction_btb_hit_way;
     logic [ADDRESS_WIDTH-1:0] prediction_redirect_target;
     logic [31:0] prediction_instruction_raw;
     logic [ADDRESS_WIDTH-1:0] prediction_instruction_addr;
@@ -91,7 +89,6 @@ module rv_processor #(
         .o_instruction_valid        (fetch_instruction_valid),
         .o_instruction_addr         (fetch_instruction_addr),
         .o_instruction_raw          (fetch_instruction_raw),
-        .o_btb_hit_way              (fetch_btb_hit_way),
         .o_btb_hit                  (fetch_btb_hit),
         .o_btb_hit_was_jump         (fetch_btb_hit_was_jump)
     );
@@ -106,7 +103,6 @@ module rv_processor #(
         .i_btb_hit_was_jump       (fetch_btb_hit_was_jump),
         .i_predict                (prediction_predict),
         .i_btb_hit                (fetch_btb_hit),
-        .i_btb_hit_way            (fetch_btb_hit_way),
         .i_instruction_raw        (fetch_instruction_raw),
         .i_instruction_addr       (fetch_instruction_addr),
         .i_instruction_valid      (fetch_instruction_valid),
@@ -114,7 +110,6 @@ module rv_processor #(
         .o_prediction             (prediction_prediction),
         .o_pht_index              (prediction_pht_index),
         .o_btb_hit                (prediction_btb_hit),
-        .o_btb_hit_way            (prediction_btb_hit_way),
         .o_predictor_redirect     (prediction_redirect),
         .o_predictor_redirect_addr(prediction_redirect_target),
         .o_instruction_raw        (prediction_instruction_raw),
@@ -131,7 +126,6 @@ module rv_processor #(
         .i_output_bubble       (decode_output_bubble),
         .i_instruction_valid   (prediction_instruction_valid),
         .i_btb_hit             (prediction_btb_hit),
-        .i_btb_way_hit         (prediction_btb_hit_way),
         .i_predictor_prediction(prediction_prediction),
         .i_predictor_pht_index (prediction_pht_index),
         .i_instruction_raw     (prediction_instruction_raw),

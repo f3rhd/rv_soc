@@ -25,7 +25,6 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     logic predictor_update;
     logic [31:0] redirection_address;
     logic [31:0] branch_instruction_addr;
-    logic [1:0] branch_addr_way;
     logic [HISTORY_SIZE-1:0] pht_index;
     logic btb_write_jump;
 
@@ -50,7 +49,6 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         output predictor_update,
         output redirection_address,
         output branch_instruction_addr,
-        output branch_addr_way,
         output pht_index,
         output invalid,
         output mem_write,
@@ -77,7 +75,6 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         input btb_write,
         input btb_write_jump,
         input branch_instruction_addr,
-        input branch_addr_way,
         input redirection_address
     );
 

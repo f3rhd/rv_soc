@@ -15,7 +15,6 @@ module fetch #(
     output logic o_instruction_valid,
     output logic [$clog2(I_CACHE_SIZE/4)-1:0] o_instruction_addr,
     output logic [31:0] o_instruction_raw,
-    output logic [1:0] o_btb_hit_way,
     output logic o_btb_hit,
     output logic o_btb_hit_was_jump
 );
@@ -49,7 +48,6 @@ module fetch #(
         .i_reset(i_reset),
         .exi(exi),
         .o_target_addr(btb_target_addr),
-        .o_way(o_btb_hit_way),
         .o_hit(o_btb_hit),
         .o_hit_was_jump(o_btb_hit_was_jump)
     );

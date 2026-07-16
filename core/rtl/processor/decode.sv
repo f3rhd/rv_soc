@@ -10,7 +10,6 @@ module decode #(
     input logic i_btb_hit,
     input logic i_predictor_prediction,
     input logic [HISTORY_SIZE-1:0] i_predictor_pht_index,
-    input logic [1:0] i_btb_way_hit,
     input logic [31:0] i_instruction_raw,
     input logic [ADDRESS_WIDTH-1:0] i_instruction_addr,
     output decode_output_t o_decode
@@ -28,7 +27,6 @@ module decode #(
         decoded_mop_next.prediction_data.btb_was_hit = i_btb_hit;
         decoded_mop_next.prediction_data.prediction = i_predictor_prediction;
         decoded_mop_next.prediction_data.pht_index = i_predictor_pht_index;
-        decoded_mop_next.prediction_data.btb_way_hit = i_btb_way_hit;
         decoded_mop_next.instruction_data.instruction_addr = {
             {(32 - ADDRESS_WIDTH) {1'b0}}, i_instruction_addr
         };
