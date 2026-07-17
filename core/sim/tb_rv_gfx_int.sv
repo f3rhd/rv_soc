@@ -79,20 +79,21 @@ module tb_rv_gfx_int;
         end
         if (rv_processor.execution_if.btb_write) begin
             $display(
-                "[Time: %0t] BranchTableBank[%d] <- instruction_addr : 0x%h | target_addr : 0x%h | is_jump : 0x%h",
-                $time, rv_processor.execution_if.branch_addr_way,
-                rv_processor.execution_if.branch_instruction_addr,
-                rv_processor.execution_if.redirection_address,
+                "[Time: %0t] BranchTableBank[0x%h][0x%h] <- instruction_addr : 0x%h | target_addr : 0x%h | is_jump : 0x%h",
+                $time, rv_processor.fetch.btb.write_set_id,
+                rv_processor.fetch.btb.write_way,
+                rv_processor.execution_if.branch_instruction_addr * 4,
+                rv_processor.execution_if.redirection_address * 4,
                 rv_processor.execution_if.btb_write_jump);
         end
         if (rv_processor.execution_if.redirect) begin
             $display(
                 "[Time: %0t] Execution stage redirected pc to the address 0x%h",
-                $time, rv_processor.execution_if.redirection_address);
+                $time, rv_processor.execution_if.redirection_address * 4);
         end
         if (rv_processor.fetch_btb_hit & rv_processor.fetch_instruction_valid) begin
             $display("[Time: %0t] Instruction[0x%h] hit btb.", $time,
-                     rv_processor.fetch_instruction_addr);
+                     rv_processor.fetch_instruction_addr * 4);
         end
     end
     initial begin
