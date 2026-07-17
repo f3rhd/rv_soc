@@ -75,7 +75,7 @@ module prediction #(
                 };
             end
             // If we are redirecting this cycle output bubble next cycle
-            if (i_output_bubble | o_predictor_redirect) begin
+            if (i_output_bubble | (o_predictor_redirect & i_en)) begin
                 o_btb_hit           <= 0;
                 o_instruction_raw   <= 0;
                 o_instruction_addr  <= 0;

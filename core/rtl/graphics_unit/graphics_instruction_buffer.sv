@@ -24,10 +24,10 @@ module graphics_instruction_buffer #(
     logic [$clog2(INSTRUCTION_BUFFER_BOTTOM_INDEX + 1) - 1:0] tail;
 
     logic [32:0] read_entry;
-    logic [$clog2(BUFFER_SIZE):0] fill_count;
+    logic [$clog2(INSTRUCTION_BUFFER_BOTTOM_INDEX):0] fill_count;
 
-    assign o_instruction          = read_entry;
-    assign o_buffer_is_full       = (fill_count == BUFFER_SIZE);
+    assign o_instruction = read_entry;
+    assign o_buffer_is_full = (fill_count == INSTRUCTION_BUFFER_BOTTOM_INDEX + 1);
     assign o_instruction_is_valid = (fill_count != 0);
 
     always_ff @(posedge clk) begin

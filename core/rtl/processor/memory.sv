@@ -8,7 +8,8 @@ module memory #(
     input logic clk,
     execution_if.mem_consumer ei,
     graphics_if.processor graphicsi,
-    output register_write_data_t o_register_write
+    output register_write_data_t o_register_write,
+    output logic o_graphics_write
 );
     localparam unsigned GRAPHICS_PIXEL_DATA_ADDRESS = 32'hFFFFFFFF;
     localparam unsigned GRAPHICS_COMMAND_DATA_ADDRESS = 32'hFFFFFFF0;
@@ -39,6 +40,7 @@ module memory #(
     logic [7:0] byte1_write;
     logic [7:0] byte2_write;
     logic [7:0] byte3_write;
+    assign o_graphics_write = (ei.alu_out == GRAPHICS_COMMAND_DATA_ADDRESS || ei.alu_out == GRAPHICS_PIXEL_DATA_ADDRESS) & ei.mem_write;
     always_comb begin
         byte_en = 4'b0000;
         if (ei.mem_write && !ei.invalid) begin
@@ -81,7 +83,7 @@ module memory #(
                 reg_alu_out      <= ei.alu_out;
             end else begin
                 if (ei.mem_write) begin
-                    if (ei.alu_out == GRAPHICS_COMMAND_DATA_ADDRESS || ei.alu_out == GRAPHICS_PIXEL_DATA_ADDRESS) begin
+                    if (o_graphics_write) begin
                         graphicsi.graphics_instruction <= {
                             ei.alu_out == GRAPHICS_COMMAND_DATA_ADDRESS ? 1'b1 : 1'b0,
                             ei.memory_write_data
