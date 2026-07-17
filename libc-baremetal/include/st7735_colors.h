@@ -1,3 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef COLORS_H
 #define COLORS_H
 // ST7735 Color Definitions (BGR565 format, 32-bit duplicated)

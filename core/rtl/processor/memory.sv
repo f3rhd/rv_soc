@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `include "../../include/execution_interface.svh"
 `include "../../include/execution_interface.svh"
 `include "../../include/graphics_interface.svh"

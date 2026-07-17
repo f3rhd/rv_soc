@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `include "../../include/execution_interface.svh"
 module prediction #(
     parameter HISTORY_SIZE  = 10,

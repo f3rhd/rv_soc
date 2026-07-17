@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `ifndef SPI_TX_ENGINE_SVH
 `define SPI_TX_ENGINE_SVH 
 module spi_tx_engine #(

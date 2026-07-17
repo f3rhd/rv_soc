@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `ifndef BOOTLOADER_INTERFACE_SVH
 `define BOOTLOADER_INTERFACE_SVH
 interface bootloader_if;

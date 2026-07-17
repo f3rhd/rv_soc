@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `include "../../include/graphics_interface.svh"
 `include "graphics_decode_output.svh"
 module graphics_unit #(

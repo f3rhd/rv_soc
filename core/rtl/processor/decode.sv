@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `include "../../include/decode_output.svh"
 module decode #(
     parameter HISTORY_SIZE  = 10,

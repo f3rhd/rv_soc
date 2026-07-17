@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 module uart_rx_engine #(
     parameter SYSTEM_CLK_HZ = 100_000_000,
     parameter BAUD_RATE = 115200

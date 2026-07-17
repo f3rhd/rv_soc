@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `include "../../include/register.svh"
 `include "../../include/decode_output.svh"
 `include "../../include/execution_interface.svh"

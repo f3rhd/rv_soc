@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `ifndef REGISTER_READ_OUTPUT_SVH
 `define REGISTER_READ_OUTPUT_SVH
 `include "decode_output.svh"

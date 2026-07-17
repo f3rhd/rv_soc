@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `ifndef EXECUTION_INTERFACE_SVH
 `define EXECUTION_INTERFACE_SVH
 interface execution_if #(parameter HISTORY_SIZE = 10);

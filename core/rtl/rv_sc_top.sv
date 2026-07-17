@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `include "../include/bootloader_interface.svh"
 `include "../include/graphics_interface.svh"
 module rv_sc_top (

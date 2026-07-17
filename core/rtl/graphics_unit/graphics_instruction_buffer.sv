@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 module graphics_instruction_buffer #(
     parameter unsigned BUFFER_SIZE = 256 * 4
 ) (

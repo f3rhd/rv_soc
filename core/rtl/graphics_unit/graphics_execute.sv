@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `include "graphics_decode_output.svh"
 module graphics_execute #(
     parameter unsigned SYSTEM_CLK_HZ = 100_000_000,

@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `ifndef DECODE_RESULT_H
 `define DECODE_RESULT_H
 typedef struct packed {

@@ -1,3 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef ST7735_H
 #define ST7735_H
 #include "st7735_colors.h"

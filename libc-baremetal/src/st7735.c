@@ -1,3 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "../include/st7735.h"
 inline void st7735_stream_pixel(unsigned int color, int amount);
 inline void st7735_set_rectangle(

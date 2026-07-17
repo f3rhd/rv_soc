@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `ifndef GRAPHICS_INTERFACE_SVH
 `define GRAPHICS_INTERFACE_SVH
 interface graphics_if;

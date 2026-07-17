@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 module uart_tx_engine #(
     parameter unsigned DATA_WIDTH = 8,
     parameter unsigned BAUD_RATE = 115200,

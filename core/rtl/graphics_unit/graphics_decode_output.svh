@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 `ifndef GRAPHICS_DECODE_OUTPUT_SVH
 `define GRAPHICS_DECODE_OUTPUT_SVH
 typedef enum logic [1:0] {
