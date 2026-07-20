@@ -20,7 +20,8 @@ module rv_sc_top (
     output logic cs,
     // 7 segment display ports 
     output logic [6:0] seg,
-    output logic [3:0] an
+    output logic [3:0] an,
+    output logic [15:0] led
 );
     localparam unsigned SYSTEM_CLK_HZ = 100_000_000;
     localparam unsigned GRAPHICS_SPI_CLK_HZ = 25_000_000;
@@ -45,6 +46,7 @@ module rv_sc_top (
     assign graphicsi.graphics_init      = boot_edge;
     assign bootloaderi.rx               = rx;
     assign tx                           = bootloaderi.tx;
+    assign led                          = rv_processor.register_file.file[5];
 
     button_edge_detect button_edge_detect_boot (
         .clk   (clk),
