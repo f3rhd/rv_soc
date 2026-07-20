@@ -41,23 +41,19 @@ module tb_rv_gfx_int;
             $display("[Time: %0t] Register File[%d] <- 0x%h", $time,
                      rv_processor.register_write_.write_addr,
                      rv_processor.register_write_.write_data);
-            $fflush();
         end
         if (rv_processor.memory.ei.mem_write) begin
             $display("[Time: %0t] DCache[0x%h] <- %h", $time,
                      rv_processor.memory.ei.alu_out,
                      rv_processor.memory.ei.memory_write_data);
-            $fflush();
         end
         if (rv_processor.memory.ei.mem_read) begin
             $display("[Time: %0t] Reading DCache[0x%h]", $time,
                      rv_processor.memory.ei.alu_out);
-            $fflush();
         end
         if (rv_processor.stage_controller_stall_vector != 0) begin
             $display("[Time: %0t] Stall vector : %b", $time,
                      rv_processor.stage_controller_stall_vector);
-            $fflush();
         end
         if(rv_processor.memory.ei.mem_write & (rv_processor.memory.ei.alu_out == 32'hFFFFFFFF || rv_processor.memory.ei.alu_out == 32'hFFFFFFF0)) begin
             if (graphics_if.graphics_buffer_full) begin
@@ -65,24 +61,20 @@ module tb_rv_gfx_int;
             end else begin
                 $display("[Time: %0t] GFX instruction write success", $time);
             end
-            $fflush();
         end
         if (rv_processor.stage_controller_flush_vector != 0) begin
             $display("[Time: %0t] Flush vector : %b", $time,
                      rv_processor.stage_controller_flush_vector);
-            $fflush();
         end
         if (rv_processor.prediction_redirect & rv_processor.prediction_enable) begin
             $display(
                 "[Time: %0t] Predictor redirected pc to due to dissagrement with fetch unit 0x%h",
                 $time, rv_processor.prediction_redirect_target);
-            $fflush();
         end
         if (rv_processor.execution_if.predictor_update) begin
             $display("[Time: %0t] PHT[%d] <~ %d", $time,
                      rv_processor.execution_if.pht_index,
                      rv_processor.execution_if.actual_branch_result);
-            $fflush();
         end
         if (rv_processor.execution_if.btb_write) begin
             $display(
@@ -92,13 +84,11 @@ module tb_rv_gfx_int;
                 rv_processor.execution_if.branch_instruction_addr * 4,
                 rv_processor.execution_if.btb_branch_target_addr * 4,
                 rv_processor.execution_if.btb_write_jump);
-            $fflush();
         end
         if (rv_processor.execution_if.redirect) begin
             $display(
                 "[Time: %0t] Execution stage redirected pc to the address 0x%h",
                 $time, rv_processor.execution_if.redirection_address * 4);
-            $fflush();
         end
         if (rv_processor.fetch_btb_hit & rv_processor.fetch_instruction_valid) begin
             if (print) begin
@@ -109,7 +99,6 @@ module tb_rv_gfx_int;
                 if (rv_processor.fetch_instruction_addr == 'd191) begin
                     $display("oybla");
                 end
-                $fflush();
             end
             if (rv_processor.fetch_instruction_addr == 2) begin
                 print <= 0;
