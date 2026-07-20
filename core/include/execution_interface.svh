@@ -31,6 +31,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     logic predictor_update;
     logic [31:0] redirection_address;
     logic [31:0] branch_instruction_addr;
+    logic [31:0] btb_branch_target_addr;
     logic [HISTORY_SIZE-1:0] pht_index;
     logic btb_write_jump;
 
@@ -62,7 +63,8 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         output reg_write,
         output btb_write,
         output stall_pipeline_type1,
-        output btb_write_jump
+        output btb_write_jump,
+        output btb_branch_target_addr
     );
     modport register_read (
         input dest,
@@ -81,7 +83,8 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         input btb_write,
         input btb_write_jump,
         input branch_instruction_addr,
-        input redirection_address
+        input redirection_address,
+        input btb_branch_target_addr
     );
 
     modport mem_consumer (

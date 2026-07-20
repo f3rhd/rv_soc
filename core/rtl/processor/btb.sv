@@ -64,7 +64,7 @@ module btb #(
                     is_jump : exi.btb_write_jump,
                     valid : 1'b1,
                     tag : write_tag,
-                    target_addr : exi.redirection_address[ADDRESS_WIDTH-1:0]
+                    target_addr : exi.btb_branch_target_addr[ADDRESS_WIDTH-1:0]
                 };
             end
             accessed_entry <= branch_table[read_set_id][read_way];

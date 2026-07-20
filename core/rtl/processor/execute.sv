@@ -35,6 +35,7 @@ module execute #(
     logic btb_write;
     logic [31:0] branch_instruction_addr;
     logic btb_write_jump;
+    logic [31:0] btb_branch_target_addr;
 
     decoded_instruction_t instruction_data;
     register_read_data_t read_data;
@@ -65,6 +66,7 @@ module execute #(
         btb_write = instruction_data.btb_write & ~prediction_data.btb_was_hit & ~instruction_data.invalid;
         branch_instruction_addr = instruction_data.instruction_addr;
         btb_write_jump = '0;
+        btb_branch_target_addr = instruction_data.instruction_addr +instruction_data.extended_imm_val;
 
 
         src1_data = src1_match ? exi.alu_out : read_data.src1_data;
@@ -213,6 +215,7 @@ module execute #(
             exi.branch_instruction_addr <= 0;
             exi.btb_write_jump          <= 0;
             exi.actual_branch_result    <= 0;
+            exi.btb_branch_target_addr  <= 0;
         end else if (i_en) begin
             exi.memory_write_data       <= memory_write_data;
             exi.memory_operation        <= memory_operation;
@@ -230,6 +233,7 @@ module execute #(
             exi.branch_instruction_addr <= branch_instruction_addr;
             exi.btb_write_jump          <= btb_write_jump;
             exi.actual_branch_result    <= branch_result;
+            exi.btb_branch_target_addr  <= btb_branch_target_addr;
         end
     end
 endmodule
