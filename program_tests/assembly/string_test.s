@@ -1,0 +1,76 @@
+.reset_vector: li  sp, 1024
+	j	    main
+reverse:addi    sp,sp,-48
+	sw      ra,44(sp)
+	sw      s0,40(sp)
+	addi    s0,sp,48
+	sw      a0,-36(s0)
+	sw      a1,-40(s0)
+	sw      zero,-20(s0)
+	lw      a5,-40(s0)
+	addi    a5,a5,-1
+	sw      a5,-24(s0)
+	j       .L2
+.L3:lw      a5,-20(s0)
+	lw      a4,-36(s0)
+	add     a5,a4,a5
+	lbu     a5,0(a5)
+	sb      a5,-25(s0)
+	lw      a5,-24(s0)
+	lw      a4,-36(s0)
+	add     a4,a4,a5
+	lw      a5,-20(s0)
+	lw      a3,-36(s0)
+	add     a5,a3,a5
+	lbu     a4,0(a4)
+	sb      a4,0(a5)
+	lw      a5,-24(s0)
+	lw      a4,-36(s0)
+	add     a5,a4,a5
+	lbu     a4,-25(s0)
+	sb      a4,0(a5)
+	lw      a5,-20(s0)
+	addi    a5,a5,1
+	sw      a5,-20(s0)
+	lw      a5,-24(s0)
+	addi    a5,a5,-1
+	sw      a5,-24(s0)
+.L2:lw      a4,-20(s0)
+	lw      a5,-24(s0)
+	blt     a4,a5,.L3
+	nop
+	nop
+	lw      ra,44(sp)
+	lw      s0,40(sp)
+	addi    sp,sp,48
+	jr      ra
+main:addi    sp,sp,-32
+	sw      ra,28(sp)
+	sw      s0,24(sp)
+	addi    s0,sp,32
+	li      a5,1634492416
+	addi    a5,a5,371
+	sw      a5,-28(s0)
+	li      a5,109
+	sb      a5,-24(s0)
+	addi    a5,s0,-28
+	li      a1,5
+	mv      a0,a5
+	call    reverse
+	lbu     a4,-28(s0)
+	li      a5,109
+	bne     a4,a5,.L5
+	lbu     a4,-27(s0)
+	li      a5,97
+	bne     a4,a5,.L5
+	lbu     a4,-26(s0)
+	li      a5,108
+	bne     a4,a5,.L5
+	lbu     a4,-25(s0)
+	li      a5,97
+	bne     a4,a5,.L5
+	lbu     a4,-24(s0)
+	li      a5,115
+	bne     a4,a5,.L5
+	li      a5, 3169
+.L5:nop
