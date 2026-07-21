@@ -96,9 +96,6 @@ module tb_rv_gfx_int;
                     "[Time: %0t] Instruction[0x%h] hit btb. | Redirected to : 0x%h",
                     $time, rv_processor.fetch_instruction_addr * 4,
                     rv_processor.fetch.btb_target_addr * 4);
-                if (rv_processor.fetch_instruction_addr == 'd191) begin
-                    $display("oybla");
-                end
             end
             if (rv_processor.fetch_instruction_addr == 2) begin
                 print <= 0;
@@ -107,9 +104,6 @@ module tb_rv_gfx_int;
         if (graphics_unit.execute_complete) begin
             $display("Graphics Instruction : 0x%h complete",
                      graphics_unit.graphics_execute.r_decode.instruction);
-        end
-        if (rv_processor.execution_if.branch_instruction_addr == 'd188) begin
-            $display("oyblaaaaa");
         end
 
     end
