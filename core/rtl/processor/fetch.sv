@@ -51,6 +51,7 @@ module fetch #(
     ) btb (
         .clk(clk),
         .i_branch_addr_read(program_pointer),
+        .i_enable(i_en),
         .i_reset(i_reset),
         .exi(exi),
         .o_target_addr(btb_target_addr),

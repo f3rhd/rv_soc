@@ -11,6 +11,7 @@ module btb #(
 ) (
     input logic clk,
     input logic i_reset,
+    input logic i_enable,
     input logic [ADDRESS_WIDTH-1:0] i_branch_addr_read,
     execution_if.fetch_consumer exi,
     output logic [ADDRESS_WIDTH-1:0] o_target_addr,
@@ -56,7 +57,7 @@ module btb #(
                 end
                 set_allocation_counter[i] <= 0;
             end
-        end else begin
+        end else if (i_enable) begin
             if (exi.btb_write) begin
                 branch_table[write_set_id][set_allocation_counter[write_set_id]] <= '{
                     is_jump : exi.btb_write_jump,
