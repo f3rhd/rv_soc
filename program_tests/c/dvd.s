@@ -64,7 +64,8 @@ change_color_on_collision:
 	j	.L3
 .L10:
 	lw	a5,-20(s0)
-	li	a4,-1
+	li	a4,2031616
+	addi	a4,a4,31
 	sw	a4,0(a5)
 	j	.L12
 .L11:
@@ -128,16 +129,17 @@ change_color_on_collision:
 delay:
 	addi	sp,sp,-16
 	sw	zero,12(sp)
-.L14:
 	lw	a5,12(sp)
-	bltu	a5,a0,.L15
-	addi	sp,sp,16
-	jr	ra
+	bleu	a0,a5,.L13
 .L15:
 	lw	a5,12(sp)
 	addi	a5,a5,1
 	sw	a5,12(sp)
-	j	.L14
+	lw	a5,12(sp)
+	bltu	a5,a0,.L15
+.L13:
+	addi	sp,sp,16
+	jr	ra
 draw_dvd:
 	addi	sp,sp,-32
 	sw	s1,24(sp)
@@ -163,95 +165,309 @@ main:
 	sw	s2,52(sp)
 	sw	s3,48(sp)
 	sw	s4,44(sp)
+	sw	s5,40(sp)
 	sw	s6,36(sp)
 	sw	s7,32(sp)
 	sw	s8,28(sp)
 	sw	s9,24(sp)
-	sw	s5,40(sp)
+	sw	s10,20(sp)
+	sw	s11,16(sp)
 	call	st7735_set_rectangle
 	li	a1,12288
-	li	a0,1048576
 	addi	a1,a1,-2048
-	addi	a0,a0,16
+	li	a0,0
+	call	st7735_stream_pixel
+	li	a5,1048576
+	addi	a5,a5,16
 	li	s3,2
-	call	st7735_stream_pixel
+	sw	a5,8(sp)
 	mv	s4,s3
-	li	s2,80
-	li	s1,64
-	li	s6,106
-	li	s8,107
-	li	s7,138
-	li	s9,139
-.L22:
-	addi	a3,s2,20
-	addi	a2,s1,20
-	mv	a1,s2
-	mv	a0,s1
-	call	st7735_set_rectangle
-	li	a0,1048576
-	li	a1,200
-	addi	a0,a0,16
-	call	st7735_stream_pixel
-	add	s1,s1,s4
-	addi	a5,s1,-1
-	add	s2,s2,s3
-	bleu	a5,s6,.L20
-	sgt	s1,s1,s8
-	neg	s1,s1
-	neg	s4,s4
-	andi	s1,s1,108
-.L20:
-	addi	a5,s2,-1
-	neg	s5,s3
-	bleu	a5,s7,.L24
-	ble	s2,s9,.L25
-	li	s2,140
-.L21:
-	li	a2,-1
-	mv	a0,s1
-	mv	a1,s2
-	call	draw_dvd
-	li	a0,98304
-	addi	a0,a0,1696
-	call	delay
-	mv	s3,s5
-	j	.L22
-.L24:
-	mv	s5,s3
-	j	.L21
-.L25:
+	li	s9,80
+	li	s8,64
 	li	s2,0
-	j	.L21
+	li	s1,0
+	li	s5,106
+	li	s6,8
+	li	s7,139
+.L30:
+	addi	a3,s9,20
+	addi	a2,s8,20
+	mv	a1,s9
+	mv	a0,s8
+	call	st7735_set_rectangle
+	li	a1,200
+	li	a0,0
+	call	st7735_stream_pixel
+	add	s8,s8,s4
+	add	s9,s9,s3
+	addi	a5,s8,-1
+	addi	a4,s9,-1
+	bgtu	a5,s5,.L22
+	li	a5,138
+	addi	s10,s8,19
+	addi	s11,s9,19
+	bleu	a4,a5,.L24
+.L23:
+	neg	s3,s3
+	ble	s9,s7,.L34
+	li	s11,159
+	li	s9,140
+.L26:
+	addi	s1,s1,1
+	addi	s2,s2,1
+	ble	s1,s6,.L27
+	li	s1,0
+.L27:
+	mv t0, s2
+	mv	a1,s1
+	addi	a0,sp,8
+	call	change_color_on_collision
+.L24:
+	mv	a2,s10
+	lw	s10,8(sp)
+	mv	a3,s11
+	mv	a1,s9
+	mv	a0,s8
+	call	st7735_set_rectangle
+	mv	a0,s10
+	li	a1,200
+	call	st7735_stream_pixel
+	lw	a5,8(sp)
+	beq	a5,zero,.L28
+	sw	zero,12(sp)
+	lw	a5,12(sp)
+	li	a4,249856
+	addi	a4,a4,143
+	bgtu	a5,a4,.L30
+.L29:
+	lw	a5,12(sp)
+	addi	a5,a5,1
+	sw	a5,12(sp)
+	lw	a5,12(sp)
+	bleu	a5,a4,.L29
+	j	.L30
+.L22:
+	li	a5,107
+	neg	s4,s4
+	ble	s8,a5,.L25
+	li	a5,138
+	bgtu	a4,a5,.L32
+	addi	s11,s9,19
+	li	s10,127
+	li	s8,108
+	j	.L26
+.L34:
+	li	s11,19
+	li	s9,0
+	j	.L26
+.L25:
+	li	a5,138
+	bgtu	a4,a5,.L33
+	addi	s11,s9,19
+	li	s10,19
+	li	s8,0
+	j	.L26
+.L32:
+	li	s10,127
+	li	s8,108
+	j	.L23
+.L33:
+	li	s10,19
+	li	s8,0
+	j	.L23
+.L28:
+	lw	ra,60(sp)
+	lw	s1,56(sp)
+	lw	s2,52(sp)
+	lw	s3,48(sp)
+	lw	s4,44(sp)
+	lw	s5,40(sp)
+	lw	s6,36(sp)
+	lw	s7,32(sp)
+	lw	s8,28(sp)
+	lw	s9,24(sp)
+	lw	s10,20(sp)
+	lw	s11,16(sp)
+	li	a0,0
+	addi	sp,sp,64
+	jr	ra
 
 # ---- file: ..\..\libc-baremetal\src\st7735.c ----
 
+st7735_draw_pixel:
+	li	a3,16711680
+	slli	a5,a1,16
+	slli	a4,a2,16
+	andi	a1,a1,255
+	andi	a2,a2,255
+	slli	a1,a1,8
+	and	a5,a5,a3
+	and	a4,a4,a3
+	slli	a2,a2,8
+	or	a5,a5,a1
+	or	a4,a4,a2
+	li	a1,704643072
+	li	a3,721420288
+	or	a4,a4,a3
+	or	a5,a5,a1
+	li	a3,-16
+	sw a5, 0(a3) 
+	sw a4, 0(a3) 
+	li	a5,738197504
+	sw a5, 0(a3) 
+	li	a5,-1
+	sw a0, 0(a5) 
+	ret
+st7735_draw_rectangle:
+	li	t3,16711680
+	slli	a5,a0,16
+	andi	t1,a2,255
+	slli	a6,a1,16
+	andi	a7,a3,255
+	and	a5,a5,t3
+	slli	t1,t1,8
+	and	a6,a6,t3
+	slli	a7,a7,8
+	or	a5,a5,t1
+	or	a6,a6,a7
+	li	t1,704643072
+	li	a7,721420288
+	or	a6,a6,a7
+	or	a5,a5,t1
+	li	a7,-16
+	sw a5, 0(a7) 
+	sw a6, 0(a7) 
+	li	a5,738197504
+	sw a5, 0(a7) 
+	sub	a3,a3,a2
+	sub	a1,a1,a0
+	mul	a1,a1,a3
+	srai	a3,a1,1
+	ble	a3,zero,.L3
+	li	a5,0
+	li	a2,-1
+.L5:
+	sw a4, 0(a2) 
+	addi	a5,a5,1
+	bne	a3,a5,.L5
+.L3:
+	ret
 st7735_draw_triangle:
 	ret
+st7735_draw_line:
+	sub	t4,a3,a1
+	addi	sp,sp,-48
+	srai	a5,t4,31
+	sw	s5,24(sp)
+	sw	s6,20(sp)
+	sw	s7,16(sp)
+	mv	s5,a3
+	xor	t4,a5,t4
+	sw	s0,44(sp)
+	sw	s1,40(sp)
+	sw	s2,36(sp)
+	sw	s3,32(sp)
+	sw	s4,28(sp)
+	sw	s8,12(sp)
+	sw	s9,8(sp)
+	mv	a3,a0
+	mv	s6,a4
+	sub	t4,t4,a5
+	li	s7,1
+	blt	a1,s5,.L9
+	li	s7,-1
+.L9:
+	sub	a4,s6,a2
+	srai	a5,a4,31
+	xor	a4,a5,a4
+	sub	a4,a4,a5
+	neg	s4,a4
+	li	s8,-1
+	bge	a2,s6,.L10
+	li	s8,1
+.L10:
+	sub	a7,t4,a4
+	slli	t0,a1,16
+	slli	t6,a1,8
+	slli	a0,a2,16
+	slli	t2,a2,8
+	sub	t5,a1,s5
+	li	t3,16711680
+	li	s3,704643072
+	li	s2,721420288
+	li	t1,-16
+	li	s1,738197504
+	li	s0,-1
+.L11:
+	slli	a6,t6,16
+	srli	a6,a6,16
+	slli	s9,t2,16
+	and	a5,t0,t3
+	srli	s9,s9,16
+	or	a5,a5,a6
+	and	a6,a0,t3
+	or	a6,a6,s9
+	or	a5,a5,s3
+	or	a6,a6,s2
+	sw a5, 0(t1) 
+	sw a6, 0(t1) 
+	sw s1, 0(t1) 
+	sw a3, 0(s0) 
+	slli	a5,a7,1
+	bne	t5,zero,.L18
+	beq	a2,s6,.L8
+.L18:
+	bgt	s4,a5,.L14
+	add	a1,a1,s7
+	sub	a7,a7,a4
+	slli	t0,a1,16
+	slli	t6,a1,8
+	sub	t5,a1,s5
+	blt	t4,a5,.L11
+.L14:
+	add	a2,a2,s8
+	add	a7,a7,t4
+	slli	a0,a2,16
+	slli	t2,a2,8
+	j	.L11
+.L8:
+	lw	s0,44(sp)
+	lw	s1,40(sp)
+	lw	s2,36(sp)
+	lw	s3,32(sp)
+	lw	s4,28(sp)
+	lw	s5,24(sp)
+	lw	s6,20(sp)
+	lw	s7,16(sp)
+	lw	s8,12(sp)
+	lw	s9,8(sp)
+	addi	sp,sp,48
+	jr	ra
 st7735_draw_circle:
 	ret
 st7735_stream_pixel:
+	ble	a1,zero,.L27
 	li	a5,0
 	li	a4,-1
-.L4:
-	blt	a5,a1,.L5
-	ret
-.L5:
+.L29:
 	sw a0, 0(a4) 
 	addi	a5,a5,1
-	j	.L4
+	bne	a1,a5,.L29
+.L27:
+	ret
 st7735_set_rectangle:
 	li	a5,16711680
 	slli	a0,a0,16
-	andi	a2,a2,255
 	slli	a1,a1,16
+	andi	a2,a2,255
 	andi	a3,a3,255
-	and	a0,a0,a5
 	slli	a2,a2,8
-	and	a1,a1,a5
 	slli	a3,a3,8
+	and	a0,a0,a5
+	and	a1,a1,a5
 	or	a0,a0,a2
-	li	a4,704643072
 	or	a1,a1,a3
+	li	a4,704643072
 	li	a5,721420288
 	or	a1,a1,a5
 	or	a0,a0,a4
@@ -261,102 +477,4 @@ st7735_set_rectangle:
 	li	a4,738197504
 	sw a4, 0(a5) 
 	ret
-st7735_draw_pixel:
-	addi	sp,sp,-16
-	sw	s0,8(sp)
-	mv	s0,a0
-	mv	a0,a1
-	mv	a3,a2
-	mv	a1,a2
-	mv	a2,a0
-	sw	ra,12(sp)
-	call	st7735_set_rectangle
-	mv	a0,s0
-	lw	s0,8(sp)
-	lw	ra,12(sp)
-	li	a1,1
-	addi	sp,sp,16
-	tail	st7735_stream_pixel
-st7735_draw_line:
-	addi	sp,sp,-64
-	sw	s0,56(sp)
-	sub	s0,a3,a1
-	srai	a5,s0,31
-	sw	s4,40(sp)
-	xor	s0,a5,s0
-	sw	ra,60(sp)
-	sw	s1,52(sp)
-	sw	s2,48(sp)
-	sw	s3,44(sp)
-	sw	s5,36(sp)
-	sub	s0,s0,a5
-	li	s4,1
-	blt	a1,a3,.L10
-	li	s4,-1
-.L10:
-	sub	s1,a4,a2
-	srai	a5,s1,31
-	xor	s1,a5,s1
-	sub	s1,s1,a5
-	neg	s5,s1
-	li	s3,-1
-	bge	a2,a4,.L11
-	li	s3,1
-.L11:
-	sub	s2,s0,s1
-.L12:
-	sw	a4,28(sp)
-	sw	a3,24(sp)
-	sw	a2,20(sp)
-	sw	a1,16(sp)
-	sw	a0,12(sp)
-	call	st7735_draw_pixel
-	lw	a1,16(sp)
-	lw	a3,24(sp)
-	lw	a0,12(sp)
-	lw	a2,20(sp)
-	lw	a4,28(sp)
-	bne	a1,a3,.L19
-	beq	a2,a4,.L9
-.L19:
-	slli	a5,s2,1
-	bgt	s5,a5,.L15
-	sub	s2,s2,s1
-	add	a1,a1,s4
-	blt	s0,a5,.L12
-.L15:
-	add	s2,s2,s0
-	add	a2,a2,s3
-	j	.L12
-.L9:
-	lw	ra,60(sp)
-	lw	s0,56(sp)
-	lw	s1,52(sp)
-	lw	s2,48(sp)
-	lw	s3,44(sp)
-	lw	s4,40(sp)
-	lw	s5,36(sp)
-	addi	sp,sp,64
-	jr	ra
-st7735_draw_rectangle:
-	addi	sp,sp,-48
-	sw	ra,44(sp)
-	sw	a0,28(sp)
-	sw	a1,24(sp)
-	sw	a2,20(sp)
-	sw	a3,16(sp)
-	sw	a4,12(sp)
-	call	st7735_set_rectangle
-	lw	a0,28(sp)
-	lw	a1,24(sp)
-	lw	a3,16(sp)
-	lw	a2,20(sp)
-	sub	a1,a1,a0
-	lw	ra,44(sp)
-	sub	a3,a3,a2
-	mul	a1,a1,a3
-	lw	a0,12(sp)
-	addi	sp,sp,48
-	srai	a1,a1,1
-	tail	st7735_stream_pixel
 

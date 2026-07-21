@@ -24,7 +24,7 @@ void draw_dvd(vec2 pos, unsigned color) {
         pos.x,
         pos.y,
         pos.x + SQUARE_HEIGHT - 1,
-        pos.y + SQUARE_HEIGHT- 1
+        pos.y + SQUARE_HEIGHT - 1
     );
     st7735_stream_pixel(color, SQUARE_HEIGHT * SQUARE_HEIGHT / 2);
 }
@@ -32,7 +32,7 @@ __attribute__((optimize("O0"))) void
 change_color_on_collision(unsigned* dvd_color, int current_index) {
     switch (current_index) {
     case 0:
-        *dvd_color = ST7735_WHITE;
+        *dvd_color = ST7735_RED;
         break;
     case 1:
         *dvd_color = ST7735_RED;
@@ -67,11 +67,12 @@ int main() {
     vec2 vel = {2, 2};
 
     st7735_set_rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-    st7735_stream_pixel(ST7735_MAROON, SCREEN_HEIGHT * SCREEN_WIDTH / 2);
+    st7735_stream_pixel(ST7735_BLACK, SCREEN_HEIGHT * SCREEN_WIDTH / 2);
 
-    unsigned current_color = ST7735_WHITE;
+    unsigned current_color = ST7735_MAROON;
     int color_index = 0;
     int had_collision = 0;
+    int collision_counter = 0;
     while (1) {
         had_collision = 0;
         st7735_set_rectangle(
@@ -80,7 +81,7 @@ int main() {
             pos.x + SQUARE_HEIGHT,
             pos.y + SQUARE_HEIGHT
         );
-        st7735_stream_pixel(ST7735_MAROON, SQUARE_HEIGHT* SQUARE_HEIGHT / 2);
+        st7735_stream_pixel(ST7735_BLACK, SQUARE_HEIGHT * SQUARE_HEIGHT / 2);
 
         pos.x += vel.x;
         pos.y += vel.y;
@@ -105,22 +106,20 @@ int main() {
         }
 
         if (had_collision) {
+
+            collision_counter++;
             color_index++;
             if (color_index > 8) {
                 color_index = 0;
             }
-
-            asm volatile (
-                "mv t0, %0"
-                :                   // No outputs
-                : "r" (color_index) // Input: copy color_index into a temporary register (%0)
-                : "t0"              // Clobber: tells the compiler you modified t0
-            );
-
             change_color_on_collision(&current_color, color_index);
         }
         draw_dvd(pos, current_color);
 
-        delay(100'000);
+        if (current_color == ST7735_BLACK) {
+            break;
+        }
+
+        delay(250'000);
     }
 }
