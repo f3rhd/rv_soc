@@ -13,7 +13,7 @@ void delay(unsigned dly_amount) {
 }
 void draw_dvd(vec2 pos, unsigned color) {
 
-    st7735_draw_rectangle(color,pos.x, pos.y, SQUARE_HEIGHT, SQUARE_HEIGHT);
+    st7735_draw_rectangle(color, pos.x, pos.y, SQUARE_HEIGHT, SQUARE_HEIGHT);
 }
 __attribute__((optimize("O0"))) void
 change_color_on_collision(unsigned* dvd_color, int current_index) {
@@ -65,8 +65,8 @@ int main() {
             ST7735_BLACK,
             pos.x,
             pos.y,
-            pos.x + SQUARE_HEIGHT,
-            pos.y + SQUARE_HEIGHT
+            SQUARE_HEIGHT,
+            SQUARE_HEIGHT
         );
 
         pos.x += vel.x;

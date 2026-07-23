@@ -20,11 +20,13 @@ int main() {
 
     unsigned current_color = ST7735_MAROON;
     while (1) {
-        st7735_draw_circle(ST7735_BLACK, pos.x, pos.y, RADIUS);
+        
+        st7735_draw_rectangle(ST7735_BLACK, pos.x - RADIUS, pos.y - RADIUS, RADIUS * 2, RADIUS * 2);
 
         pos.x += vel.x;
         pos.y += vel.y;
 
+        
         if (pos.x + RADIUS >= SCREEN_WIDTH || pos.x - RADIUS <= 0) {
             vel.x = -vel.x;
 
@@ -33,15 +35,18 @@ int main() {
             if (pos.x + RADIUS >= SCREEN_WIDTH)
                 pos.x = SCREEN_WIDTH - RADIUS;
         }
+
+        
         if (pos.y + RADIUS >= SCREEN_HEIGHT || pos.y - RADIUS <= 0) {
             vel.y = -vel.y;
 
-            if (pos.y <= 0)
+            if (pos.y - RADIUS <= 0) 
                 pos.y = RADIUS;
             if (pos.y + RADIUS >= SCREEN_HEIGHT)
                 pos.y = SCREEN_HEIGHT - RADIUS;
         }
 
+        
         st7735_draw_circle(current_color, pos.x, pos.y, RADIUS);
 
         delay(250'000);
