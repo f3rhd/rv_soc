@@ -19,7 +19,9 @@ module rv_processor #(
     input logic clk,
     input logic reset,
     bootloader_if.processor bootloader_if,
-    graphics_if.processor graphics_if
+    graphics_if.processor graphics_if,
+    output logic [15:0] o_led,
+    output logic [15:0] o_segment_display_value
 );
 
     localparam ADDRESS_WIDTH = $clog2(I_CACHE_SIZE / 4);
@@ -173,7 +175,9 @@ module rv_processor #(
         .ei              (execution_if),
         .graphicsi       (graphics_if),
         .o_register_write(register_write_),
-        .o_graphics_write(memory_graphics_write)
+        .o_graphics_write(memory_graphics_write),
+        .o_led_value     (o_led),
+        .o_segment_value (o_segment_display_value)
     );
 
     always_comb begin

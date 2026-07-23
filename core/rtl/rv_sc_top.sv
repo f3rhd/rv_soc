@@ -27,15 +27,16 @@ module rv_sc_top (
     localparam unsigned GRAPHICS_SPI_CLK_HZ = 25_000_000;
     localparam unsigned BAUD_RATE = 115200;
     localparam unsigned HISTORY_SIZE = 5;
-    localparam unsigned I_CACHE_SIZE = 1024 * 16;
+    localparam unsigned I_CACHE_SIZE = 1024 * 32;
     localparam unsigned D_CACHE_SIZE = 1024 * 32;
     localparam unsigned BTB_SIZE = 32;
-    localparam unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 8192 * 4;
+    localparam unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 8192 / 2 * 4;
 
     bootloader_if bootloaderi ();
     graphics_if graphicsi ();
     logic boot_edge;
     logic reset_edge;
+    logic [15:0] segment_value;
 
     assign sck                          = graphicsi.display_sck;
     assign sda                          = graphicsi.display_sda;
@@ -46,7 +47,6 @@ module rv_sc_top (
     assign graphicsi.graphics_init      = boot_edge;
     assign bootloaderi.rx               = rx;
     assign tx                           = bootloaderi.tx;
-    assign led                          = rv_processor.register_file.file[5];
 
     button_edge_detect button_edge_detect_boot (
         .clk   (clk),
@@ -73,10 +73,12 @@ module rv_sc_top (
         .D_CACHE_SIZE(D_CACHE_SIZE  /* default 1 << 10 */),
         .BTB_SIZE    (BTB_SIZE  /* default 128 */)
     ) rv_processor (
-        .clk          (clk),
-        .reset        (reset_edge),
-        .bootloader_if(bootloaderi),
-        .graphics_if  (graphicsi)
+        .clk                    (clk),
+        .reset                  (reset_edge),
+        .bootloader_if          (bootloaderi),
+        .graphics_if            (graphicsi),
+        .o_led                  (led),
+        .o_segment_display_value(segment_value)
     );
     graphics_unit #(
         .GRAPHICS_INSTRUCTION_BUFFER_SIZE(GRAPHICS_INSTRUCTION_BUFFER_SIZE /* default 256 * 4 */),
@@ -88,10 +90,10 @@ module rv_sc_top (
         .graphics_if(graphicsi)
     );
     seven_seg_display seven_seg_display (
-        .clk  (clk),
+        .clk(clk),
         .reset(reset_edge),
-        .in   (graphicsi.graphics_init_done & bootloaderi.program_load_done),
+        .i_display_val(segment_value),
         .o_seg(seg),
-        .o_an (an)
+        .o_an(an)
     );
 endmodule

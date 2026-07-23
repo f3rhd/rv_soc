@@ -15,10 +15,14 @@ module memory #(
     execution_if.mem_consumer ei,
     graphics_if.processor graphicsi,
     output register_write_data_t o_register_write,
-    output logic o_graphics_write
+    output logic o_graphics_write,
+    output logic [15:0] o_led_value,
+    output logic [15:0] o_segment_value
 );
-    localparam unsigned GRAPHICS_PIXEL_DATA_ADDRESS = 32'hFFFFFFFF;
-    localparam unsigned GRAPHICS_COMMAND_DATA_ADDRESS = 32'hFFFFFFF0;
+    localparam logic [31:0] GRAPHICS_PIXEL_ADDRESS = 32'hF0000000;
+    localparam logic [31:0] GRAPHICS_COMMAND_ADDRESS = 32'hF0000004;
+    localparam logic [31:0] SEGMENT_ADDRESS = 32'hF0000008;
+    localparam logic [31:0] LED_ADDRESS = 32'hF000000C;
 
 `ifdef VIVADO
     (* ram_style = "block" *)
@@ -46,7 +50,16 @@ module memory #(
     logic [7:0] byte1_write;
     logic [7:0] byte2_write;
     logic [7:0] byte3_write;
-    assign o_graphics_write = (ei.alu_out == GRAPHICS_COMMAND_DATA_ADDRESS || ei.alu_out == GRAPHICS_PIXEL_DATA_ADDRESS) & ei.mem_write;
+    logic is_mmio;
+
+
+
+    assign is_mmio = ei.alu_out[31] == 1'b1;
+
+
+    assign o_graphics_write = is_mmio && ei.mem_write && (ei.alu_out[3:0] == GRAPHICS_COMMAND_ADDRESS[3:0] | ei.alu_out[3:0] == GRAPHICS_PIXEL_ADDRESS[3:0]);
+
+
     always_comb begin
         byte_en = 4'b0000;
         if (ei.mem_write && !ei.invalid) begin
@@ -84,17 +97,36 @@ module memory #(
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
             graphicsi.graphics_instruction_write <= 1'b0;
+            o_segment_value                      <= 0;
+            o_led_value                          <= 0;
             if (ei.reg_write & ~ei.mem_read & ~ei.mem_write) begin
                 alu_is_reg_write <= 1;
                 reg_alu_out      <= ei.alu_out;
             end else begin
                 if (ei.mem_write) begin
-                    if (o_graphics_write) begin
-                        graphicsi.graphics_instruction <= {
-                            ei.alu_out == GRAPHICS_COMMAND_DATA_ADDRESS ? 1'b1 : 1'b0,
-                            ei.memory_write_data
-                        };
-                        graphicsi.graphics_instruction_write <= 1'b1;
+                    if (is_mmio) begin
+                        case (ei.alu_out[3:0])
+                            GRAPHICS_COMMAND_ADDRESS[3:0]: begin
+                                graphicsi.graphics_instruction <= {
+                                    1'b1, ei.memory_write_data
+                                };
+                                graphicsi.graphics_instruction_write <=ei.memory_operation == 3'b010;
+                            end
+                            GRAPHICS_PIXEL_ADDRESS[3:0]: begin
+                                graphicsi.graphics_instruction <= {
+                                    1'b0, ei.memory_write_data
+                                };
+                                graphicsi.graphics_instruction_write <=  ei.memory_operation == 3'b010;
+                            end
+                            SEGMENT_ADDRESS[3:0]: begin
+                                if (ei.memory_operation == 3'b001)
+                                    o_segment_value <= ei.memory_write_data[15:0];
+                            end
+                            LED_ADDRESS[3:0]: begin
+                                if (ei.memory_operation == 3'b001)
+                                    o_led_value <= ei.memory_write_data[15:0];
+                            end
+                        endcase
                     end else begin
                         if (byte_en[0]) begin
                             ram[translated_address][0:7] <= byte0_write;
