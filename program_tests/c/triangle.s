@@ -12,17 +12,11 @@ main:
 	sw	ra,12(sp)
 	sw	s0,8(sp)
 	addi	s0,sp,16
-	li	a4,160
-	li	a3,128
-	li	a2,0
-	li	a1,0
-	li	a0,0
-	call	st7735_draw_rectangle
 	li	a7,140
-	li	a6,128
+	li	a6,108
 	li	a5,140
-	li	a4,0
-	li	a3,0
+	li	a4,20
+	li	a3,80
 	li	a2,64
 	li	a1,0
 	li	a0,2031616
@@ -102,59 +96,53 @@ st7735_draw_rectangle:
 	addi	sp,sp,64
 	jr	ra
 st7735_triangle_fill_span:
-	addi	sp,sp,-32
-	sw	ra,28(sp)
-	sw	s0,24(sp)
-	addi	s0,sp,32
-	sw	a0,-20(s0)
-	sw	a1,-24(s0)
-	sw	a2,-28(s0)
-	sw	a3,-32(s0)
-	lw	a5,-24(s0)
+	addi	sp,sp,-48
+	sw	ra,44(sp)
+	sw	s0,40(sp)
+	addi	s0,sp,48
+	sw	a0,-36(s0)
+	sw	a1,-40(s0)
+	sw	a2,-44(s0)
+	sw	a3,-48(s0)
+	lw	a5,-40(s0)
 	blt	a5,zero,.L10
-	lw	a4,-24(s0)
+	lw	a4,-40(s0)
 	li	a5,159
 	bgt	a4,a5,.L10
-	lw	a4,-28(s0)
-	lw	a5,-32(s0)
+	lw	a4,-44(s0)
+	lw	a5,-48(s0)
 	ble	a4,a5,.L7
-	lw	a4,-28(s0)
-	lw	a5,-32(s0)
-	xor	a5,a4,a5
-	sw	a5,-28(s0)
+	lw	a5,-44(s0)
+	sw	a5,-20(s0)
+	lw	a5,-48(s0)
+	sw	a5,-44(s0)
+	lw	a5,-20(s0)
+	sw	a5,-48(s0)
 .L7:
-	lw	a4,-32(s0)
-	lw	a5,-28(s0)
-	xor	a5,a4,a5
-	sw	a5,-32(s0)
-	lw	a4,-28(s0)
-	lw	a5,-32(s0)
-	xor	a5,a4,a5
-	sw	a5,-28(s0)
-	lw	a5,-28(s0)
+	lw	a5,-44(s0)
 	bge	a5,zero,.L8
 	li	a5,0
 .L8:
-	sw	a5,-28(s0)
-	lw	a5,-32(s0)
+	sw	a5,-44(s0)
+	lw	a5,-48(s0)
 	li	a4,127
 	ble	a5,a4,.L9
 	li	a5,127
 .L9:
-	sw	a5,-32(s0)
-	lw	a4,-24(s0)
-	lw	a3,-32(s0)
-	lw	a2,-24(s0)
-	lw	a1,-28(s0)
-	lw	a0,-20(s0)
+	sw	a5,-48(s0)
+	lw	a4,-40(s0)
+	lw	a3,-48(s0)
+	lw	a2,-40(s0)
+	lw	a1,-44(s0)
+	lw	a0,-36(s0)
 	call	st7735_draw_line
 	j	.L3
 .L10:
 	nop
 .L3:
-	lw	ra,28(sp)
-	lw	s0,24(sp)
-	addi	sp,sp,32
+	lw	ra,44(sp)
+	lw	s0,40(sp)
+	addi	sp,sp,48
 	jr	ra
 st7735_triangle_edge_x:
 	addi	sp,sp,-48
@@ -192,135 +180,99 @@ st7735_triangle_edge_x:
 	addi	sp,sp,48
 	jr	ra
 st7735_draw_triangle:
-	addi	sp,sp,-96
-	sw	ra,92(sp)
-	sw	s0,88(sp)
-	addi	s0,sp,96
-	sw	a0,-68(s0)
-	sw	a1,-72(s0)
-	sw	a2,-76(s0)
-	sw	a3,-80(s0)
-	sw	a4,-84(s0)
-	sw	a5,-88(s0)
-	sw	a6,-92(s0)
-	sw	a7,-96(s0)
-	lw	a5,-72(s0)
+	addi	sp,sp,-128
+	sw	ra,124(sp)
+	sw	s0,120(sp)
+	addi	s0,sp,128
+	sw	a0,-100(s0)
+	sw	a1,-104(s0)
+	sw	a2,-108(s0)
+	sw	a3,-112(s0)
+	sw	a4,-116(s0)
+	sw	a5,-120(s0)
+	sw	a6,-124(s0)
+	sw	a7,-128(s0)
+	lw	a5,-104(s0)
 	beq	a5,zero,.L15
-	lw	a4,-88(s0)
-	lw	a3,-84(s0)
-	lw	a2,-80(s0)
-	lw	a1,-76(s0)
-	lw	a0,-68(s0)
+	lw	a4,-120(s0)
+	lw	a3,-116(s0)
+	lw	a2,-112(s0)
+	lw	a1,-108(s0)
+	lw	a0,-100(s0)
 	call	st7735_draw_line
-	lw	a4,-96(s0)
-	lw	a3,-92(s0)
-	lw	a2,-80(s0)
-	lw	a1,-76(s0)
-	lw	a0,-68(s0)
+	lw	a4,-128(s0)
+	lw	a3,-124(s0)
+	lw	a2,-112(s0)
+	lw	a1,-108(s0)
+	lw	a0,-100(s0)
 	call	st7735_draw_line
-	lw	a4,-96(s0)
-	lw	a3,-92(s0)
-	lw	a2,-88(s0)
-	lw	a1,-84(s0)
-	lw	a0,-68(s0)
+	lw	a4,-128(s0)
+	lw	a3,-124(s0)
+	lw	a2,-120(s0)
+	lw	a1,-116(s0)
+	lw	a0,-100(s0)
 	call	st7735_draw_line
 	j	.L14
 .L15:
-	lw	a5,-76(s0)
+	lw	a5,-108(s0)
 	sw	a5,-20(s0)
-	lw	a5,-80(s0)
+	lw	a5,-112(s0)
 	sw	a5,-24(s0)
-	lw	a5,-84(s0)
+	lw	a5,-116(s0)
 	sw	a5,-28(s0)
-	lw	a5,-88(s0)
+	lw	a5,-120(s0)
 	sw	a5,-32(s0)
-	lw	a5,-92(s0)
+	lw	a5,-124(s0)
 	sw	a5,-36(s0)
-	lw	a5,-96(s0)
+	lw	a5,-128(s0)
 	sw	a5,-40(s0)
 	lw	a4,-24(s0)
 	lw	a5,-32(s0)
 	ble	a4,a5,.L17
-	lw	a4,-20(s0)
-	lw	a5,-28(s0)
-	xor	a5,a4,a5
-	sw	a5,-20(s0)
-	lw	a4,-28(s0)
 	lw	a5,-20(s0)
-	xor	a5,a4,a5
-	sw	a5,-28(s0)
-	lw	a4,-20(s0)
+	sw	a5,-52(s0)
 	lw	a5,-28(s0)
-	xor	a5,a4,a5
 	sw	a5,-20(s0)
-	lw	a4,-24(s0)
-	lw	a5,-32(s0)
-	xor	a5,a4,a5
-	sw	a5,-24(s0)
-	lw	a4,-32(s0)
+	lw	a5,-52(s0)
+	sw	a5,-28(s0)
 	lw	a5,-24(s0)
-	xor	a5,a4,a5
-	sw	a5,-32(s0)
-	lw	a4,-24(s0)
+	sw	a5,-56(s0)
 	lw	a5,-32(s0)
-	xor	a5,a4,a5
 	sw	a5,-24(s0)
+	lw	a5,-56(s0)
+	sw	a5,-32(s0)
 .L17:
 	lw	a4,-24(s0)
 	lw	a5,-40(s0)
 	ble	a4,a5,.L18
-	lw	a4,-20(s0)
-	lw	a5,-36(s0)
-	xor	a5,a4,a5
-	sw	a5,-20(s0)
-	lw	a4,-36(s0)
 	lw	a5,-20(s0)
-	xor	a5,a4,a5
-	sw	a5,-36(s0)
-	lw	a4,-20(s0)
+	sw	a5,-60(s0)
 	lw	a5,-36(s0)
-	xor	a5,a4,a5
 	sw	a5,-20(s0)
-	lw	a4,-24(s0)
-	lw	a5,-40(s0)
-	xor	a5,a4,a5
-	sw	a5,-24(s0)
-	lw	a4,-40(s0)
+	lw	a5,-60(s0)
+	sw	a5,-36(s0)
 	lw	a5,-24(s0)
-	xor	a5,a4,a5
-	sw	a5,-40(s0)
-	lw	a4,-24(s0)
+	sw	a5,-64(s0)
 	lw	a5,-40(s0)
-	xor	a5,a4,a5
 	sw	a5,-24(s0)
+	lw	a5,-64(s0)
+	sw	a5,-40(s0)
 .L18:
 	lw	a4,-32(s0)
 	lw	a5,-40(s0)
 	ble	a4,a5,.L19
-	lw	a4,-28(s0)
-	lw	a5,-36(s0)
-	xor	a5,a4,a5
-	sw	a5,-28(s0)
-	lw	a4,-36(s0)
 	lw	a5,-28(s0)
-	xor	a5,a4,a5
-	sw	a5,-36(s0)
-	lw	a4,-28(s0)
+	sw	a5,-68(s0)
 	lw	a5,-36(s0)
-	xor	a5,a4,a5
 	sw	a5,-28(s0)
-	lw	a4,-32(s0)
-	lw	a5,-40(s0)
-	xor	a5,a4,a5
-	sw	a5,-32(s0)
-	lw	a4,-40(s0)
+	lw	a5,-68(s0)
+	sw	a5,-36(s0)
 	lw	a5,-32(s0)
-	xor	a5,a4,a5
-	sw	a5,-40(s0)
-	lw	a4,-32(s0)
+	sw	a5,-72(s0)
 	lw	a5,-40(s0)
-	xor	a5,a4,a5
 	sw	a5,-32(s0)
+	lw	a5,-72(s0)
+	sw	a5,-40(s0)
 .L19:
 	lw	a5,-24(s0)
 	sw	a5,-44(s0)
@@ -332,18 +284,18 @@ st7735_draw_triangle:
 	lw	a1,-20(s0)
 	lw	a0,-44(s0)
 	call	st7735_triangle_edge_x
-	sw	a0,-60(s0)
+	sw	a0,-84(s0)
 	lw	a4,-32(s0)
 	lw	a3,-28(s0)
 	lw	a2,-24(s0)
 	lw	a1,-20(s0)
 	lw	a0,-44(s0)
 	call	st7735_triangle_edge_x
-	sw	a0,-64(s0)
-	lw	a3,-64(s0)
-	lw	a2,-60(s0)
+	sw	a0,-88(s0)
+	lw	a3,-88(s0)
+	lw	a2,-84(s0)
 	lw	a1,-44(s0)
-	lw	a0,-68(s0)
+	lw	a0,-100(s0)
 	call	st7735_triangle_fill_span
 	lw	a5,-44(s0)
 	addi	a5,a5,1
@@ -362,18 +314,18 @@ st7735_draw_triangle:
 	lw	a1,-20(s0)
 	lw	a0,-48(s0)
 	call	st7735_triangle_edge_x
-	sw	a0,-52(s0)
+	sw	a0,-76(s0)
 	lw	a4,-40(s0)
 	lw	a3,-36(s0)
 	lw	a2,-32(s0)
 	lw	a1,-28(s0)
 	lw	a0,-48(s0)
 	call	st7735_triangle_edge_x
-	sw	a0,-56(s0)
-	lw	a3,-56(s0)
-	lw	a2,-52(s0)
+	sw	a0,-80(s0)
+	lw	a3,-80(s0)
+	lw	a2,-76(s0)
 	lw	a1,-48(s0)
-	lw	a0,-68(s0)
+	lw	a0,-100(s0)
 	call	st7735_triangle_fill_span
 	lw	a5,-48(s0)
 	addi	a5,a5,1
@@ -383,9 +335,9 @@ st7735_draw_triangle:
 	lw	a5,-40(s0)
 	ble	a4,a5,.L23
 .L14:
-	lw	ra,92(sp)
-	lw	s0,88(sp)
-	addi	sp,sp,96
+	lw	ra,124(sp)
+	lw	s0,120(sp)
+	addi	sp,sp,128
 	jr	ra
 st7735_draw_line:
 	addi	sp,sp,-96
