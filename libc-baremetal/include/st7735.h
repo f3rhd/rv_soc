@@ -8,23 +8,17 @@
 #ifndef ST7735_H
 #define ST7735_H
 #include "st7735_colors.h"
-void st7735_stream_pixel(unsigned color, int amount);
-void st7735_set_rectangle(
-    int x_start,
-    int y_start,
-    int x_end,
-    int y_end
-);
 void st7735_draw_pixel(unsigned color, int x, int y);
 void st7735_draw_rectangle(
+    unsigned color,
     int x_start,
     int y_start,
-    int x_end,
-    int y_end,
-    unsigned color
+    int width,
+    int height
 );
 void st7735_draw_triangle(
     unsigned color,
+    int hollow,
     int p1_x,
     int p1_y,
     int p2_x,
