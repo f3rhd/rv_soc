@@ -193,6 +193,7 @@ module graphics_execute #(
             send_byte_return   <= EXEC_KIND_DO_NOTHING;
             graphics_state     <= IDLE;
             boot_state         <= UNDEFINED;
+            sent_command       <= 0;
         end else begin
             case (graphics_state)
                 IDLE: begin
@@ -204,6 +205,7 @@ module graphics_execute #(
                     o_execute_complete <= 0;
                     exec_state         <= EXEC_KIND_DO_NOTHING;
                     boot_state         <= UNDEFINED;
+                    sent_command       <= 0;
                     if (i_boot) begin
                         graphics_state <= BOOT;
                         rom_ptr        <= 0;

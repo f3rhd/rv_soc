@@ -30,11 +30,12 @@ module graphics_instruction_buffer #(
     logic [$clog2(INSTRUCTION_BUFFER_BOTTOM_INDEX + 1) - 1:0] tail;
 
     logic [32:0] read_entry;
+    logic head_advanced;
     logic [$clog2(INSTRUCTION_BUFFER_BOTTOM_INDEX):0] fill_count;
 
     assign o_instruction = read_entry;
     assign o_buffer_is_full = (fill_count == INSTRUCTION_BUFFER_BOTTOM_INDEX + 1);
-    assign o_instruction_is_valid = (fill_count != 0);
+    assign o_instruction_is_valid = (fill_count != 0) & !head_advanced;
 
     always_ff @(posedge clk) begin
         if (i_reset) begin
@@ -52,12 +53,15 @@ module graphics_instruction_buffer #(
     end
     always_ff @(posedge clk) begin
         if (i_reset) begin
-            head <= 0;
-            tail <= 0;
+            head          <= 0;
+            tail          <= 0;
+            head_advanced <= 0;
         end else begin
-            read_entry <= instruction_buffer[head];
+            head_advanced <= 0;
+            read_entry    <= instruction_buffer[head];
             if (i_advance_head) begin
-                head <= head + 1;
+                head          <= head + 1;
+                head_advanced <= 1;
             end
             if (i_instruction_write & !o_buffer_is_full) begin : write
                 instruction_buffer[tail] <= i_instruction;

@@ -11,13 +11,14 @@ module tb_rv_gfx_int;
 
     logic clk = 0;
     logic reset = 0;
+    logic print = 1;
     bootloader_if bootloader_if ();
     graphics_if graphics_if ();
     rv_processor #(
         .HISTORY_SIZE(10  /* default 10 */),
         .I_CACHE_SIZE(1024 * 16  /* default 1024 */),
         .D_CACHE_SIZE(1024 * 32  /* default 1 << 10 */),
-        .BTB_SIZE    (16  /* default 128 */)
+        .BTB_SIZE    (64  /* default 128 */)
     ) rv_processor (
         .clk          (clk),
         .reset        (reset),
@@ -25,7 +26,7 @@ module tb_rv_gfx_int;
         .graphics_if  (graphics_if)
     );
     graphics_unit #(
-        .GRAPHICS_INSTRUCTION_BUFFER_SIZE(10240 * 4  /* default 256 * 4 */),
+        .GRAPHICS_INSTRUCTION_BUFFER_SIZE(10240 * 100 * 4  /* default 256 * 4 */),
         .SYSTEM_CLK_HZ(100_000_000  /* default 100_000_000 */),
         .SPI_CLK_HZ(50_000_000  /* default 25_000_000 */)
     ) graphics_unit (
@@ -36,13 +37,11 @@ module tb_rv_gfx_int;
 
     always #5 clk = ~clk;
     always_ff @(posedge clk) begin
-        if (rv_processor.register_write_.write_enable && rv_processor.register_write_.write_addr != 0)
-            $display(
-                "[Time: %0t] Register File[%d] <- 0x%h",
-                $time,
-                rv_processor.register_write_.write_addr,
-                rv_processor.register_write_.write_data
-            );
+        if (rv_processor.register_write_.write_enable && rv_processor.register_write_.write_addr != 0)begin
+            $display("[Time: %0t] Register File[%d] <- 0x%h", $time,
+                     rv_processor.register_write_.write_addr,
+                     rv_processor.register_write_.write_data);
+        end
         if (rv_processor.memory.ei.mem_write) begin
             $display("[Time: %0t] DCache[0x%h] <- %h", $time,
                      rv_processor.memory.ei.alu_out,
@@ -81,9 +80,9 @@ module tb_rv_gfx_int;
             $display(
                 "[Time: %0t] BranchTableBank[0x%h][0x%h] <- instruction_addr : 0x%h | target_addr : 0x%h | is_jump : 0x%h",
                 $time, rv_processor.fetch.btb.write_set_id,
-                rv_processor.fetch.btb.write_way,
+                rv_processor.fetch.btb.set_allocation_counter[rv_processor.fetch.btb.write_set_id],
                 rv_processor.execution_if.branch_instruction_addr * 4,
-                rv_processor.execution_if.redirection_address * 4,
+                rv_processor.execution_if.btb_branch_target_addr * 4,
                 rv_processor.execution_if.btb_write_jump);
         end
         if (rv_processor.execution_if.redirect) begin
@@ -92,19 +91,28 @@ module tb_rv_gfx_int;
                 $time, rv_processor.execution_if.redirection_address * 4);
         end
         if (rv_processor.fetch_btb_hit & rv_processor.fetch_instruction_valid) begin
-            $display("[Time: %0t] Instruction[0x%h] hit btb.", $time,
-                     rv_processor.fetch_instruction_addr * 4);
+            if (print) begin
+                $display(
+                    "[Time: %0t] Instruction[0x%h] hit btb. | Redirected to : 0x%h",
+                    $time, rv_processor.fetch_instruction_addr * 4,
+                    rv_processor.fetch.btb_target_addr * 4);
+            end
+            if (rv_processor.fetch_instruction_addr == 2) begin
+                print <= 0;
+            end
         end
+        if (graphics_unit.execute_complete) begin
+            $display("Graphics Instruction : 0x%h complete",
+                     graphics_unit.graphics_execute.r_decode.instruction);
+        end
+
     end
     initial begin
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/assembly/string_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/dvd.hex",
             rv_processor.fetch.instructions);
 
-        reset                           = 1;
-        bootloader_if.program_load_done = 0;
-        bootloader_if.instruction       = 0;
-        bootloader_if.instruction_ready = 0;
+        reset = 1;
 
         repeat (2) @(posedge clk);
         #1;
@@ -113,11 +121,9 @@ module tb_rv_gfx_int;
         #2;
         graphics_unit.graphics_execute.graphics_state = graphics_unit.graphics_execute.EXECUTE;
         graphics_unit.graphics_execute.exec_state = graphics_unit.graphics_execute.EXEC_KIND_DO_NOTHING;
-        bootloader_if.program_load_done = 1;
-        bootloader_if.instruction = 0;
-        bootloader_if.instruction_ready = 0;
-        //rv_processor.fetch.program_size = 32'hFFFFFFFF;
-        graphics_if.graphics_init_done = 1;
+        rv_processor.fetch.state = rv_processor.fetch.FETCH;
+        rv_processor.fetch.instruction_count = 32'hFFFFFFFF;
+        #1;
         $stop;
     end
 endmodule
