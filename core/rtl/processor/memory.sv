@@ -12,6 +12,7 @@ module memory #(
     parameter SIZE = 2048
 ) (
     input logic clk,
+    input logic i_reset,
     execution_if.mem_consumer ei,
     graphics_if.processor graphicsi,
     output register_write_data_t o_register_write,
@@ -83,7 +84,16 @@ module memory #(
                                                 ei.memory_write_data[7:0];
     end
     always_ff @(posedge clk) begin
-        if (ei.invalid) begin
+        if (i_reset) begin
+            o_register_write.write_addr          <= 0;
+            o_register_write.write_enable        <= 0;
+            alu_is_reg_write                     <= 0;
+            reg_mem_read                         <= 0;
+            graphicsi.graphics_instruction       <= 0;
+            graphicsi.graphics_instruction_write <= 1'b0;
+            o_led_value                          <= 0;
+            o_segment_value                      <= 0;
+        end else if (ei.invalid) begin
             o_register_write.write_addr          <= 0;
             o_register_write.write_enable        <= 0;
             alu_is_reg_write                     <= 0;
@@ -97,8 +107,6 @@ module memory #(
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
             graphicsi.graphics_instruction_write <= 1'b0;
-            o_segment_value                      <= 0;
-            o_led_value                          <= 0;
             if (ei.reg_write & ~ei.mem_read & ~ei.mem_write) begin
                 alu_is_reg_write <= 1;
                 reg_alu_out      <= ei.alu_out;

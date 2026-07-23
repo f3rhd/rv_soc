@@ -172,6 +172,7 @@ module rv_processor #(
         .SIZE(D_CACHE_SIZE)
     ) memory (
         .clk             (clk),
+        .i_reset         (reset),
         .ei              (execution_if),
         .graphicsi       (graphics_if),
         .o_register_write(register_write_),
