@@ -35,15 +35,13 @@ inline void st7735_draw_rectangle(
 #define __MAX(x, y) x > y ? x : y
 #define __MIN(x, y) x < y ? x : y
 static void st7735_triangle_fill_span(unsigned color, int y, int xa, int xb) {
-
+    if (y < 0 || y >= ST7735_DISPLAY_HEIGHT)
+        return;
     if (xa > xb)
         __SWAP(xa, xb);
     xa = __MAX(xa, 0);
     xb = __MIN(xb, ST7735_DISPLAY_WIDTH - 1);
-    if (y < 0 || y >= ST7735_DISPLAY_HEIGHT)
-        return;
-    int base = y * ST7735_DISPLAY_HEIGHT;
-    st7735_draw_line(color, xa, base, xb, base);
+    st7735_draw_line(color, xa, y, xb, y);
 }
 inline static int
 st7735_triangle_edge_x(int y, int ax, int ay, int bx, int by) {
