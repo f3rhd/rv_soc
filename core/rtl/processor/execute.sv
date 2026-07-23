@@ -42,6 +42,10 @@ module execute #(
     logic mul_begin;
     logic mul_done;
     logic [1:0] mul_type;
+    logic [1:0] div_type;
+    logic div_begin;
+    logic [31:0] div_result;
+    logic div_done;
 
     decoded_instruction_t instruction_data;
     register_read_data_t read_data;
@@ -59,7 +63,7 @@ module execute #(
         |
         ((i_decode_out.instruction_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~i_decode_out.instruction_data.is_reg_to_reg_imm )
     );
-    assign exi.stall_pipeline_type2 = mul_begin & ~mul_done;
+    assign exi.stall_pipeline_type2 = (mul_begin & ~mul_done) | (div_begin & ~div_done);
     multiplier multiplier (
         .clk           (clk),
         .i_multiplicand(src2_data),
@@ -69,6 +73,16 @@ module execute #(
         .i_reset       (i_reset),
         .o_result      (mul_result),
         .o_done        (mul_done)
+    );
+    divider divider (
+        .clk       (clk),
+        .i_dividend(src1_data),
+        .i_divisor (src2_data),
+        .i_div_type(div_type),
+        .i_begin   (div_begin),
+        .i_reset   (i_reset),
+        .o_result  (div_result),
+        .o_done    (div_done)
     );
     always_comb begin
         memory_operation = '0;
@@ -86,6 +100,8 @@ module execute #(
         btb_branch_target_addr = instruction_data.instruction_addr +instruction_data.extended_imm_val;
         mul_begin = 0;
         mul_type = 0;
+        div_begin = 0;
+        div_type = 0;
 
 
         src1_data = src1_match ? exi.alu_out : read_data.src1_data;
@@ -141,26 +157,33 @@ module execute #(
                         mul_type  = 2'b11;
                         mul_begin = 1;
                     end
-                    //5'b10010:
-                    //alu_out = (src2_data == 32'h0) ? 32'hFFFF_FFFF :
-                    //            (src1_data == 32'h8000_0000 &&
-                    //            src2_data == 32'hFFFF_FFFF)  ? 32'h8000_0000 :
-                    //            $signed(src1_data) / $signed(src2_data);
+                    // DIV 
+                    5'b10010: begin
+                        alu_out   = div_result;
+                        div_type  = 2'b00;
+                        div_begin = 1;
+                    end
 
-                    //// DIVU (Unsigned)
-                    //5'b10011:
-                    //alu_out = (src2_data == 32'h0) ? 32'hFFFF_FFFF :
-                    //            src1_data / src2_data;
+                    // DIVU (Unsigned)
+                    5'b10011: begin
+                        alu_out   = div_result;
+                        div_type  = 2'b01;
+                        div_begin = 1;
 
-                    //5'b10100:
-                    //alu_out = (src2_data == 32'h0) ? src1_data :
-                    //            (src1_data == 32'h8000_0000 &&
-                    //            src2_data == 32'hFFFF_FFFF)  ? 32'h0 :
-                    //            $signed(src1_data) % $signed(src2_data);
+                    end
+                    // REM
+                    5'b10100: begin
+                        alu_out   = div_result;
+                        div_type  = 2'b10;
+                        div_begin = 1;
+                    end
 
-                    //5'b10101:
-                    //alu_out = (src2_data == 32'h0) ? src1_data :
-                    //           src1_data % src2_data;
+                    // REMU
+                    5'b10101: begin
+                        alu_out   = div_result;
+                        div_type  = 2'b11;
+                        div_begin = 1;
+                    end
                     default: alu_out = 0;
                 endcase
             end
