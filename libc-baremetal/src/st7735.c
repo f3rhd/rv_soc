@@ -24,21 +24,25 @@ inline void st7735_draw_rectangle(
 ) {
     int x_end = x_start + width;
     int y_end = y_start + height;
-    st7735_set_rectangle(x_start, y_start, x_end-1, y_end-1);
+    st7735_set_rectangle(x_start, y_start, x_end - 1, y_end - 1);
     // each color data corresponds to two pixel values
     st7735_stream_pixel(color, ((x_end - x_start) * (y_end - y_start)) >> 1);
 }
 #define __SWAP(x, y)                                                           \
-    x = x ^ y;                                                                 \
-    y = x ^ y;                                                                 \
-    x = x ^ y;
+    do {                                                                       \
+        int temp = x;                                                          \
+        x = y;                                                                 \
+        y = temp;                                                              \
+    } while (0)
+
 #define __MAX(x, y) x > y ? x : y
 #define __MIN(x, y) x < y ? x : y
 static void st7735_triangle_fill_span(unsigned color, int y, int xa, int xb) {
     if (y < 0 || y >= ST7735_DISPLAY_HEIGHT)
         return;
-    if (xa > xb)
+    if (xa > xb) {
         __SWAP(xa, xb);
+    }
     xa = __MAX(xa, 0);
     xb = __MIN(xb, ST7735_DISPLAY_WIDTH - 1);
     st7735_draw_line(color, xa, y, xb, y);
@@ -160,10 +164,34 @@ void st7735_draw_circle(
     int err = 1 - radius;
 
     while (x >= y) {
-        st7735_draw_line(color, center_x - x, center_y + y, center_x + x, center_y + y);
-        st7735_draw_line(color, center_x - x, center_y - y, center_x + x, center_y - y);
-        st7735_draw_line(color, center_x - y, center_y + x, center_x + y, center_y + x);
-        st7735_draw_line(color, center_x - y, center_y - x, center_x + y, center_y - x);
+        st7735_draw_line(
+            color,
+            center_x - x,
+            center_y + y,
+            center_x + x,
+            center_y + y
+        );
+        st7735_draw_line(
+            color,
+            center_x - x,
+            center_y - y,
+            center_x + x,
+            center_y - y
+        );
+        st7735_draw_line(
+            color,
+            center_x - y,
+            center_y + x,
+            center_x + y,
+            center_y + x
+        );
+        st7735_draw_line(
+            color,
+            center_x - y,
+            center_y - x,
+            center_x + y,
+            center_y - x
+        );
 
         y++;
 
