@@ -205,7 +205,7 @@ void st7735_draw_circle(
 }
 
 static inline void st7735_stream_pixel(unsigned int color, int amount) {
-    volatile int* data_address = (volatile int*)0xFFFFFFFF;
+    volatile int* data_address = (volatile int*)0xF0000000;
 
     for (int i = 0; i < amount; i++) {
         asm volatile("sw %0, 0(%1) \n\t"
@@ -217,7 +217,7 @@ static inline void st7735_stream_pixel(unsigned int color, int amount) {
 
 static inline void
 st7735_set_rectangle(int x_start, int y_start, int x_end, int y_end) {
-    volatile int* command_address = (volatile int*)0xFFFFFFF0;
+    volatile int* command_address = (volatile int*)0xF0000004;
     int stream_cmd = 0x2C000000;
 
     int col_value =
