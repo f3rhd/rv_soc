@@ -15,11 +15,13 @@ module execute #(
     when there is a dependency between a load and following branch/jump instruction
     we have to disable redirection for one cycle as operand that is going to be use for comparison is not ready yet*/
     input logic i_en,
+    input logic i_reset,
     input logic i_output_bubble,
     input decode_output_t i_decode_out, // has the signals needed for triggering type1 stall
     input register_read_output_t i_register_read_out,
     execution_if.producer exi
 );
+
     logic [31:0] alu_out;
     logic branch_result;
     logic [2:0] memory_operation;
@@ -36,6 +38,10 @@ module execute #(
     logic [31:0] branch_instruction_addr;
     logic btb_write_jump;
     logic [31:0] btb_branch_target_addr;
+    logic [31:0] mul_result;
+    logic mul_begin;
+    logic mul_done;
+    logic [1:0] mul_type;
 
     decoded_instruction_t instruction_data;
     register_read_data_t read_data;
@@ -53,6 +59,17 @@ module execute #(
         |
         ((i_decode_out.instruction_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~i_decode_out.instruction_data.is_reg_to_reg_imm )
     );
+    assign exi.stall_pipeline_type2 = mul_begin & ~mul_done;
+    multiplier multiplier (
+        .clk           (clk),
+        .i_multiplicand(src2_data),
+        .i_multiplier  (src1_data),
+        .i_mul_type    (mul_type),
+        .i_begin       (mul_begin),
+        .i_reset       (i_reset),
+        .o_result      (mul_result),
+        .o_done        (mul_done)
+    );
     always_comb begin
         memory_operation = '0;
         alu_out = 0;
@@ -67,6 +84,8 @@ module execute #(
         branch_instruction_addr = instruction_data.instruction_addr;
         btb_write_jump = '0;
         btb_branch_target_addr = instruction_data.instruction_addr +instruction_data.extended_imm_val;
+        mul_begin = 0;
+        mul_type = 0;
 
 
         src1_data = src1_match ? exi.alu_out : read_data.src1_data;
@@ -97,20 +116,31 @@ module execute #(
                     // LUI
                     5'b01100: alu_out = src2_data;
                     //MUL
-                    //5'b01110: alu_out = src1_data * src2_data;
-                    //// MULH (Signed * Signed)
-                    //5'b01111:
-                    //alu_out = 64'($signed(src1_data) * $signed(src2_data)) >>
-                    //    32;
+                    5'b01110: begin
+                        alu_out   = mul_result;
+                        mul_type  = 2'b00;
+                        mul_begin = 1;
+                    end
+                    // MULH (Signed * Signed)
+                    5'b01111: begin
+                        alu_out   = mul_result;
+                        mul_type  = 2'b01;
+                        mul_begin = 1;
+                    end
 
-                    //// MULHSU (Signed * Unsigned)
-                    //5'b10000:
-                    //alu_out = (65'($signed({{32{src1_data[31]}}, src1_data}) *
-                    //               $signed({33'b0, src2_data}))) >> 32;
+                    // MULHSU (Signed * Unsigned)
+                    5'b10000: begin
+                        alu_out   = mul_result;
+                        mul_type  = 2'b10;
+                        mul_begin = 1;
+                    end
 
-                    //// MULHU (Unsigned * Unsigned)
-                    //5'b10001: alu_out = (64'(src1_data) * 64'(src2_data)) >> 32;
-
+                    // MULHU (Unsigned * Unsigned)
+                    5'b10001: begin
+                        alu_out   = mul_result;
+                        mul_type  = 2'b11;
+                        mul_begin = 1;
+                    end
                     //5'b10010:
                     //alu_out = (src2_data == 32'h0) ? 32'hFFFF_FFFF :
                     //            (src1_data == 32'h8000_0000 &&
@@ -197,6 +227,7 @@ module execute #(
             end
         endcase
     end
+
     always_ff @(posedge clk) begin
         if (instruction_data.invalid | i_output_bubble) begin
             exi.invalid                 <= 1;

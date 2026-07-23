@@ -9,6 +9,7 @@ module stage_controller (
     input logic i_misprediction,
     input logic i_load_stall_type0,
     input logic i_load_stall_type1,
+    input logic i_load_stall_type2,
     input logic i_graphics_instruction_write_fail,
     output logic [0:4] flush_vector,
     output logic [0:4] stall_vector
@@ -49,6 +50,10 @@ module stage_controller (
             flush_vector = 5'b00001;
             stall_vector = 5'b11100;
         end else if (i_load_stall_type1) begin
+            stall_vector = 5'b11101;
+            flush_vector = 5'b00010;
+        end else if (i_load_stall_type2) begin // when multiplication or division is happening
+            // flush execute stall the rest
             stall_vector = 5'b11101;
             flush_vector = 5'b00010;
         end

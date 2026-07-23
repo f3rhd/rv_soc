@@ -109,7 +109,7 @@ module tb_rv_gfx_int;
     end
     initial begin
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/dvd.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/assembly/mul_test.hex",
             rv_processor.fetch.instructions);
 
         reset = 1;

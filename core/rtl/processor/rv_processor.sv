@@ -63,6 +63,7 @@ module rv_processor #(
     execution_if #(.HISTORY_SIZE(HISTORY_SIZE)) execution_if ();
     logic execution_output_bubble;
     logic execution_enable;
+    logic execution_reset; // resets the internal state of multiplier and divider units
 
 
     // Stage control signals
@@ -76,6 +77,7 @@ module rv_processor #(
         .i_misprediction(execution_if.redirect),
         .i_load_stall_type0(execution_if.stall_pipeline_type0),
         .i_load_stall_type1(execution_if.stall_pipeline_type1),
+        .i_load_stall_type2(execution_if.stall_pipeline_type2),
         .i_graphics_instruction_write_fail(graphics_if.graphics_buffer_full & memory_graphics_write),
         .flush_vector(stage_controller_flush_vector),
         .stall_vector(stage_controller_stall_vector)
@@ -156,6 +158,7 @@ module rv_processor #(
     execute execute (
         .clk                (clk),
         .i_en               (execution_enable),
+        .i_reset            (execution_reset),
         .i_output_bubble    (execution_output_bubble),
         .i_decode_out       (decode_out_),
         .i_register_read_out(register_read_),
@@ -193,5 +196,6 @@ module rv_processor #(
 
         execution_output_bubble = stage_controller_flush_vector[3];
         execution_enable = ~stage_controller_stall_vector[3];
+        execution_reset = reset;
     end
 endmodule

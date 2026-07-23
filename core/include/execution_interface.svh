@@ -41,10 +41,12 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     logic invalid;
     logic stall_pipeline_type0;
     logic stall_pipeline_type1;
+    logic stall_pipeline_type2;
     logic mem_write;
     logic mem_read;
     logic reg_write;
     logic btb_write;
+
 
     modport producer(
         output redirect,
@@ -64,7 +66,8 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         output btb_write,
         output stall_pipeline_type1,
         output btb_write_jump,
-        output btb_branch_target_addr
+        output btb_branch_target_addr,
+        output stall_pipeline_type2
     );
     modport register_read (
         input dest,
