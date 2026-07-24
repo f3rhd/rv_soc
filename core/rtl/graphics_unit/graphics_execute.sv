@@ -47,7 +47,7 @@ module graphics_execute #(
     // we are going to fill screen with blue before handing it to execute
     localparam logic [15:0] FILL_COLOR = 16'hF800;  // Blue in BGR565
     localparam unsigned FILL_PIXELS = 20480;  // 128 * 160
-    logic [14:0] fill_pix_cnt;
+    logic [23:0] fill_pix_cnt;
 
     typedef enum logic [1:0] {
         IDLE,
@@ -397,29 +397,40 @@ module graphics_execute #(
 
                         EXEC_KIND_RAMWR: begin
                             // RAMWR doesnt require any arguments
+                            // but we are going to encode the pixel count in it
                             tx_data          <= r_decode.instruction[31:24];
                             tx_start         <= 1;
                             exec_state       <= EXEC_KIND_SEND_BYTE;
                             send_byte_return <= EXEC_KIND_RAMWR;
                             if (sent_byte_counter == 1) begin
-                                sent_byte_counter  <= 0;
-                                tx_start           <= 0;
+                                fill_pix_cnt <= r_decode.instruction[23:0];
+                                sent_byte_counter <= 0;
+                                tx_start <= 0;
                                 o_execute_complete <= 1;
-                                exec_state         <= EXEC_KIND_DO_NOTHING;
-                                send_byte_return   <= EXEC_KIND_DO_NOTHING;
+                                exec_state <= EXEC_KIND_DO_NOTHING;
+                                send_byte_return <= EXEC_KIND_DO_NOTHING;
                             end
                         end
                         EXEC_KIND_SEND_RAW_PIXEL: begin
-                            tx_data <= r_decode.instruction[(3-sent_byte_counter)*8 +: 8];
-                            tx_start <= 1;
-                            exec_state <= EXEC_KIND_SEND_BYTE;
-                            send_byte_return <= EXEC_KIND_SEND_RAW_PIXEL;
-                            if (sent_byte_counter == 4) begin
+
+                            if (fill_pix_cnt == 0) begin
                                 sent_byte_counter  <= 0;
                                 tx_start           <= 0;
                                 o_execute_complete <= 1;
                                 exec_state         <= EXEC_KIND_DO_NOTHING;
                                 send_byte_return   <= EXEC_KIND_DO_NOTHING;
+                            end else begin
+                                if (sent_byte_counter == 4) begin
+                                    fill_pix_cnt      <= fill_pix_cnt - 1;
+                                    sent_byte_counter <= 0;
+                                    tx_start          <= 0;
+                                    tx_data           <= 0;
+                                end else begin
+                                    tx_data <= r_decode.instruction[(3-sent_byte_counter)*8 +: 8];
+                                    tx_start <= 1;
+                                    exec_state <= EXEC_KIND_SEND_BYTE;
+                                    send_byte_return <= EXEC_KIND_SEND_RAW_PIXEL;
+                                end
                             end
                         end
                         EXEC_KIND_SEND_BYTE: begin

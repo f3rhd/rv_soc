@@ -26,7 +26,7 @@ inline void st7735_draw_rectangle(
     int y_end = y_start + height;
     st7735_set_rectangle(x_start, y_start, x_end - 1, y_end - 1);
     // each color data corresponds to two pixel values
-    st7735_stream_pixel(color, ((x_end - x_start) * (y_end - y_start)) >> 1);
+    st7735_stream_pixel(color, (width * height) >> 1);
 }
 #define __SWAP(x, y)                                                           \
     do {                                                                       \
@@ -206,20 +206,22 @@ void st7735_draw_circle(
 
 static inline void st7735_stream_pixel(unsigned int color, int amount) {
     volatile int* data_address = (volatile int*)0xF0000000;
+    volatile int* command_address = (volatile int*)0xF0000004;
 
-    for (int i = 0; i < amount; i++) {
-        asm volatile("sw %0, 0(%1) \n\t"
-                     :
-                     : "r"(color), "r"(data_address)
-                     : "memory");
-    }
+    int stream_cmd = (0x2C << 24) | (amount & 0x00FFFFFFFF);
+    asm volatile("sw %0, 0(%1) \n\t"
+                 :
+                 : "r"(stream_cmd), "r"(command_address)
+                 : "memory");
+    asm volatile("sw %0, 0(%1) \n\t"
+                    :
+                    : "r"(color), "r"(data_address)
+                    : "memory");
 }
 
 static inline void
 st7735_set_rectangle(int x_start, int y_start, int x_end, int y_end) {
     volatile int* command_address = (volatile int*)0xF0000004;
-    int stream_cmd = 0x2C000000;
-
     int col_value =
         (0x2A << 24) | ((x_start & 0xFF) << 16) | ((x_end & 0xFF) << 8);
     int row_value =
@@ -229,9 +231,5 @@ st7735_set_rectangle(int x_start, int y_start, int x_end, int y_end) {
                  "sw %1, 0(%2) \n\t"
                  :
                  : "r"(col_value), "r"(row_value), "r"(command_address)
-                 : "memory");
-    asm volatile("sw %0, 0(%1) \n\t"
-                 :
-                 : "r"(stream_cmd), "r"(command_address)
                  : "memory");
 }
