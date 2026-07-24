@@ -46,14 +46,15 @@ module stage_controller (
             flush_vector = 5'b01111;
             stall_vector = 5'b00000;
         end
+        else if (i_load_stall_type2) begin // when multiplication or division is happening
+            // flush execute stall the rest
+            stall_vector = 5'b11101;
+            flush_vector = 5'b00010;
+        end
         else if (i_load_stall_type0 | r_stall) begin  // stall fetch pred dec, flush read
             flush_vector = 5'b00001;
             stall_vector = 5'b11100;
         end else if (i_load_stall_type1) begin
-            stall_vector = 5'b11101;
-            flush_vector = 5'b00010;
-        end else if (i_load_stall_type2) begin // when multiplication or division is happening
-            // flush execute stall the rest
             stall_vector = 5'b11101;
             flush_vector = 5'b00010;
         end
