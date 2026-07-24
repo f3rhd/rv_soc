@@ -26,7 +26,7 @@ module tb_rv_gfx_int;
         .graphics_if  (graphics_if)
     );
     graphics_unit #(
-        .GRAPHICS_INSTRUCTION_BUFFER_SIZE(10240 * 100 * 4  /* default 256 * 4 */),
+        .GRAPHICS_INSTRUCTION_BUFFER_SIZE(8192 / 2 * 4  /* default 256 * 4 */),
         .SYSTEM_CLK_HZ(100_000_000  /* default 100_000_000 */),
         .SPI_CLK_HZ(50_000_000  /* default 25_000_000 */)
     ) graphics_unit (
@@ -55,7 +55,7 @@ module tb_rv_gfx_int;
             $display("[Time: %0t] Stall vector : %b", $time,
                      rv_processor.stage_controller_stall_vector);
         end
-        if(rv_processor.memory.ei.mem_write & (rv_processor.memory.ei.alu_out == 32'hFFFFFFFF || rv_processor.memory.ei.alu_out == 32'hFFFFFFF0)) begin
+        if(rv_processor.memory.ei.mem_write & rv_processor.memory_graphics_write) begin
             if (graphics_if.graphics_buffer_full) begin
                 $display("[Time: %0t] GFX instruction write failed", $time);
             end else begin
@@ -109,7 +109,7 @@ module tb_rv_gfx_int;
     end
     initial begin
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/assembly/div_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/circle.hex",
             rv_processor.fetch.instructions);
 
         reset = 1;
