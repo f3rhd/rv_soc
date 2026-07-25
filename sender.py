@@ -49,8 +49,7 @@ def send_program():
         for i, b in enumerate(data):
             ser.write(bytes([b]))
             time.sleep(0.00001)
-            if (i + 1) % 16 == 0 or (i + 1) == total:
-                print(f"  [{i+1:>4}/{total}] sent 0x{b:02X}")
+            print(f"  [{i+1:>4}/{total}] sent 0x{b:02X}")
 
         ser.close()
 

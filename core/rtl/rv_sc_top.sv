@@ -26,7 +26,7 @@ module rv_sc_top (
     localparam unsigned SYSTEM_CLK_HZ = 100_000_000;
     localparam unsigned GRAPHICS_SPI_CLK_HZ = 25_000_000;
     localparam unsigned BAUD_RATE = 115200;
-    localparam unsigned HISTORY_SIZE = 5;
+    localparam unsigned HISTORY_SIZE = 8;
     localparam unsigned I_CACHE_SIZE = 1024 * 32;
     localparam unsigned D_CACHE_SIZE = 1024 * 32;
     localparam unsigned BTB_SIZE = 32;

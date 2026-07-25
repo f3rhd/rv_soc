@@ -118,7 +118,7 @@ module memory #(
                                 graphicsi.graphics_instruction <= {
                                     1'b1, ei.memory_write_data
                                 };
-                                graphicsi.graphics_instruction_write <=ei.memory_operation == 3'b010;
+                                graphicsi.graphics_instruction_write <= ei.memory_operation == 3'b010;
                             end
                             GRAPHICS_PIXEL_ADDRESS[3:0]: begin
                                 graphicsi.graphics_instruction <= {

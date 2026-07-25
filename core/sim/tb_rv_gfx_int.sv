@@ -15,10 +15,10 @@ module tb_rv_gfx_int;
     bootloader_if bootloader_if ();
     graphics_if graphics_if ();
     rv_processor #(
-        .HISTORY_SIZE(10  /* default 10 */),
-        .I_CACHE_SIZE(1024 * 16  /* default 1024 */),
+        .HISTORY_SIZE(8  /* default 10 */),
+        .I_CACHE_SIZE(1024 * 32  /* default 1024 */),
         .D_CACHE_SIZE(1024 * 32  /* default 1 << 10 */),
-        .BTB_SIZE    (64  /* default 128 */)
+        .BTB_SIZE    (32  /* default 128 */)
     ) rv_processor (
         .clk          (clk),
         .reset        (reset),
@@ -28,7 +28,7 @@ module tb_rv_gfx_int;
     graphics_unit #(
         .GRAPHICS_INSTRUCTION_BUFFER_SIZE(8192 / 2 * 4  /* default 256 * 4 */),
         .SYSTEM_CLK_HZ(100_000_000  /* default 100_000_000 */),
-        .SPI_CLK_HZ(50_000_000  /* default 25_000_000 */)
+        .SPI_CLK_HZ(25_000_000  /* default 25_000_000 */)
     ) graphics_unit (
         .clk        (clk),
         .i_reset    (reset),
@@ -102,14 +102,14 @@ module tb_rv_gfx_int;
             end
         end
         if (graphics_unit.execute_complete) begin
-            $display("Graphics Instruction : 0x%h complete",
+            $display("[Time :%0t] Graphics Instruction : 0x%h complete", $time,
                      graphics_unit.graphics_execute.r_decode.instruction);
         end
 
     end
     initial begin
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/circle.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/dvd.hex",
             rv_processor.fetch.instructions);
 
         reset = 1;

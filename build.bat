@@ -50,6 +50,7 @@ set "OPTFLAG=-%OPTLEVEL%"
 
 set "GCC=riscv64-unknown-elf-gcc"
 set "OBJCOPY=riscv64-unknown-elf-objcopy"
+set "OBJDUMP=riscv64-unknown-elf-objdump"
 
 where %GCC% >nul 2>nul
 if errorlevel 1 (
@@ -59,6 +60,11 @@ if errorlevel 1 (
 where %OBJCOPY% >nul 2>nul
 if errorlevel 1 (
     echo ERROR: %OBJCOPY% not found in PATH.
+    exit /b 1
+)
+where %OBJDUMP% >nul 2>nul
+if errorlevel 1 (
+    echo ERROR: %OBJDUMP% not found in PATH.
     exit /b 1
 )
 
@@ -73,8 +79,9 @@ set "STARTUP_O=__startup_tmp.o"
 set "LDSCRIPT=__link_tmp.ld"
 set "ELF=__out_tmp.elf"
 set "BIN=__out_tmp.bin"
-set "FILTER_PS1=__filter_tmp.ps1"
 set "BIN2HEX_PS1=__bin2hex_tmp.ps1"
+
+set "CFLAGS=-march=rv32im -mabi=ilp32 -ffreestanding -nostdlib -fno-pic -fno-pie -ffunction-sections -fdata-sections -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables"
 
 set "OBJLIST="
 set "TMPFILELIST="
@@ -92,59 +99,21 @@ call :cleanup
     echo     j halt_loop
 )
 
-"%GCC%" -march=rv32im -mabi=ilp32 -ffreestanding -nostdlib -fno-pic -fno-pie %OPTFLAG% -c "%STARTUP_S%" -o "%STARTUP_O%"
+"%GCC%" %CFLAGS% %OPTFLAG% -c "%STARTUP_S%" -o "%STARTUP_O%"
 if errorlevel 1 goto :build_error
 
 set "OBJLIST=%STARTUP_O%"
 
 
-> "%FILTER_PS1%" (
-    echo param^([string]$InputFile,[string]$OutputFile^)
-    echo $lines = Get-Content -LiteralPath $InputFile
-    echo $result = New-Object System.Collections.Generic.List[string]
-    echo foreach ^($line in $lines^) {
-    echo     $trimmed = $line.Trim^(^)
-    echo     if ^($trimmed -eq ""^) { continue }
-    echo     if ^($trimmed -match '^^\s*#'^) { continue }
-    echo     if ^($trimmed -match '^^\.L[0-9]+:$'^) { $result.Add^($line^); continue }
-    echo     if ^($trimmed -match '^^\.'^) { continue }
-    echo     $result.Add^($line^)
-    echo }
-    echo Set-Content -LiteralPath $OutputFile -Value $result -Encoding ascii
-)
-
-> "%OUT_ASM%" (
-    echo _start:
-    echo     li sp,0x8000
-    echo     call main
-    echo.
-    echo halt_loop:
-    echo     j halt_loop
-    echo.
-)
-
 for /l %%I in (1,1,%SRCCOUNT%) do (
     set "THISSRC=!SOURCES%%I!"
     set "OBJ_%%I=__tu%%I_tmp.o"
-    set "ASM_%%I=__tu%%I_tmp.s"
-    set "ASMCLEAN_%%I=__tu%%I_clean_tmp.s"
 
-    "%GCC%" -march=rv32im -mabi=ilp32 -ffreestanding -nostdlib -fno-pic -fno-pie %OPTFLAG% -c "!THISSRC!" -o "!OBJ_%%I!"
+    "%GCC%" %CFLAGS% %OPTFLAG% -c "!THISSRC!" -o "!OBJ_%%I!"
     if errorlevel 1 goto :build_error
-
-    "%GCC%" -march=rv32im -mabi=ilp32 -ffreestanding -nostdlib -fno-pic -fno-pie %OPTFLAG% -S "!THISSRC!" -o "!ASM_%%I!"
-    if errorlevel 1 goto :build_error
-
-    powershell -NoProfile -ExecutionPolicy Bypass -File "%FILTER_PS1%" -InputFile "!ASM_%%I!" -OutputFile "!ASMCLEAN_%%I!"
-    if errorlevel 1 goto :build_error
-
-    >> "%OUT_ASM%" echo # ---- file: !THISSRC! ----
-    >> "%OUT_ASM%" echo.
-    type "!ASMCLEAN_%%I!" >> "%OUT_ASM%"
-    >> "%OUT_ASM%" echo.
 
     set "OBJLIST=!OBJLIST! !OBJ_%%I!"
-    set "TMPFILELIST=!TMPFILELIST! !OBJ_%%I! !ASM_%%I! !ASMCLEAN_%%I!"
+    set "TMPFILELIST=!TMPFILELIST! !OBJ_%%I!"
 )
 
 
@@ -157,7 +126,7 @@ for /l %%I in (1,1,%SRCCOUNT%) do (
     echo SECTIONS
     echo {
     echo     . = 0x00000000;
-    echo     .text : { *^(.text.start^) *^(.text*^) } ^> RAM
+    echo     .text : { KEEP^(*^(.text.start^)^) *^(.text*^) } ^> RAM
     echo     .rodata : { *^(.rodata*^) } ^> RAM
     echo     .data : { *^(.data*^) } ^> RAM
     echo     .bss : { *^(.bss*^) *^(COMMON^) } ^> RAM
@@ -165,7 +134,11 @@ for /l %%I in (1,1,%SRCCOUNT%) do (
 )
 
 
-"%GCC%" -march=rv32im -mabi=ilp32 -ffreestanding -nostdlib -nostartfiles %OPTFLAG% -T "%LDSCRIPT%" -Wl,-e,_start -o "%ELF%" %OBJLIST%
+"%GCC%" %CFLAGS% %OPTFLAG% -nostartfiles -T "%LDSCRIPT%" -Wl,-e,_start -Wl,--gc-sections -o "%ELF%" %OBJLIST%
+if errorlevel 1 goto :build_error
+
+
+"%OBJDUMP%" -d "%ELF%" > "%OUT_ASM%"
 if errorlevel 1 goto :build_error
 
 
@@ -215,7 +188,7 @@ exit /b 1
 :cleanup
 for %%F in (
     "%STARTUP_S%" "%STARTUP_O%" "%LDSCRIPT%" "%ELF%" "%BIN%"
-    "%FILTER_PS1%" "%BIN2HEX_PS1%"
+    "%BIN2HEX_PS1%"
 ) do (
     if exist %%F del /f /q %%F >nul 2>nul
 )
@@ -223,7 +196,7 @@ for %%F in (%TMPFILELIST%) do (
     if exist %%F del /f /q %%F >nul 2>nul
 )
 
-for %%F in (__tu*_tmp.o __tu*_tmp.s __tu*_clean_tmp.s) do (
+for %%F in (__tu*_tmp.o) do (
     if exist "%%F" del /f /q "%%F" >nul 2>nul
 )
 exit /b 0
