@@ -397,22 +397,33 @@ module graphics_execute #(
 
                         EXEC_KIND_RAMWR: begin
                             // RAMWR doesnt require any arguments
-                            // but we are going to encode the pixel count in it
                             tx_data          <= r_decode.instruction[31:24];
                             tx_start         <= 1;
                             exec_state       <= EXEC_KIND_WAIT;
                             send_byte_return <= EXEC_KIND_RAMWR;
                             if (sent_byte_counter == 1) begin
-                                fill_pix_cnt <= r_decode.instruction[23:0];
-                                sent_byte_counter <= 0;
-                                tx_start <= 0;
+                                //fill_pix_cnt <= r_decode.instruction[23:0];  @BrokeTheWholeThing
+                                sent_byte_counter  <= 0;
+                                tx_start           <= 0;
                                 o_execute_complete <= 1;
-                                exec_state <= EXEC_KIND_DO_NOTHING;
-                                send_byte_return <= EXEC_KIND_DO_NOTHING;
+                                exec_state         <= EXEC_KIND_DO_NOTHING;
+                                send_byte_return   <= EXEC_KIND_DO_NOTHING;
                             end
                         end
                         EXEC_KIND_SEND_RAW_PIXEL: begin
 
+                            tx_data <= r_decode.instruction[(3-sent_byte_counter)*8 +: 8];
+                            tx_start <= 1;
+                            exec_state <= EXEC_KIND_WAIT;
+                            send_byte_return <= EXEC_KIND_SEND_RAW_PIXEL;
+                            if (sent_byte_counter == 4) begin
+                                sent_byte_counter  <= 0;
+                                tx_start           <= 0;
+                                o_execute_complete <= 1;
+                                exec_state         <= EXEC_KIND_DO_NOTHING;
+                                send_byte_return   <= EXEC_KIND_DO_NOTHING;
+                            end
+                            /*  @BrokeTheWholeThing
                             if (fill_pix_cnt == 0) begin
                                 sent_byte_counter  <= 0;
                                 tx_start           <= 0;
@@ -432,6 +443,7 @@ module graphics_execute #(
                                     send_byte_return <= EXEC_KIND_SEND_RAW_PIXEL;
                                 end
                             end
+                            */
                         end
                         EXEC_KIND_WAIT: begin
                             if (tx_done) begin

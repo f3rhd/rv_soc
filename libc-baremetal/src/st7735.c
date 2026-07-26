@@ -208,15 +208,31 @@ static inline void st7735_stream_pixel(unsigned int color, int amount) {
     volatile int* data_address = (volatile int*)0xF0000000;
     volatile int* command_address = (volatile int*)0xF0000004;
 
+#ifdef NEW_GRAPHICS_ENCODING
     int stream_cmd = (0x2C << 24) | (amount & 0x00FFFFFFFF);
     asm volatile("sw %0, 0(%1) \n\t"
                  :
                  : "r"(stream_cmd), "r"(command_address)
                  : "memory");
     asm volatile("sw %0, 0(%1) \n\t"
-                    :
-                    : "r"(color), "r"(data_address)
-                    : "memory");
+                 :
+                 : "r"(color), "r"(data_address)
+                 : "memory");
+#else
+    int stream_cmd = 0x2C000000;
+    asm volatile("sw %0, 0(%1) \n\t"
+                 :
+                 : "r"(stream_cmd), "r"(command_address)
+                 : "memory");
+    for (int i = 0; i < amount / 2; i++) {
+
+        asm volatile("sw %0, 0(%1) \n\t"
+                     :
+                     : "r"(color), "r"(data_address)
+                     : "memory");
+    }
+
+#endif
 }
 
 static inline void
