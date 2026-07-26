@@ -224,7 +224,7 @@ static inline void st7735_stream_pixel(unsigned int color, int amount) {
                  :
                  : "r"(stream_cmd), "r"(command_address)
                  : "memory");
-    for (int i = 0; i < amount / 2; i++) {
+    for (int i = 0; i < amount; i++) {
 
         asm volatile("sw %0, 0(%1) \n\t"
                      :

@@ -21,7 +21,7 @@ int main() {
     unsigned current_color = ST7735_MAROON;
     while (1) {
         
-        st7735_draw_rectangle(ST7735_BLACK, pos.x - RADIUS, pos.y - RADIUS, RADIUS * 2, RADIUS * 2);
+        st7735_draw_circle(ST7735_BLACK, pos.x, pos.y, RADIUS + 10);
 
         pos.x += vel.x;
         pos.y += vel.y;
