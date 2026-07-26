@@ -12,10 +12,10 @@ module stage_controller (
     input logic i_load_stall_type2,
     input logic i_graphics_instruction_write_fail,
     output logic [0:4] flush_vector,
-    output logic [0:4] stall_vector
+    output logic [0:5] stall_vector
 );
     /*
-        [0]       [1]        [2]      [4]     [3]
+        [0]       [1]        [2]      [4]     [3]         [5]
         fetch -> predict -> decode -> read -> execute -> memory -> write
     */
     /*
@@ -32,11 +32,11 @@ module stage_controller (
         beq x1,x2
     */
     always_comb begin
-        flush_vector = 5'b0000;
-        stall_vector = 5'b0000;
+        flush_vector = 5'b00000;
+        stall_vector = 6'b000000;
         if (i_graphics_instruction_write_fail) begin
             flush_vector = 5'b00000;
-            stall_vector = 5'b11111;
+            stall_vector = 6'b111111;
         end else if (i_misprediction) begin
             /*
             flush everything except fetch stage
@@ -44,18 +44,18 @@ module stage_controller (
             is going to be fetched from calculated target address
             */
             flush_vector = 5'b01111;
-            stall_vector = 5'b00000;
+            stall_vector = 6'b000000;
         end
         else if (i_load_stall_type2) begin // when multiplication or division is happening
             // flush execute stall the rest
-            stall_vector = 5'b11101;
+            stall_vector = 6'b111010;
             flush_vector = 5'b00010;
         end
         else if (i_load_stall_type0 | r_stall) begin  // stall fetch pred dec, flush read
             flush_vector = 5'b00001;
-            stall_vector = 5'b11100;
+            stall_vector = 6'b111000;
         end else if (i_load_stall_type1) begin
-            stall_vector = 5'b11101;
+            stall_vector = 6'b111010;
             flush_vector = 5'b00010;
         end
 

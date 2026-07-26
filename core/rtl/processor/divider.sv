@@ -146,6 +146,7 @@ module divider (
                     o_result  <= div_kind[0] ? final_remainder : final_quotient;
                     div_state <= S_IDLE;
                 end
+                default: div_state <= S_IDLE;
             endcase
         end
     end

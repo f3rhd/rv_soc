@@ -69,9 +69,11 @@ module rv_processor #(
 
 
     // Stage control signals
-    logic [0:4] stage_controller_flush_vector, stage_controller_stall_vector;
+    logic [0:4] stage_controller_flush_vector;
+    logic [0:5] stage_controller_stall_vector;
 
     logic memory_graphics_write;
+    logic memory_en;
 
 
     stage_controller stage_controller (
@@ -174,6 +176,7 @@ module rv_processor #(
         .clk             (clk),
         .i_reset         (reset),
         .ei              (execution_if),
+        .i_en            (memory_en),
         .graphicsi       (graphics_if),
         .o_register_write(register_write_),
         .o_graphics_write(memory_graphics_write),
@@ -202,5 +205,7 @@ module rv_processor #(
         execution_output_bubble = stage_controller_flush_vector[3];
         execution_enable = ~stage_controller_stall_vector[3];
         execution_reset = reset;
+
+        memory_en = ~stage_controller_stall_vector[5];
     end
 endmodule

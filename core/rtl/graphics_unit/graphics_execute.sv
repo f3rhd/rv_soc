@@ -60,7 +60,7 @@ module graphics_execute #(
         EXEC_KIND_RASET_OR_CASET,
         EXEC_KIND_DO_NOTHING,
         EXEC_KIND_SEND_RAW_PIXEL,
-        EXEC_KIND_SEND_BYTE
+        EXEC_KIND_WAIT
     } execution_state_e;
     typedef enum logic [3:0] {
         UNDEFINED,
@@ -360,7 +360,7 @@ module graphics_execute #(
                         EXEC_KIND_RASET_OR_CASET: begin
                             send_byte_return <= EXEC_KIND_RASET_OR_CASET;
                             // We are going to send bytes in next cycle
-                            exec_state       <= EXEC_KIND_SEND_BYTE;
+                            exec_state       <= EXEC_KIND_WAIT;
                             tx_start         <= 1;
 
                             if (!sent_command) begin
@@ -400,7 +400,7 @@ module graphics_execute #(
                             // but we are going to encode the pixel count in it
                             tx_data          <= r_decode.instruction[31:24];
                             tx_start         <= 1;
-                            exec_state       <= EXEC_KIND_SEND_BYTE;
+                            exec_state       <= EXEC_KIND_WAIT;
                             send_byte_return <= EXEC_KIND_RAMWR;
                             if (sent_byte_counter == 1) begin
                                 fill_pix_cnt <= r_decode.instruction[23:0];
@@ -428,12 +428,12 @@ module graphics_execute #(
                                 end else begin
                                     tx_data <= r_decode.instruction[(3-sent_byte_counter)*8 +: 8];
                                     tx_start <= 1;
-                                    exec_state <= EXEC_KIND_SEND_BYTE;
+                                    exec_state <= EXEC_KIND_WAIT;
                                     send_byte_return <= EXEC_KIND_SEND_RAW_PIXEL;
                                 end
                             end
                         end
-                        EXEC_KIND_SEND_BYTE: begin
+                        EXEC_KIND_WAIT: begin
                             if (tx_done) begin
                                 sent_byte_counter <= sent_byte_counter + 1;
                                 // Return to caller

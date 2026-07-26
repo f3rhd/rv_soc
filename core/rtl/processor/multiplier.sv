@@ -134,6 +134,7 @@ module multiplier (
                     end
                     mul_state <= S_IDLE;
                 end
+                default: mul_state <= S_IDLE;
             endcase
         end
     end

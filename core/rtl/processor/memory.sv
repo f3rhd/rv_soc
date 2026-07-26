@@ -13,6 +13,7 @@ module memory #(
 ) (
     input logic clk,
     input logic i_reset,
+    input logic i_en,
     execution_if.mem_consumer ei,
     graphics_if.processor graphicsi,
     output register_write_data_t o_register_write,
@@ -58,7 +59,7 @@ module memory #(
     assign is_mmio = ei.alu_out[31] == 1'b1;
 
 
-    assign o_graphics_write = is_mmio && ei.mem_write && (ei.alu_out[3:0] == GRAPHICS_COMMAND_ADDRESS[3:0] | ei.alu_out[3:0] == GRAPHICS_PIXEL_ADDRESS[3:0]);
+    assign o_graphics_write = graphicsi.graphics_instruction_write/*is_mmio && ei.mem_write && (ei.alu_out[3:0] == GRAPHICS_COMMAND_ADDRESS[3:0] | ei.alu_out[3:0] == GRAPHICS_PIXEL_ADDRESS[3:0])*/;
 
 
     always_comb begin
@@ -100,7 +101,7 @@ module memory #(
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
             graphicsi.graphics_instruction_write <= 1'b0;
-        end else begin
+        end else if (i_en) begin
             o_register_write.write_enable        <= ei.reg_write;
             o_register_write.write_addr          <= ei.dest;
             alu_is_reg_write                     <= 0;
@@ -118,21 +119,25 @@ module memory #(
                                 graphicsi.graphics_instruction <= {
                                     1'b1, ei.memory_write_data
                                 };
-                                graphicsi.graphics_instruction_write <= ei.memory_operation == 3'b010;
+                                graphicsi.graphics_instruction_write <= 1 /*~graphicsi.graphics_buffer_full*/ /*ei.memory_operation == 3'b010*/;
                             end
                             GRAPHICS_PIXEL_ADDRESS[3:0]: begin
                                 graphicsi.graphics_instruction <= {
                                     1'b0, ei.memory_write_data
                                 };
-                                graphicsi.graphics_instruction_write <=  ei.memory_operation == 3'b010;
+                                graphicsi.graphics_instruction_write <=  1 /*~graphicsi.graphics_buffer_full*/ /*ei.memory_operation == 3'b010*/;
                             end
                             SEGMENT_ADDRESS[3:0]: begin
-                                if (ei.memory_operation == 3'b001)
-                                    o_segment_value <= ei.memory_write_data[15:0];
+                                /*if (ei.memory_operation == 3'b001)*/
+                                o_segment_value <= ei.memory_write_data[15:0];
                             end
                             LED_ADDRESS[3:0]: begin
-                                if (ei.memory_operation == 3'b001)
-                                    o_led_value <= ei.memory_write_data[15:0];
+                                /*if (ei.memory_operation == 3'b001)*/
+                                o_led_value <= ei.memory_write_data[15:0];
+                            end
+                            default: begin
+                                o_segment_value <= 16'hFFFF;
+                                o_led_value     <= 16'hFFFF;
                             end
                         endcase
                     end else begin
