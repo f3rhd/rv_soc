@@ -42,9 +42,6 @@ module btb #(
     logic [TAG_WIDTH - 1 : 0] r_read_tag;
 
     logic [TAG_WIDTH - 1 : 0] write_tag;
-    logic forward = 0;
-    logic [ADDRESS_WIDTH-1:0] forwarded_address = 0;
-    logic forwarded_was_jump;
 
     assign write_tag    = exi.branch_instruction_addr[(ADDRESS_WIDTH-1) -: TAG_WIDTH];
     assign read_tag = i_branch_addr_read[(ADDRESS_WIDTH-1)-:TAG_WIDTH];
@@ -60,13 +57,7 @@ module btb #(
                 end
                 set_allocation_counter[i] <= 0;
             end
-            forward            <= 0;
-            forwarded_address  <= 0;
-            forwarded_was_jump <= 0;
         end else if (i_enable) begin
-            forward            <= 0;
-            forwarded_address  <= 0;
-            forwarded_was_jump <= 0;
             if (exi.btb_write) begin
                 branch_table[write_set_id][set_allocation_counter[write_set_id]] <= '{
                     is_jump : exi.btb_write_jump,
@@ -75,11 +66,6 @@ module btb #(
                     target_addr : exi.btb_branch_target_addr[ADDRESS_WIDTH-1:0]
                 };
                 set_allocation_counter[write_set_id] <= set_allocation_counter[write_set_id] + 1;
-                if(i_branch_addr_read == exi.branch_instruction_addr[ADDRESS_WIDTH-1:0]) begin
-                    forward            <= 1;
-                    forwarded_address  <= 0;
-                    forwarded_was_jump <= exi.btb_write_jump;
-                end
             end
             accessed_line <= branch_table[read_set_id];
             r_read_tag    <= read_tag;
@@ -91,20 +77,20 @@ module btb #(
         o_hit          = 1'b0;
         o_target_addr  = '0;
         o_hit_was_jump = 1'b0;
-        if (forward) begin
-            o_hit          = 1'b1;
-            o_target_addr  = forwarded_address;
-            o_hit_was_jump = forwarded_was_jump;
-        end else begin
-            for (int w = 0; w < NUM_WAYS; w++) begin
-                if (accessed_line[w].valid && (accessed_line[w].tag == r_read_tag)) begin
-                    o_hit          = 1'b1;
-                    o_target_addr  = accessed_line[w].target_addr;
-                    o_hit_was_jump = accessed_line[w].is_jump;
-                    break;
-                end
+        // if (i_branch_addr_read == exi.branch_instruction_addr[ADDRESS_WIDTH-1:0] & exi.btb_write & i_enable) begin // @VisitMeLater : does & i_enable make sense here?????
+        //     o_hit          = 1'b1;
+        //     o_target_addr  = exi.btb_branch_target_addr[ADDRESS_WIDTH-1:0];
+        //     o_hit_was_jump = exi.btb_write_jump;
+        //end else begin
+        for (int w = 0; w < NUM_WAYS; w++) begin
+            if (accessed_line[w].valid && (accessed_line[w].tag == r_read_tag)) begin
+                o_hit          = 1'b1;
+                o_target_addr  = accessed_line[w].target_addr;
+                o_hit_was_jump = accessed_line[w].is_jump;
+                break;
             end
         end
+        //end
     end
 
 

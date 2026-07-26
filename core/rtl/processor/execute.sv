@@ -58,10 +58,10 @@ module execute #(
     assign src1_match = (exi.reg_write && ~exi.mem_read  && (instruction_data.src1 == exi.dest) && (exi.dest != 5'd0));
     assign src2_match = (exi.reg_write && ~exi.mem_read  && (instruction_data.src2 == exi.dest) && (exi.dest != 5'd0));
 
-    assign exi.stall_pipeline_type1 = ~i_decode_out.instruction_data.invalid & exi.mem_read & (
+    assign exi.stall_pipeline_type1 = ~i_decode_out.instruction_data.invalid & exi.mem_read & ~i_decode_out.instruction_data.doesnt_read_register & (
         ((i_decode_out.instruction_data.src1 == exi.dest) && (exi.dest != 5'd0)) 
         |
-        ((i_decode_out.instruction_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~i_decode_out.instruction_data.is_reg_to_reg_imm )
+        ((i_decode_out.instruction_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~i_decode_out.instruction_data.uses_imm_instead_of_rs2 )
     );
     assign exi.stall_pipeline_type2 = (mul_begin & ~mul_done) | (div_begin & ~div_done);
     multiplier multiplier (

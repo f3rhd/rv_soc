@@ -40,6 +40,8 @@ module decode #(
         decoded_mop_next.instruction_data.src2 = i_instruction_raw[24:20];
         decoded_mop_next.instruction_data.dest = i_instruction_raw[11:7];
         decoded_mop_next.instruction_data.invalid = ~i_instruction_valid;
+        decoded_mop_next.instruction_data.uses_imm_instead_of_rs2 = 1'b0;
+        decoded_mop_next.instruction_data.doesnt_read_register = 1'b0;
         op = i_instruction_raw[6:0];
         funct3 = i_instruction_raw[14:12];
         funct7 = i_instruction_raw[31:25];
@@ -83,7 +85,7 @@ module decode #(
             7'b0010011: begin
                 decoded_mop_next.instruction_data.uses_imm = 1'b1;
                 decoded_mop_next.instruction_data.reg_write = 1'b1;
-                decoded_mop_next.instruction_data.is_reg_to_reg_imm = 1'b1;
+                decoded_mop_next.instruction_data.uses_imm_instead_of_rs2 = 1'b1;
                 decoded_mop_next.instruction_data.extended_imm_val = {
                     {20{i_instruction_raw[31]}}, i_instruction_raw[31:20]
                 };
@@ -98,6 +100,7 @@ module decode #(
             7'b0110111: begin : lui
                 decoded_mop_next.instruction_data.uses_imm = 1'b1;
                 decoded_mop_next.instruction_data.reg_write = 1'b1;
+                decoded_mop_next.instruction_data.doesnt_read_register = 1'b1;
                 decoded_mop_next.instruction_data.extended_imm_val = {
                     i_instruction_raw[31:12], 12'b0
                 };
@@ -106,6 +109,7 @@ module decode #(
             7'b0010111: begin : auipc
                 decoded_mop_next.instruction_data.uses_imm = 1'b1;
                 decoded_mop_next.instruction_data.reg_write = 1'b1;
+                decoded_mop_next.instruction_data.doesnt_read_register = 1'b1;
                 decoded_mop_next.instruction_data.extended_imm_val = {
                     i_instruction_raw[31:12], 12'b0
                 };
@@ -145,6 +149,7 @@ module decode #(
                 decoded_mop_next.instruction_data.uses_imm = 1'b1;
                 decoded_mop_next.instruction_data.reg_write = 1'b1;
                 decoded_mop_next.instruction_data.btb_write = 1'b1;
+                decoded_mop_next.instruction_data.doesnt_read_register = 1'b1;
                 decoded_mop_next.instruction_data.extended_imm_val = {
                     {13{i_instruction_raw[31]}},
                     i_instruction_raw[31],
@@ -157,6 +162,7 @@ module decode #(
             7'b1100111: begin : jalr
                 decoded_mop_next.instruction_data.uses_imm = 1'b1;
                 decoded_mop_next.instruction_data.reg_write = 1'b1;
+                decoded_mop_next.instruction_data.uses_imm_instead_of_rs2 = 1'b1;
                 decoded_mop_next.instruction_data.extended_imm_val = {
                     {22{i_instruction_raw[31]}}, i_instruction_raw[31:22]
                 };
@@ -167,6 +173,7 @@ module decode #(
                 decoded_mop_next.instruction_data.uses_imm = 1'b1;
                 decoded_mop_next.instruction_data.reg_write = 1'b1;
                 decoded_mop_next.instruction_data.mem_read = 1'b1;
+                decoded_mop_next.instruction_data.uses_imm_instead_of_rs2 = 1'b1;
                 decoded_mop_next.instruction_data.extended_imm_val = {
                     {20{i_instruction_raw[31]}}, i_instruction_raw[31:20]
                 };
