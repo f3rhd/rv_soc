@@ -94,13 +94,6 @@ module memory #(
             graphicsi.graphics_instruction_write <= 1'b0;
             o_led_value                          <= 0;
             o_segment_value                      <= 0;
-        end else if (ei.invalid) begin
-            o_register_write.write_addr          <= 0;
-            o_register_write.write_enable        <= 0;
-            alu_is_reg_write                     <= 0;
-            reg_mem_read                         <= 0;
-            graphicsi.graphics_instruction       <= 0;
-            graphicsi.graphics_instruction_write <= 1'b0;
         end else if (i_en) begin
             o_register_write.write_enable        <= ei.reg_write;
             o_register_write.write_addr          <= ei.dest;

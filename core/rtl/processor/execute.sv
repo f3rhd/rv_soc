@@ -11,9 +11,6 @@ module execute #(
     parameter HISTORY_SIZE = 10
 ) (
     input logic clk,
-    /*unlike stall behavior of other stages execution's is rather different
-    when there is a dependency between a load and following branch/jump instruction
-    we have to disable redirection for one cycle as operand that is going to be use for comparison is not ready yet*/
     input logic i_en,
     input logic i_reset,
     input logic i_output_bubble,
@@ -252,7 +249,7 @@ module execute #(
     end
 
     always_ff @(posedge clk) begin
-        if (instruction_data.invalid | i_output_bubble) begin
+        if (instruction_data.invalid | i_output_bubble | i_reset) begin
             exi.invalid                 <= 1;
             exi.memory_write_data       <= 0;
             exi.memory_operation        <= 0;
