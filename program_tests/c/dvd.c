@@ -1,4 +1,5 @@
 #include "../../libc-baremetal/include/st7735.h"
+#include "../../libc-baremetal/include/led.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 160
@@ -100,11 +101,8 @@ int main() {
             }
             change_color_on_collision(&current_color, color_index);
         }
+                seg_write_hex(((pos.x & 0xFF) << 8) | (pos.y & 0xFF));
         draw_dvd(pos, current_color);
-
-        if (current_color == ST7735_BLACK) {
-            break;
-        }
 
         delay(250'000);
     }

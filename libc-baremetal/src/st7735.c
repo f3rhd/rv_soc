@@ -6,6 +6,7 @@
  */
 
 #include "../include/st7735.h"
+#define NEW_GRAPHICS_ENCODING
 #define ST7735_DISPLAY_WIDTH 128
 #define ST7735_DISPLAY_HEIGHT 160
 static inline void st7735_stream_pixel(unsigned int color, int amount);
@@ -121,8 +122,7 @@ void st7735_draw_line(
     int x1 = (int)x_end;
     int y1 = (int)y_end;
 
-// we dont have math lib yet so we are going to manually implement abs
-#define __ABS(EXPR) (EXPR) > 0 ? (EXPR) : -(EXPR)
+#define __ABS(EXPR) (((EXPR) > 0) ? (EXPR) : -(EXPR))
 
     int dx = __ABS(x1 - x0);
     int sx = (x0 < x1) ? 1 : -1;

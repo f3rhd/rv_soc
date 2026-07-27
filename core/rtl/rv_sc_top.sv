@@ -30,7 +30,7 @@ module rv_sc_top (
     localparam unsigned I_CACHE_SIZE = 1024 * 32;
     localparam unsigned D_CACHE_SIZE = 1024 * 32;
     localparam unsigned BTB_SIZE = 32;
-    localparam unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 8192 / 2 * 4;
+    localparam unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 8192 / 4 * 4;
 
     bootloader_if bootloaderi ();
     graphics_if graphicsi ();

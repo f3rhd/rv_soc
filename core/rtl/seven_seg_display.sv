@@ -52,7 +52,7 @@ module seven_seg_display (
             4'h6: o_seg = 7'b0100000;  // 6
             4'h7: o_seg = 7'b1111000;  // 7
             4'h8: o_seg = 7'b0000000;  // 8
-            4'h9: o_seg = 7'b0100000;  // 9
+            4'h9: o_seg = 7'b0000100;  // 9
             4'hA: o_seg = 7'b0001000;  // A
             4'hB: o_seg = 7'b0000011;  // b
             4'hC: o_seg = 7'b1000110;  // C
