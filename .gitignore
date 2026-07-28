@@ -1,5 +1,6 @@
 vivado/
 tests/foo.hex
-simulate.cpp
+simulate/
+build2.bat
 *.exe
 *.txt
