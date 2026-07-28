@@ -23,6 +23,7 @@ module divider (
 
     typedef enum logic [1:0] {
         S_IDLE,
+        S_LATCHED,
         S_EXECUTE,
         S_DONE
     } _div_state;
@@ -43,7 +44,6 @@ module divider (
     logic             dividend_sign;
     logic             divisor_sign;
 
-    logic      [31:0] saved_dividend;
     logic             div_by_zero;
     logic             signed_overflow;
 
@@ -55,6 +55,8 @@ module divider (
     logic      [31:0] final_quotient;
     logic      [31:0] final_remainder;
 
+    logic      [31:0] latched_dividend;
+    logic      [31:0] latched_divisor;
     always_comb begin
         case (i_div_type)
             2'b00:   div_type = DIV;
@@ -64,11 +66,11 @@ module divider (
             default: div_type = UNDEFINED;
         endcase
 
-        dividend_sign = i_dividend[31] & ~div_type[1];
-        divisor_sign = i_divisor[31] & ~div_type[1];
+        dividend_sign = latched_dividend[31] & ~div_kind[1];
+        divisor_sign = latched_divisor[31] & ~div_kind[1];
 
-        dividend_abs = dividend_sign ? (~i_dividend + 1'b1) : i_dividend;
-        divisor_abs = divisor_sign ? (~i_divisor + 1'b1) : i_divisor;
+        dividend_abs = dividend_sign ? (~latched_dividend + 1'b1) : latched_dividend;
+        divisor_abs = divisor_sign ? (~latched_divisor + 1'b1) : latched_divisor;
 
         shifted_remainder = {remainder[30:0], quotient[31]};
         trial = {1'b0, shifted_remainder} - {1'b0, divisor};
@@ -78,7 +80,7 @@ module divider (
 
         if (div_by_zero) begin
             final_quotient  = 32'hFFFF_FFFF;
-            final_remainder = saved_dividend;
+            final_remainder = latched_dividend;
         end else if (signed_overflow) begin
             final_quotient  = 32'h8000_0000;
             final_remainder = 32'h0000_0000;
@@ -90,40 +92,53 @@ module divider (
 
     always_ff @(posedge clk) begin
         if (i_reset) begin
-            div_kind        <= UNDEFINED;
-            div_state       <= S_IDLE;
-            o_done          <= 0;
-            iterator        <= 0;
-            divisor         <= 0;
-            quotient        <= 0;
-            remainder       <= 0;
-            saved_dividend  <= 0;
-            div_by_zero     <= 0;
-            signed_overflow <= 0;
-            o_result        <= 0;
+            div_kind         <= UNDEFINED;
+            div_state        <= S_IDLE;
+            o_done           <= 0;
+            iterator         <= 0;
+            divisor          <= 0;
+            quotient         <= 0;
+            remainder        <= 0;
+            div_by_zero      <= 0;
+            signed_overflow  <= 0;
+            o_result         <= 0;
+            latched_dividend <= 0;
+            latched_divisor  <= 0;
         end else begin
             case (div_state)
                 S_IDLE: begin
-                    o_done   <= 0;
-                    iterator <= 0;
+                    iterator         <= 0;
+                    o_done           <= 0;
+                    divisor          <= 0;
+                    quotient         <= 0;
+                    remainder        <= 0;
+                    div_by_zero      <= 0;
+                    signed_overflow  <= 0;
+                    o_result         <= 0;
+                    latched_dividend <= 0;
+                    latched_divisor  <= 0;
 
                     if (o_done) begin
                     end else if (i_begin) begin
-                        div_kind <= div_type;
-                        div_state <= S_EXECUTE;
-
-                        divisor <= divisor_abs;
-                        quotient <= dividend_abs;
-                        remainder <= 0;
-
-                        saved_dividend <= i_dividend;
-                        div_by_zero <= (i_divisor == 32'b0);
-                        signed_overflow   <= ~div_type[1] &
-                                             (i_dividend == 32'h8000_0000) &
-                                             (i_divisor  == 32'hFFFF_FFFF);
+                        latched_divisor  <= i_divisor;
+                        latched_dividend <= i_dividend;
+                        div_kind         <= div_type;
+                        div_state        <= S_LATCHED;
                     end
                 end
 
+                S_LATCHED: begin
+                    div_state <= S_EXECUTE;
+
+                    divisor <= divisor_abs;
+                    quotient <= dividend_abs;
+                    remainder <= 0;
+
+                    div_by_zero <= (latched_divisor == 32'b0);
+                    signed_overflow   <= ~div_kind[1] &
+                                             (latched_dividend == 32'h8000_0000) &
+                                             (latched_divisor  == 32'hFFFF_FFFF);
+                end
                 S_EXECUTE: begin
                     iterator <= iterator + 1;
 

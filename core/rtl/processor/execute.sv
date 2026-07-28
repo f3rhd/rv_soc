@@ -62,22 +62,22 @@ module execute #(
     );
     assign exi.stall_pipeline_type2 = (mul_begin & ~mul_done) | (div_begin & ~div_done);
     multiplier multiplier (
-        .clk           (clk),
+        .clk(clk),
         .i_multiplicand(src2_data),
-        .i_multiplier  (src1_data),
-        .i_mul_type    (mul_type),
-        .i_begin       (mul_begin & i_en),
-        .i_reset       (i_reset),
-        .o_result      (mul_result),
-        .o_done        (mul_done)
+        .i_multiplier(src1_data),
+        .i_mul_type(mul_type),
+        .i_begin(mul_begin & i_en & ~instruction_data.invalid),
+        .i_reset(i_reset | exi.redirect),
+        .o_result(mul_result),
+        .o_done(mul_done)
     );
     divider divider (
         .clk       (clk),
         .i_dividend(src1_data),
         .i_divisor (src2_data),
         .i_div_type(div_type),
-        .i_begin   (div_begin & i_en),
-        .i_reset   (i_reset),
+        .i_begin   (div_begin & i_en & ~instruction_data.invalid),
+        .i_reset   (i_reset | exi.redirect),
         .o_result  (div_result),
         .o_done    (div_done)
     );
