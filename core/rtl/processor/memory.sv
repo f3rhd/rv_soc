@@ -95,13 +95,13 @@ module memory #(
             o_led_value                          <= 0;
             o_segment_value                      <= 0;
         end else if (i_en) begin
-            o_register_write.write_enable        <= ei.reg_write;
+            o_register_write.write_enable        <= ei.int_reg_write;
             o_register_write.write_addr          <= ei.dest;
             alu_is_reg_write                     <= 0;
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
             graphicsi.graphics_instruction_write <= 1'b0;
-            if (ei.reg_write & ~ei.mem_read & ~ei.mem_write) begin
+            if (ei.int_reg_write & ~ei.mem_read & ~ei.mem_write) begin
                 alu_is_reg_write <= 1;
                 reg_alu_out      <= ei.alu_out;
             end else begin

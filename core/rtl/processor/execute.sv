@@ -52,13 +52,13 @@ module execute #(
     assign instruction_data = i_register_read_out.decode_data.instruction_data;
     assign read_data = i_register_read_out.read_data;
 
-    assign src1_match = (exi.reg_write && ~exi.mem_read  && (instruction_data.src1 == exi.dest) && (exi.dest != 5'd0));
-    assign src2_match = (exi.reg_write && ~exi.mem_read  && (instruction_data.src2 == exi.dest) && (exi.dest != 5'd0));
+    assign src1_match = (exi.int_reg_write && ~exi.mem_read  && (instruction_data.src1 == exi.dest) && (exi.dest != 5'd0));
+    assign src2_match = (exi.int_reg_write && ~exi.mem_read  && (instruction_data.src2 == exi.dest) && (exi.dest != 5'd0));
 
-    assign exi.stall_pipeline_type1 = ~i_decode_out.instruction_data.invalid & exi.mem_read & ~i_decode_out.instruction_data.doesnt_read_register & (
-        ((i_decode_out.instruction_data.src1 == exi.dest) && (exi.dest != 5'd0)) 
+    assign exi.stall_pipeline_type1 = ~i_decode_out.instruction_data.invalid & exi.mem_read & (exi.dest != 5'd0) & (
+        ((i_decode_out.instruction_data.src1 == exi.dest) && i_decode_out.instruction_data.read_rs1) 
         |
-        ((i_decode_out.instruction_data.src2 == exi.dest) && (exi.dest != 5'd0) && ~i_decode_out.instruction_data.uses_imm_instead_of_rs2 )
+        ((i_decode_out.instruction_data.src2 == exi.dest) && i_decode_out.instruction_data.read_rs2 )
     );
     assign exi.stall_pipeline_type2 = (mul_begin & ~mul_done) | (div_begin & ~div_done);
     multiplier multiplier (
@@ -94,7 +94,7 @@ module execute #(
         btb_write = instruction_data.btb_write & ~prediction_data.btb_was_hit & ~instruction_data.invalid;
         branch_instruction_addr = instruction_data.instruction_addr;
         btb_write_jump = '0;
-        btb_branch_target_addr = instruction_data.instruction_addr +instruction_data.extended_imm_val;
+        btb_branch_target_addr = instruction_data.instruction_addr + instruction_data.extended_imm_val;
         mul_begin = 0;
         mul_type = 0;
         div_begin = 0;
@@ -256,7 +256,7 @@ module execute #(
             exi.alu_out                 <= 0;
             exi.dest                    <= 0;
             exi.mem_write               <= 0;
-            exi.reg_write               <= 0;
+            exi.int_reg_write           <= 0;
             exi.mem_read                <= 0;
             exi.predictor_update        <= 0;
             exi.redirection_address     <= 0;
@@ -275,7 +275,7 @@ module execute #(
             exi.invalid                 <= instruction_data.invalid;
             exi.mem_write               <= instruction_data.mem_write;
             exi.mem_read                <= instruction_data.mem_read;
-            exi.reg_write               <= instruction_data.reg_write;
+            exi.int_reg_write           <= instruction_data.int_reg_write;
             exi.predictor_update        <= predictor_update;
             exi.redirection_address     <= redirection_address;
             exi.redirect                <= redirect;

@@ -23,10 +23,10 @@ module register_file (
     decoded_instruction_t instruction_data_out;
     assign instruction_data_in = i_decode_out.instruction_data;
     assign instruction_data_out = o_register_read.decode_data.instruction_data;
-    assign exi.stall_pipeline_type0 = ~instruction_data_in.invalid & instruction_data_out.mem_read & ~instruction_data_in.doesnt_read_register & (
-        ((instruction_data_in.src1 == instruction_data_out.dest) && (instruction_data_out.dest != 5'd0)) 
+    assign exi.stall_pipeline_type0 = ~instruction_data_in.invalid & instruction_data_out.mem_read & instruction_data_out.dest != 0 & (
+        ((instruction_data_in.src1 == instruction_data_out.dest) && instruction_data_in.read_rs1) 
         |
-        ((instruction_data_in.src2 == instruction_data_out.dest) && (instruction_data_out.dest != 5'd0) && ~instruction_data_in.uses_imm_instead_of_rs2 )
+        ((instruction_data_in.src2 == instruction_data_out.dest) && instruction_data_in.read_rs2)
     );
 
     always_ff @(posedge clk) begin
@@ -48,7 +48,7 @@ module register_file (
         if (i_en) begin
             o_register_read.decode_data <= i_decode_out;
             // Forward from execute
-            if (exi.reg_write & ~exi.mem_read & exi.dest == instruction_data_in.src1 && instruction_data_in.src1 != 0) begin
+            if (exi.int_reg_write & ~exi.mem_read & exi.dest == instruction_data_in.src1 && instruction_data_in.src1 != 0) begin
                 o_register_read.read_data.src1_data <= exi.alu_out;
                 // Forward from write back stage
             end else if (i_register_write.write_enable & i_register_write.write_addr == instruction_data_in.src1 && instruction_data_in.src1 != 0) begin
@@ -57,7 +57,7 @@ module register_file (
                 o_register_read.read_data.src1_data <= file[instruction_data_in.src1];
             end
 
-            if (exi.reg_write & ~exi.mem_read & exi.dest == instruction_data_in.src2 && instruction_data_in.src2 != 0) begin
+            if (exi.int_reg_write & ~exi.mem_read & exi.dest == instruction_data_in.src2 && instruction_data_in.src2 != 0) begin
                 o_register_read.read_data.src2_data <= exi.alu_out;
             end  // Forward from write back stage
             else if (i_register_write.write_enable & i_register_write.write_addr == instruction_data_in.src2 && instruction_data_in.src2 != 0) begin

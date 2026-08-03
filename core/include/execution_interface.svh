@@ -44,7 +44,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     logic stall_pipeline_type2;
     logic mem_write;
     logic mem_read;
-    logic reg_write;
+    logic int_reg_write;
     logic btb_write;
 
 
@@ -62,7 +62,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         output invalid,
         output mem_write,
         output mem_read,
-        output reg_write,
+        output int_reg_write,
         output btb_write,
         output stall_pipeline_type1,
         output btb_write_jump,
@@ -72,7 +72,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     modport register_read (
         input dest,
         input alu_out,
-        input reg_write,
+        input int_reg_write,
         input mem_read,
         output stall_pipeline_type0
     );
@@ -98,7 +98,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         input invalid,
         input mem_write,
         input mem_read,
-        input reg_write
+        input int_reg_write
     );
 endinterface
 `endif // EXECUTION_INTERFACE_SVH

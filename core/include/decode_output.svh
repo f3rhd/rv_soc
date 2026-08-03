@@ -14,13 +14,20 @@ typedef struct packed {
     logic [4:0] dest;
     logic [6:0] operation;
     logic uses_imm;
-    logic uses_imm_instead_of_rs2;
-    logic doesnt_read_register;
+    logic read_rs1;
+    logic read_rs2;
     logic invalid;
-    logic reg_write;
+    logic int_reg_write;
     logic mem_write;
     logic mem_read;
     logic btb_write;
+    // Float stuff
+    logic float_reg_write;
+    logic [4:0] src3; 
+    logic [2:0] round_mode;
+    logic read_fs1;
+    logic read_fs2;
+    logic read_fs3;
 } decoded_instruction_t;
 typedef struct packed {
     logic [9:0] pht_index;
@@ -32,8 +39,6 @@ typedef struct packed {
     prediction_data_t     prediction_data;
 } decode_output_t;
 /*
-    For optimization we are going to use use bit splitting
-    We can check the type of an instruction using only [6:5] bits along the pipeline
     7'h000000 - invalid
     ALU operations: [6:5] = 2'b00 {
         7'b00_00001 - add
@@ -73,15 +78,18 @@ typedef struct packed {
     Memory Instructions : [6:5] = 2'b10  {
 
         [3] = 1'b0 indicates store:
-            7'b10_00_000 - store byte
-            7'b10_00_001 - store half
-            7'b10_00_010 - store word
+            7'b10_00_000 - store integer byte 
+            7'b10_00_001 - store integer half 
+            7'b10_00_010 - store integer word 
         [3] = 1'b1 indicates load:
-            7'b10_01_000 - load byte
-            7'b10_01_001 - load half
-            7'b10_01_010 - load word
-            7'b10_01_011 - load byte unsigned 
-            7'b10_01_100 - load half unsigned
+            7'b10_01_000 - load integer byte
+            7'b10_01_001 - load integer half
+            7'b10_01_010 - load integer word
+            7'b10_01_011 - load integer byte unsigned 
+            7'b10_01_100 - load integer half unsigned
+    }
+    Float instructions : [6:5] = 2'b11 {
+
     }
 
 */
