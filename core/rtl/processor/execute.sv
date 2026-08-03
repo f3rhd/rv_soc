@@ -23,8 +23,8 @@ module execute #(
     logic branch_result;
     logic [2:0] memory_operation;
     logic [31:0] memory_write_data;
-    logic src1_match, src2_match;
-    logic [31:0] src1_data, src2_data;
+    logic src1_match, src2_match, src3_match;
+    logic [31:0] src1_data, src2_data, src3_data;
 
 
     logic predictor_update;
@@ -52,9 +52,9 @@ module execute #(
     assign instruction_data = i_register_read_out.decode_data.instruction_data;
     assign read_data = i_register_read_out.read_data;
 
-    // TODO : This accounts integer results only add float forwarding as well
-    assign src1_match = (exi.int_reg_write && ~exi.mem_read  && (instruction_data.src1 == exi.dest) && (exi.dest != 5'd0));
-    assign src2_match = (exi.int_reg_write && ~exi.mem_read  && (instruction_data.src2 == exi.dest) && (exi.dest != 5'd0));
+    assign src1_match = (~exi.mem_read && ((exi.int_reg_write && instruction_data.read_rs1) | (exi.float_reg_write &instruction_data.read_fs1)) && (instruction_data.src1 == exi.dest));
+    assign src2_match = (~exi.mem_read && ((exi.int_reg_write && instruction_data.read_rs2) | (exi.float_reg_write &instruction_data.read_fs2)) && (instruction_data.src2 == exi.dest));
+    assign src3_match = (~exi.mem_read && exi.float_reg_write && instruction_data.src3 == exi.dest);
 
     always_comb begin : stall_logic
         exi.stall_pipeline_type1 = 0;
@@ -118,6 +118,7 @@ module execute #(
 
         src1_data = src1_match ? exi.exec_result : read_data.src1_data;
         src2_data = src2_match ? exi.exec_result : read_data.src2_data;
+        src3_data = src3_match ? exi.exec_result : read_data.src3_data;
         case (instruction_data.operation[6:5])
             2'b00: begin
                 src2_data = instruction_data.uses_imm ? instruction_data.extended_imm_val : src2_data;
