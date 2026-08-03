@@ -32,7 +32,7 @@ module execute #(
     logic redirect;
     logic [HISTORY_SIZE - 1 : 0] pht_index;
     logic btb_write;
-    logic [31:0] branch_instruction_addr;
+    logic [31:0] instruction_addr;
     logic btb_write_jump;
     logic [31:0] btb_branch_target_addr;
     logic [31:0] mul_result;
@@ -52,15 +52,30 @@ module execute #(
     assign instruction_data = i_register_read_out.decode_data.instruction_data;
     assign read_data = i_register_read_out.read_data;
 
+    // TODO : This accounts integer results only add float forwarding as well
     assign src1_match = (exi.int_reg_write && ~exi.mem_read  && (instruction_data.src1 == exi.dest) && (exi.dest != 5'd0));
     assign src2_match = (exi.int_reg_write && ~exi.mem_read  && (instruction_data.src2 == exi.dest) && (exi.dest != 5'd0));
 
-    assign exi.stall_pipeline_type1 = ~i_decode_out.instruction_data.invalid & exi.mem_read & (exi.dest != 5'd0) & (
-        ((i_decode_out.instruction_data.src1 == exi.dest) && i_decode_out.instruction_data.read_rs1) 
-        |
-        ((i_decode_out.instruction_data.src2 == exi.dest) && i_decode_out.instruction_data.read_rs2 )
-    );
-    assign exi.stall_pipeline_type2 = (mul_begin & ~mul_done) | (div_begin & ~div_done);
+    always_comb begin : stall_logic
+        exi.stall_pipeline_type1 = 0;
+        exi.stall_pipeline_type2 = (mul_begin & ~mul_done) | (div_begin & ~div_done);
+
+        if (!i_decode_out.instruction_data.invalid & exi.mem_read) begin
+            if (exi.int_reg_write & exi.dest != 0) begin
+                exi.stall_pipeline_type1 =   ((i_decode_out.instruction_data.src1 == exi.dest) && i_decode_out.instruction_data.read_rs1) 
+                                             |
+                                             ((i_decode_out.instruction_data.src2 == exi.dest) && i_decode_out.instruction_data.read_rs2);
+            end else if (exi.float_reg_write) begin
+                exi.stall_pipeline_type1 =   ((i_decode_out.instruction_data.src1 == exi.dest) && i_decode_out.instruction_data.read_fs1) 
+                                             |
+                                             ((i_decode_out.instruction_data.src2 == exi.dest) && i_decode_out.instruction_data.read_fs2)
+                                             |
+                                             ((i_decode_out.instruction_data.src3 == exi.dest) && i_decode_out.instruction_data.read_fs3 );
+            end
+        end
+    end
+
+
     multiplier multiplier (
         .clk(clk),
         .i_multiplicand(src2_data),
@@ -92,7 +107,7 @@ module execute #(
         redirect = '0;
         pht_index = prediction_data.pht_index;
         btb_write = instruction_data.btb_write & ~prediction_data.btb_was_hit & ~instruction_data.invalid;
-        branch_instruction_addr = instruction_data.instruction_addr;
+        instruction_addr = instruction_data.instruction_addr;
         btb_write_jump = '0;
         btb_branch_target_addr = instruction_data.instruction_addr + instruction_data.extended_imm_val;
         mul_begin = 0;
@@ -101,8 +116,8 @@ module execute #(
         div_type = 0;
 
 
-        src1_data = src1_match ? exi.alu_out : read_data.src1_data;
-        src2_data = src2_match ? exi.alu_out : read_data.src2_data;
+        src1_data = src1_match ? exi.exec_result : read_data.src1_data;
+        src2_data = src2_match ? exi.exec_result : read_data.src2_data;
         case (instruction_data.operation[6:5])
             2'b00: begin
                 src2_data = instruction_data.uses_imm ? instruction_data.extended_imm_val : src2_data;
@@ -250,41 +265,41 @@ module execute #(
 
     always_ff @(posedge clk) begin
         if (instruction_data.invalid | i_output_bubble | i_reset) begin
-            exi.invalid                 <= 1;
-            exi.memory_write_data       <= 0;
-            exi.memory_operation        <= 0;
-            exi.alu_out                 <= 0;
-            exi.dest                    <= 0;
-            exi.mem_write               <= 0;
-            exi.int_reg_write           <= 0;
-            exi.mem_read                <= 0;
-            exi.predictor_update        <= 0;
-            exi.redirection_address     <= 0;
-            exi.redirect                <= 0;
-            exi.pht_index               <= 0;
-            exi.btb_write               <= 0;
-            exi.branch_instruction_addr <= 0;
-            exi.btb_write_jump          <= 0;
-            exi.actual_branch_result    <= 0;
-            exi.btb_branch_target_addr  <= 0;
+            exi.invalid                    <= 1;
+            exi.memory_write_data          <= 0;
+            exi.memory_operation           <= 0;
+            exi.exec_result                <= 0;
+            exi.dest                       <= 0;
+            exi.mem_write                  <= 0;
+            exi.int_reg_write              <= 0;
+            exi.mem_read                   <= 0;
+            exi.predictor_update           <= 0;
+            exi.redirection_address        <= 0;
+            exi.redirect                   <= 0;
+            exi.pht_index                  <= 0;
+            exi.btb_write                  <= 0;
+            exi.execution_instruction_addr <= 0;
+            exi.btb_write_jump             <= 0;
+            exi.actual_branch_result       <= 0;
+            exi.btb_branch_target_addr     <= 0;
         end else if (i_en) begin
-            exi.memory_write_data       <= memory_write_data;
-            exi.memory_operation        <= memory_operation;
-            exi.alu_out                 <= alu_out;
-            exi.dest                    <= instruction_data.dest;
-            exi.invalid                 <= instruction_data.invalid;
-            exi.mem_write               <= instruction_data.mem_write;
-            exi.mem_read                <= instruction_data.mem_read;
-            exi.int_reg_write           <= instruction_data.int_reg_write;
-            exi.predictor_update        <= predictor_update;
-            exi.redirection_address     <= redirection_address;
-            exi.redirect                <= redirect;
-            exi.pht_index               <= pht_index;
-            exi.btb_write               <= btb_write;
-            exi.branch_instruction_addr <= branch_instruction_addr;
-            exi.btb_write_jump          <= btb_write_jump;
-            exi.actual_branch_result    <= branch_result;
-            exi.btb_branch_target_addr  <= btb_branch_target_addr;
+            exi.memory_write_data          <= memory_write_data;
+            exi.memory_operation           <= memory_operation;
+            exi.exec_result                <= alu_out;
+            exi.dest                       <= instruction_data.dest;
+            exi.invalid                    <= instruction_data.invalid;
+            exi.mem_write                  <= instruction_data.mem_write;
+            exi.mem_read                   <= instruction_data.mem_read;
+            exi.int_reg_write              <= instruction_data.int_reg_write;
+            exi.predictor_update           <= predictor_update;
+            exi.redirection_address        <= redirection_address;
+            exi.redirect                   <= redirect;
+            exi.pht_index                  <= pht_index;
+            exi.btb_write                  <= btb_write;
+            exi.execution_instruction_addr <= instruction_addr;
+            exi.btb_write_jump             <= btb_write_jump;
+            exi.actual_branch_result       <= branch_result;
+            exi.btb_branch_target_addr     <= btb_branch_target_addr;
         end
     end
 endmodule

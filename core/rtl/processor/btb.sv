@@ -43,10 +43,10 @@ module btb #(
 
     logic [TAG_WIDTH - 1 : 0] write_tag;
 
-    assign write_tag    = exi.branch_instruction_addr[(ADDRESS_WIDTH-1) -: TAG_WIDTH];
+    assign write_tag    = exi.execution_instruction_addr[(ADDRESS_WIDTH-1) -: TAG_WIDTH];
     assign read_tag = i_branch_addr_read[(ADDRESS_WIDTH-1)-:TAG_WIDTH];
 
-    assign write_set_id = exi.branch_instruction_addr[0+:NUM_BITS_FOR_SET_ID];
+    assign write_set_id = exi.execution_instruction_addr[0+:NUM_BITS_FOR_SET_ID];
     assign read_set_id = i_branch_addr_read[0+:NUM_BITS_FOR_SET_ID];
 
     always_ff @(posedge clk) begin
@@ -77,11 +77,6 @@ module btb #(
         o_hit          = 1'b0;
         o_target_addr  = '0;
         o_hit_was_jump = 1'b0;
-        // if (i_branch_addr_read == exi.branch_instruction_addr[ADDRESS_WIDTH-1:0] & exi.btb_write & i_enable) begin // @VisitMeLater : does & i_enable make sense here?????
-        //     o_hit          = 1'b1;
-        //     o_target_addr  = exi.btb_branch_target_addr[ADDRESS_WIDTH-1:0];
-        //     o_hit_was_jump = exi.btb_write_jump;
-        //end else begin
         for (int w = 0; w < NUM_WAYS; w++) begin
             if (accessed_line[w].valid && (accessed_line[w].tag == r_read_tag)) begin
                 o_hit          = 1'b1;
@@ -90,7 +85,6 @@ module btb #(
                 break;
             end
         end
-        //end
     end
 
 

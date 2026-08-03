@@ -20,7 +20,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     this field may have values of calculated addresses for memory access/write or  
     calculated values of the destination resgister
     */
-    logic [31:0] alu_out;
+    logic [31:0] exec_result;
     /*
     index of the destination register
     */
@@ -30,7 +30,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     logic actual_branch_result;
     logic predictor_update;
     logic [31:0] redirection_address;
-    logic [31:0] branch_instruction_addr;
+    logic [31:0] execution_instruction_addr;
     logic [31:0] btb_branch_target_addr;
     logic [HISTORY_SIZE-1:0] pht_index;
     logic btb_write_jump;
@@ -45,6 +45,7 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
     logic mem_write;
     logic mem_read;
     logic int_reg_write;
+    logic float_reg_write;
     logic btb_write;
 
 
@@ -52,12 +53,12 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         output redirect,
         output memory_write_data,
         output memory_operation,
-        output alu_out,
+        output exec_result,
         output dest,
         output actual_branch_result,
         output predictor_update,
         output redirection_address,
-        output branch_instruction_addr,
+        output execution_instruction_addr,
         output pht_index,
         output invalid,
         output mem_write,
@@ -67,12 +68,14 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         output stall_pipeline_type1,
         output btb_write_jump,
         output btb_branch_target_addr,
-        output stall_pipeline_type2
+        output stall_pipeline_type2,
+        output float_reg_write
     );
     modport register_read (
         input dest,
-        input alu_out,
+        input exec_result,
         input int_reg_write,
+        input float_reg_write,
         input mem_read,
         output stall_pipeline_type0
     );
@@ -85,20 +88,21 @@ interface execution_if #(parameter HISTORY_SIZE = 10);
         input redirect,
         input btb_write,
         input btb_write_jump,
-        input branch_instruction_addr,
+        input execution_instruction_addr,
         input redirection_address,
         input btb_branch_target_addr
     );
 
     modport mem_consumer (
-        input alu_out,
+        input exec_result,
         input memory_operation,
         input memory_write_data,
         input dest,
         input invalid,
         input mem_write,
         input mem_read,
-        input int_reg_write
+        input int_reg_write,
+        input float_reg_write
     );
 endinterface
 `endif // EXECUTION_INTERFACE_SVH

@@ -32,7 +32,7 @@ module memory #(
     (* ramstyle = "block" *)
 `endif
     logic [0:31] ram[0:SIZE-1];
-    wire [31:0] translated_address = ei.alu_out >> 2;
+    wire [31:0] translated_address = ei.exec_result >> 2;
 
     logic [1:0] r_byte_offset;
     logic alu_is_reg_write;
@@ -56,22 +56,24 @@ module memory #(
 
 
 
-    assign is_mmio = ei.alu_out[31] == 1'b1;
+    assign is_mmio = ei.exec_result[31] == 1'b1;
 
 
-    assign o_graphics_write = graphicsi.graphics_instruction_write/*is_mmio && ei.mem_write && (ei.alu_out[3:0] == GRAPHICS_COMMAND_ADDRESS[3:0] | ei.alu_out[3:0] == GRAPHICS_PIXEL_ADDRESS[3:0])*/;
+    assign o_graphics_write = graphicsi.graphics_instruction_write/*is_mmio && ei.mem_write && (ei.exec_result[3:0] == GRAPHICS_COMMAND_ADDRESS[3:0] | ei.exec_result[3:0] == GRAPHICS_PIXEL_ADDRESS[3:0])*/;
 
 
     always_comb begin
         byte_en = 4'b0000;
         if (ei.mem_write && !ei.invalid) begin
             case (ei.memory_operation)
-                3'b000:  byte_en[ei.alu_out[1:0]] = 1'b1;  // SB
+                3'b000: byte_en[ei.exec_result[1:0]] = 1'b1;  // SB
                 3'b001: begin  // SH
-                    if (ei.alu_out[1]) byte_en = 4'b1100;
+                    if (ei.exec_result[1]) byte_en = 4'b1100;
                     else byte_en = 4'b0011;
                 end
-                3'b010:  byte_en = 4'b1111;  // SW
+                3'b100,  // store float
+                3'b010:
+                byte_en = 4'b1111;  // SW
                 default: byte_en = 4'b0000;
             endcase
         end
@@ -87,7 +89,8 @@ module memory #(
     always_ff @(posedge clk) begin
         if (i_reset) begin
             o_register_write.write_addr          <= 0;
-            o_register_write.write_enable        <= 0;
+            o_register_write.int_write_enable    <= 0;
+            o_register_write.float_write_enable  <= 0;
             alu_is_reg_write                     <= 0;
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
@@ -95,7 +98,8 @@ module memory #(
             o_led_value                          <= 0;
             o_segment_value                      <= 0;
         end else if (i_en) begin
-            o_register_write.write_enable        <= ei.int_reg_write;
+            o_register_write.int_write_enable    <= ei.int_reg_write;
+            o_register_write.float_write_enable  <= ei.float_reg_write;
             o_register_write.write_addr          <= ei.dest;
             alu_is_reg_write                     <= 0;
             reg_mem_read                         <= 0;
@@ -103,11 +107,11 @@ module memory #(
             graphicsi.graphics_instruction_write <= 1'b0;
             if (ei.int_reg_write & ~ei.mem_read & ~ei.mem_write) begin
                 alu_is_reg_write <= 1;
-                reg_alu_out      <= ei.alu_out;
+                reg_alu_out      <= ei.exec_result;
             end else begin
                 if (ei.mem_write) begin
                     if (is_mmio) begin
-                        case (ei.alu_out[3:0])
+                        case (ei.exec_result[3:0])
                             GRAPHICS_COMMAND_ADDRESS[3:0]: begin
                                 graphicsi.graphics_instruction <= {
                                     1'b1, ei.memory_write_data
@@ -151,7 +155,7 @@ module memory #(
                     reg_raw_word  <= ram[translated_address];
                     reg_memory_op <= ei.memory_operation;
                     reg_mem_read  <= 1;
-                    r_byte_offset <= ei.alu_out[1:0];
+                    r_byte_offset <= ei.exec_result[1:0];
                 end
             end
         end
@@ -173,8 +177,8 @@ module memory #(
                     selected_half[7:0],
                     selected_half[15:8]
                 };
-                // load word
-                3'b010:
+                // load word integer and float
+                3'b010, 3'b101:
                 o_register_write.write_data = {
                     reg_raw_word[7:0],
                     reg_raw_word[15:8],

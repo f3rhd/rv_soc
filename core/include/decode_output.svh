@@ -81,12 +81,14 @@ typedef struct packed {
             7'b10_00_000 - store integer byte 
             7'b10_00_001 - store integer half 
             7'b10_00_010 - store integer word 
+            7'b10_00_100 - store float word 
         [3] = 1'b1 indicates load:
             7'b10_01_000 - load integer byte
             7'b10_01_001 - load integer half
             7'b10_01_010 - load integer word
             7'b10_01_011 - load integer byte unsigned 
             7'b10_01_100 - load integer half unsigned
+            7'b10_01_101 - load float word
     }
     Float instructions : [6:5] = 2'b11 {
 
