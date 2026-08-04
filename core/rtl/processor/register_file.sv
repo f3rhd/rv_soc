@@ -69,10 +69,10 @@ module register_file (
                 // Integer registers
                 if (instruction_data_in.read_rs1) begin
                     // Priority 1: Forward from EX stage
-                    if (exi.int_reg_write & ~exi.mem_read & (exi.dest == instruction_data_in.src1)) begin
+                    if (exi.int_reg_write & ~exi.mem_read & (exi.dest == instruction_data_in.src1) && instruction_data_in.src1 != 0) begin
                         o_register_read.read_data.src1_data <= exi.exec_result;
                     end  // Priority 2: Forward from WB stage
-                    else if (i_register_write.int_write_enable & (i_register_write.write_addr == instruction_data_in.src1)) begin
+                    else if (i_register_write.int_write_enable & (i_register_write.write_addr == instruction_data_in.src1) && instruction_data_in.src1 != 0) begin
                         o_register_read.read_data.src1_data <= i_register_write.write_data;
                     end  // Priority 3: Read directly from Integer Regfile
                     else begin
@@ -98,10 +98,10 @@ module register_file (
                 // Integer registers
                 if (instruction_data_in.read_rs2) begin
                     // Priority 1: Forward from EX stage
-                    if (exi.int_reg_write & ~exi.mem_read & (exi.dest == instruction_data_in.src2)) begin
+                    if (exi.int_reg_write & ~exi.mem_read & (exi.dest == instruction_data_in.src2) && instruction_data_in.src2 != 0) begin
                         o_register_read.read_data.src2_data <= exi.exec_result;
                     end  // Priority 2: Forward from WB stage
-                    else if (i_register_write.int_write_enable & (i_register_write.write_addr == instruction_data_in.src2)) begin
+                    else if (i_register_write.int_write_enable & (i_register_write.write_addr == instruction_data_in.src2) && instruction_data_in.src2 != 0) begin
                         o_register_read.read_data.src2_data <= i_register_write.write_data;
                     end  // Priority 3: Read directly from Integer Regfile
                     else begin

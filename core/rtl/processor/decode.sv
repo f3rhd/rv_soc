@@ -28,6 +28,9 @@ module decode #(
     logic is_alu_instruction;
     assign is_alu_instruction = (op == 7'b0010011) || (op == 7'b0110011);
     always_comb begin
+        op = i_instruction_raw[6:0];
+        funct3 = i_instruction_raw[14:12];
+        funct7 = i_instruction_raw[31:25];
         alu_base_op = OP_INVALID;
         decoded_mop_next.instruction_data = '0;
         decoded_mop_next.prediction_data.btb_was_hit = i_btb_hit;
@@ -42,13 +45,13 @@ module decode #(
         decoded_mop_next.instruction_data.invalid = ~i_instruction_valid;
         decoded_mop_next.instruction_data.read_rs1 = 1'b0;
         decoded_mop_next.instruction_data.read_rs2 = 1'b0;
-        op = i_instruction_raw[6:0];
-        funct3 = i_instruction_raw[14:12];
-        funct7 = i_instruction_raw[31:25];
+        decoded_mop_next.instruction_data.read_fs1 = 1'b0;
+        decoded_mop_next.instruction_data.read_fs2 = 1'b0;
+        decoded_mop_next.instruction_data.read_fs3 = 1'b0;
+        decoded_mop_next.instruction_data.src3 = funct7[6:2];
+        decoded_mop_next.instruction_data.round_mode = funct3;
         if (is_alu_instruction) begin
             if (funct7[0] & op == 7'b0110011) begin
-                decoded_mop_next.instruction_data.read_rs1 = 1'b1;
-                decoded_mop_next.instruction_data.read_rs2 = 1'b1;
                 case (funct3)
                     3'b000:  alu_base_op = ALU_MUL;
                     3'b001:  alu_base_op = ALU_MULH;
@@ -238,6 +241,115 @@ module decode #(
                                 decoded_mop_next.instruction_data.operation = BR_BEQ;
                             end
                         end
+                    end
+                end
+            end
+            2'b10: begin
+                if (op[4]) begin
+                    case (funct7[6:5])
+                        2'b00: begin
+                            decoded_mop_next.instruction_data.read_fs1 = 1'b1;
+                            decoded_mop_next.instruction_data.read_fs2 = 1'b1;
+                            decoded_mop_next.instruction_data.float_reg_write = 1'b1;
+                            if (funct7[4]) begin
+                                if (funct7[2]) begin
+                                    case (funct3[0])
+                                        1'b1:
+                                        decoded_mop_next.instruction_data.operation = FP_FMAX;
+                                        1'b0:
+                                        decoded_mop_next.instruction_data.operation = FP_FMIN;
+                                    endcase
+                                end else begin
+                                    if (funct3[2]) begin
+                                        decoded_mop_next.instruction_data.operation = FP_FSGNJX;
+                                    end else begin
+                                        if (funct3[0])
+                                            decoded_mop_next.instruction_data.operation = FP_FSGNJN;
+                                        else
+                                            decoded_mop_next.instruction_data.operation = FP_FSGNJ;
+
+                                    end
+                                end
+                            end else begin
+                                case (funct7[3:2])
+                                    2'b00:
+                                    decoded_mop_next.instruction_data.operation = FP_FADD;
+                                    2'b01:
+                                    decoded_mop_next.instruction_data.operation = FP_FSUB;
+                                    2'b10:
+                                    decoded_mop_next.instruction_data.operation = FP_FMUL;
+                                    2'b11:
+                                    decoded_mop_next.instruction_data.operation = FP_FDIV;
+                                endcase
+                            end
+                        end
+                        2'b01: begin
+                            decoded_mop_next.instruction_data.float_reg_write = 1'b1;
+                            decoded_mop_next.instruction_data.read_fs1 = 1'b1;
+                            decoded_mop_next.instruction_data.operation = FP_FSQRT;
+                        end
+                        2'b10: begin
+                            decoded_mop_next.instruction_data.int_reg_write = 1'b1;
+                            decoded_mop_next.instruction_data.read_fs1 = 1'b1;
+                            decoded_mop_next.instruction_data.read_fs2 = 1'b1;
+                            if (funct3[1])
+                                decoded_mop_next.instruction_data.operation = FP_FEQ;
+                            else if (funct3[0])
+                                decoded_mop_next.instruction_data.operation = FP_FLT;
+                            else
+                                decoded_mop_next.instruction_data.operation = FP_FLE;
+
+                        end
+                        2'b11: begin
+                            if (funct7[4]) begin
+                                if (funct7[3]) begin
+                                    decoded_mop_next.instruction_data.read_rs1 = 1'b1;
+                                    decoded_mop_next.instruction_data.float_reg_write = 1'b1;
+                                    decoded_mop_next.instruction_data.operation = FP_FMV_W_X;
+                                end else begin
+                                    decoded_mop_next.instruction_data.read_fs1 = 1'b1;
+                                    decoded_mop_next.instruction_data.int_reg_write = 1'b1;
+                                    if (funct3[0]) begin
+                                        decoded_mop_next.instruction_data.operation = FP_FCLASS;
+                                    end else begin
+                                        decoded_mop_next.instruction_data.operation = FP_FMV_X_W;
+                                    end
+                                end
+                            end else begin
+                                if (funct7[3]) begin
+                                    decoded_mop_next.instruction_data.read_rs1 = 1'b1;
+                                    decoded_mop_next.instruction_data.float_reg_write = 1'b1;
+                                    if(decoded_mop_next.instruction_data.src2[0])
+                                        decoded_mop_next.instruction_data.operation = FP_FCVT_S_WU;
+                                    else
+                                        decoded_mop_next.instruction_data.operation = FP_FCVT_S_W;
+                                end else begin
+                                    decoded_mop_next.instruction_data.read_fs1 = 1'b1;
+                                    decoded_mop_next.instruction_data.int_reg_write = 1'b1;
+                                    if(decoded_mop_next.instruction_data.src2[0])
+                                        decoded_mop_next.instruction_data.operation = FP_FCVT_WU_S;
+                                    else
+                                        decoded_mop_next.instruction_data.operation = FP_FCVT_W_S;
+
+                                end
+                            end
+                        end
+                    endcase
+                end else begin
+                    decoded_mop_next.instruction_data.read_fs1        = 1'b1;
+                    decoded_mop_next.instruction_data.read_fs2        = 1'b1;
+                    decoded_mop_next.instruction_data.read_fs3        = 1'b1;
+                    decoded_mop_next.instruction_data.float_reg_write = 1'b1;
+                    if (op[3]) begin
+                        if (op[2])
+                            decoded_mop_next.instruction_data.operation = FP_FNMADD;
+                        else
+                            decoded_mop_next.instruction_data.operation = FP_FNMSUB;
+                    end else begin
+                        if (op[2])
+                            decoded_mop_next.instruction_data.operation = FP_FMSUB;
+                        else
+                            decoded_mop_next.instruction_data.operation = FP_FMADD;
                     end
                 end
             end
