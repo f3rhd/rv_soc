@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT
  */
 
-`include "../include/graphics_interface.svh"
-`include "../include/bootloader_interface.svh"
+`include "../rtl/graphics_unit/graphics_interface.svh"
+`include "../rtl/bootloader/bootloader_interface.svh"
 
 
-`define LOG_ENABLED 
+`define LOG_ENABLED
 
 module tb_rv_gfx_int;
 
@@ -52,7 +52,7 @@ module tb_rv_gfx_int;
 `ifdef LOG_ENABLED
         if (soc_log_file) begin
 
-            if (rv_processor.register_write_.write_enable && rv_processor.register_write_.write_addr != 0) begin
+            if (rv_processor.register_write_.int_write_enable && rv_processor.register_write_.write_addr != 0) begin
                 $fdisplay(soc_log_file,
                           "[Time: \%0t] Register File[\%d] <- 0x\%h", $time,
                           rv_processor.register_write_.write_addr,
@@ -62,14 +62,14 @@ module tb_rv_gfx_int;
 
             if (rv_processor.memory.ei.mem_write) begin
                 $fdisplay(soc_log_file, "[Time: \%0t] DCache[0x\%h] <- \%h",
-                          $time, rv_processor.memory.ei.alu_out,
+                          $time, rv_processor.memory.ei.exec_result,
                           rv_processor.memory.ei.memory_write_data);
             end
 
 
             if (rv_processor.memory.ei.mem_read) begin
                 $fdisplay(soc_log_file, "[Time: \%0t] Reading DCache[0x\%h]",
-                          $time, rv_processor.memory.ei.alu_out);
+                          $time, rv_processor.memory.ei.exec_result);
             end
 
 
@@ -123,7 +123,7 @@ module tb_rv_gfx_int;
                     "[Time: %0t] BranchTableBank[0x%h][0x%h] <- instruction_addr : 0x%h | target_addr : 0x%h | is_jump : 0x%h",
                     $time, rv_processor.fetch.btb.write_set_id,
                     rv_processor.fetch.btb.set_allocation_counter[rv_processor.fetch.btb.write_set_id],
-                    rv_processor.execution_if.branch_instruction_addr * 4,
+                    rv_processor.execution_if.execution_instruction_addr * 4,
                     rv_processor.execution_if.btb_branch_target_addr * 4,
                     rv_processor.execution_if.btb_write_jump);
             end
@@ -183,7 +183,7 @@ module tb_rv_gfx_int;
         end
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/circle.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/asm/string_test.hex",
             rv_processor.fetch.instructions);
 
         reset = 1;

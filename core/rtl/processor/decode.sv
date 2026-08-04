@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-`include "../../include/decode_output.svh"
+`include "decode_output.svh"
 module decode #(
     parameter HISTORY_SIZE  = 10,
     parameter ADDRESS_WIDTH = 20

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-`include "../../include/execution_interface.svh"
+`include "execution_interface.svh"
 module prediction #(
     parameter HISTORY_SIZE  = 10,
     parameter ADDRESS_WIDTH = 31
