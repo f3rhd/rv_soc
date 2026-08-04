@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: MIT
  */
 
-`include "../../include/execution_interface.svh"
-`include "../../include/register.svh"
-`include "../../include/decode_output.svh"
+`include "execution_interface.svh"
+`include "register.svh"
+`include "decode_output.svh"
 module execute #(
     parameter HISTORY_SIZE = 10
 ) (
@@ -100,7 +100,6 @@ module execute #(
         memory_operation = '0;
         alu_out = 0;
         branch_result = '0;
-        //should_bubble = 0;
         memory_write_data = 0;
         predictor_update = '0;
         redirection_address = '0;

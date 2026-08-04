@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-`include "../../include/bootloader_interface.svh"
+`include "bootloader_interface.svh"
 module bootloader #(
     parameter SYSTEM_CLK_HZ = 100_000_000,
     parameter BAUD_RATE = 115200

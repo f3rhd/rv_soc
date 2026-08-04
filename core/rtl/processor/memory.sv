@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: MIT
  */
 
-`include "../../include/execution_interface.svh"
-`include "../../include/execution_interface.svh"
-`include "../../include/graphics_interface.svh"
-`include "../../include/register.svh"
+`include "execution_interface.svh"
+`include "../graphics_unit/graphics_interface.svh"
+`include "register.svh"
 module memory #(
     parameter SIZE = 2048
 ) (

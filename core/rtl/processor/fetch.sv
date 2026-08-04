@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-`include "../../include/bootloader_interface.svh"
+`include "../bootloader/bootloader_interface.svh"
 module fetch #(
     parameter unsigned I_CACHE_SIZE = 1024,  // Total size in bytes
     parameter unsigned BTB_SIZE = 128

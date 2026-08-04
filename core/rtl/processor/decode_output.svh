@@ -91,8 +91,34 @@ typedef struct packed {
             7'b10_01_101 - load float word
     }
     Float instructions : [6:5] = 2'b11 {
-
+        [4:3] = 2'b00 : R4 instructions
+            7'b11_00_110 - fmadd
+            7'b11_00_001 - fmsub
+            7'b11_00_010 - fnmsub
+            7'b11_00_100 - fnmadd
+        [4:3] = 2'b01 : arithmetic instructions
+            7'b11_01_000 - fadd
+            7'b11_01_001 - fsub
+            7'b11_01_010 - fmul
+            7'b11_01_011 - fdiv
+            7'b11_01_100 - fsgnj
+            7'b11_01_101 - fsgnjn
+            7'b11_01_110 - fsgnjx
+        [4:3] = 2'b10 : comparison instructions
+            7'b11_10_000 - fmin
+            7'b11_10_001 - fmax
+            7'b11_10_010 - feq
+            7'b11_10_100 - flt
+            7'b11_10_101 - fle
+        [4:3]  = 2'b11 : others
+            7'b11_11_000 - fsqrt
+            7'b11_11_001 - fclass
+            7'b11_11_010 - fcvt.w.s
+            7'b11_11_011 - fcvt.wu.s
+            7'b11_11_100 - fcvt.s.w
+            7'b11_11_101 - fcvt.s.wu
+            7'b11_11_110 - fmv.x.w
+            7'b11_11_111 - fmv.w.x
     }
-
 */
 `endif // DECODE_RESULT_H

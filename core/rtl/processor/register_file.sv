@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: MIT
  */
 
-`include "../../include/register.svh"
-`include "../../include/decode_output.svh"
-`include "../../include/execution_interface.svh"
+`include "register.svh"
+`include "decode_output.svh"
+`include "execution_interface.svh"
 module register_file (
     input logic clk,
     input logic i_en,

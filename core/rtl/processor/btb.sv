@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-`include "../../include/execution_interface.svh"
+`include "execution_interface.svh"
 module btb #(
     parameter SIZE = 32,
     parameter ADDRESS_WIDTH = 12

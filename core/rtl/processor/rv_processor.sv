@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT
  */
 
-`include "../../include/execution_interface.svh"
-`include "../../include/decode_output.svh"
-`include "../../include/register.svh"
-`include "../../include/bootloader_interface.svh"
-`include "../../include/graphics_interface.svh"
+`include "execution_interface.svh"
+`include "decode_output.svh"
+`include "register.svh"
+`include "../bootloader/bootloader_interface.svh"
+`include "../graphics_unit/graphics_interface.svh"
 
 module rv_processor #(
     parameter HISTORY_SIZE = 10,
