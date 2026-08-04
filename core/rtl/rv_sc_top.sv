@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-`include "../include/bootloader_interface.svh"
-`include "../include/graphics_interface.svh"
+`include "bootloader/bootloader_interface.svh"
+`include "graphics_unit/graphics_interface.svh"
 module rv_sc_top (
     input logic clk,
     input logic reset,

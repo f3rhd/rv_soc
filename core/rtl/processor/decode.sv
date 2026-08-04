@@ -24,11 +24,11 @@ module decode #(
     logic [6:0] funct7;
     logic [2:0] funct3;
     logic [6:0] op;
-    logic [6:0] alu_base_op;
+    opcode_e alu_base_op;
     logic is_alu_instruction;
     assign is_alu_instruction = (op == 7'b0010011) || (op == 7'b0110011);
     always_comb begin
-        alu_base_op = 0;
+        alu_base_op = OP_INVALID;
         decoded_mop_next.instruction_data = '0;
         decoded_mop_next.prediction_data.btb_was_hit = i_btb_hit;
         decoded_mop_next.prediction_data.prediction = i_predictor_prediction;
@@ -50,180 +50,202 @@ module decode #(
                 decoded_mop_next.instruction_data.read_rs1 = 1'b1;
                 decoded_mop_next.instruction_data.read_rs2 = 1'b1;
                 case (funct3)
-                    3'b000: alu_base_op = 7'b00_01110;  // mul (multiply low) 
-                    3'b001:
-                    alu_base_op = 7'b00_01111;  // mulh (multiply high signed signed)
-                    3'b010:
-                    alu_base_op = 7'b00_10000;  // mulhsu (multiply high signed unsigned)
-                    3'b011:
-                    alu_base_op = 7'b00_10001;  // mulhu (multiply high unsigned unsigned)
-                    3'b100: alu_base_op = 7'b00_10010;  // div (divide signed)
-                    3'b101:
-                    alu_base_op = 7'b00_10011;  // divu (divide unsigned)
-                    3'b110:
-                    alu_base_op = 7'b00_10100;  // rem (remainder signed)
-                    3'b111:
-                    alu_base_op = 7'b00_10101;  // remu (remainder unsigned)
+                    3'b000:  alu_base_op = ALU_MUL;
+                    3'b001:  alu_base_op = ALU_MULH;
+                    3'b010:  alu_base_op = ALU_MULHSU;
+                    3'b011:  alu_base_op = ALU_MULHU;
+                    3'b100:  alu_base_op = ALU_DIV;
+                    3'b101:  alu_base_op = ALU_DIVU;
+                    3'b110:  alu_base_op = ALU_REM;
+                    3'b111:  alu_base_op = ALU_REMU;
                     default: decoded_mop_next.instruction_data.invalid = 1'b1;
                 endcase
             end else begin
                 case (funct3)
                     3'b000:
-                    alu_base_op = funct7[5] & op == 7'b0110011 ? 7'b00_00010 : 7'b00_00001;  // sub or add
-                    3'b001: alu_base_op = 7'b00_00011;  // sll
-                    3'b010: alu_base_op = 7'b00_00100;  // slt
-                    3'b011: alu_base_op = 7'b00_00101;  // sltu
-                    3'b100: alu_base_op = 7'b00_00110;  // xor 
-                    3'b101:
-                    alu_base_op = funct7[5] ? 7'b00_01000 : 7'b00_00111; // srl or sra
-                    3'b110: alu_base_op = 7'b00_01001;  // or
-                    3'b111: alu_base_op = 7'b00_01010;  // and
+                    alu_base_op = funct7[5] & op == 7'b0110011 ? ALU_SUB : ALU_ADD;
+                    3'b001: alu_base_op = ALU_SLL;
+                    3'b010: alu_base_op = ALU_SLT;
+                    3'b011: alu_base_op = ALU_SLTU;
+                    3'b100: alu_base_op = ALU_XOR;
+                    3'b101: alu_base_op = funct7[5] ? ALU_SRA : ALU_SRL;
+                    3'b110: alu_base_op = ALU_OR;
+                    3'b111: alu_base_op = ALU_AND;
                     default: decoded_mop_next.instruction_data.invalid = 1'b1;
                 endcase
             end
         end
-        case (op)
-            // register to register immediate instructions
-            7'b0010011: begin
-                decoded_mop_next.instruction_data.uses_imm = 1'b1;
-                decoded_mop_next.instruction_data.int_reg_write = 1'b1;
-                decoded_mop_next.instruction_data.read_rs1 = 1'b1;
-                decoded_mop_next.instruction_data.read_rs2 = 1'b0;
-                decoded_mop_next.instruction_data.extended_imm_val = {
-                    {20{i_instruction_raw[31]}}, i_instruction_raw[31:20]
-                };
-                decoded_mop_next.instruction_data.operation = alu_base_op;
-            end
-            // default register to register instructions
-            7'b0110011: begin
-                decoded_mop_next.instruction_data.read_rs1      = 1'b1;
-                decoded_mop_next.instruction_data.read_rs2      = 1'b1;
-                decoded_mop_next.instruction_data.int_reg_write = 1'b1;
-                decoded_mop_next.instruction_data.operation     = alu_base_op;
-            end
-            // upper immedite instructions
-            7'b0110111: begin : lui
-                decoded_mop_next.instruction_data.uses_imm = 1'b1;
-                decoded_mop_next.instruction_data.int_reg_write = 1'b1;
-                decoded_mop_next.instruction_data.extended_imm_val = {
-                    i_instruction_raw[31:12], 12'b0
-                };
-                decoded_mop_next.instruction_data.operation = 7'b00_01100;
-            end
-            7'b0010111: begin : auipc
-                decoded_mop_next.instruction_data.uses_imm = 1'b1;
-                decoded_mop_next.instruction_data.int_reg_write = 1'b1;
-                decoded_mop_next.instruction_data.extended_imm_val = {
-                    i_instruction_raw[31:12], 12'b0
-                };
-                decoded_mop_next.instruction_data.operation = 7'b00_01011;
+        case (op[6:5])
+            2'b00: begin
+                case (op[4])
+                    1'b0: begin : load_instructions
+                        decoded_mop_next.instruction_data.uses_imm = 1'b1;
+                        decoded_mop_next.instruction_data.int_reg_write = 1'b1;
+                        decoded_mop_next.instruction_data.mem_read = 1'b1;
+                        decoded_mop_next.instruction_data.read_rs1 = 1'b1;
+                        decoded_mop_next.instruction_data.read_rs2 = 1'b0;
+                        decoded_mop_next.instruction_data.extended_imm_val = {
+                            {20{i_instruction_raw[31]}},
+                            i_instruction_raw[31:20]
+                        };
+                        if (op[2]) begin : flw
+                            decoded_mop_next.instruction_data.operation = MEM_FLW;
+                            decoded_mop_next.instruction_data.int_reg_write = 1'b0;
+                            decoded_mop_next.instruction_data.float_reg_write = 1'b1;
+                        end else begin
+                            case (funct3[2])
+                                1'b0: begin
+                                    if (funct3[1])  // lw
+                                        decoded_mop_next.instruction_data.operation = MEM_LW;
+                                    else begin
+                                        if (funct3[0])  // lh
+                                            decoded_mop_next.instruction_data.operation = MEM_LH;
+                                        else  // lb
+                                            decoded_mop_next.instruction_data.operation = MEM_LB;
+                                    end
 
+                                end
+                                1'b1: begin
+                                    if (funct3[0])  // lhu
+                                        decoded_mop_next.instruction_data.operation = MEM_LHU;
+                                    else  // lbu
+                                        decoded_mop_next.instruction_data.operation = MEM_LBU;
+                                end
+                            endcase
+                        end
+
+                    end
+                    1'b1: begin
+                        if (op[2]) begin : auipc
+                            decoded_mop_next.instruction_data.uses_imm = 1'b1;
+                            decoded_mop_next.instruction_data.int_reg_write = 1'b1;
+                            decoded_mop_next.instruction_data.extended_imm_val = {
+                                i_instruction_raw[31:12], 12'b0
+                            };
+                            decoded_mop_next.instruction_data.operation = ALU_AUIPC;
+                        end else begin : register_to_register_imm
+                            decoded_mop_next.instruction_data.uses_imm = 1'b1;
+                            decoded_mop_next.instruction_data.int_reg_write = 1'b1;
+                            decoded_mop_next.instruction_data.read_rs1 = 1'b1;
+                            decoded_mop_next.instruction_data.read_rs2 = 1'b0;
+                            decoded_mop_next.instruction_data.extended_imm_val = {
+                                {20{i_instruction_raw[31]}},
+                                i_instruction_raw[31:20]
+                            };
+                            decoded_mop_next.instruction_data.operation = alu_base_op;
+
+                        end
+                    end
+                endcase
             end
-            // branch instructions
-            7'b1100011: begin : conditional
-                decoded_mop_next.instruction_data.read_rs1 = 1'b1;
-                decoded_mop_next.instruction_data.read_rs2 = 1'b1;
-                decoded_mop_next.instruction_data.btb_write = 1'b1;
-                decoded_mop_next.instruction_data.uses_imm = 1'b1;
-                decoded_mop_next.instruction_data.extended_imm_val = {
-                    {21{i_instruction_raw[31]}},
-                    {
+            2'b01: begin
+                if (op[4]) begin
+                    if (op[2]) begin : lui
+                        decoded_mop_next.instruction_data.uses_imm = 1'b1;
+                        decoded_mop_next.instruction_data.int_reg_write = 1'b1;
+                        decoded_mop_next.instruction_data.extended_imm_val = {
+                            i_instruction_raw[31:12], 12'b0
+                        };
+                        decoded_mop_next.instruction_data.operation = ALU_LUI;
+                    end else begin : register_to_register
+                        decoded_mop_next.instruction_data.read_rs1 = 1'b1;
+                        decoded_mop_next.instruction_data.read_rs2 = 1'b1;
+                        decoded_mop_next.instruction_data.int_reg_write = 1'b1;
+                        decoded_mop_next.instruction_data.operation     = alu_base_op;
+                    end
+                end else begin : store_instructions
+                    decoded_mop_next.instruction_data.uses_imm = 1'b1;
+                    decoded_mop_next.instruction_data.mem_write = 1'b1;
+                    decoded_mop_next.instruction_data.read_rs1 = 1'b1;
+                    decoded_mop_next.instruction_data.read_rs2 = 1'b1;
+                    decoded_mop_next.instruction_data.extended_imm_val = {
+                        {20{i_instruction_raw[31]}},
+                        i_instruction_raw[31:25],
+                        i_instruction_raw[11:7]
+                    };
+                    if (op[2]) begin : fsw
+                        decoded_mop_next.instruction_data.operation = MEM_FSW;
+                        decoded_mop_next.instruction_data.read_rs2  = 1'b0;
+                        decoded_mop_next.instruction_data.read_fs2  = 1'b1;
+                    end else begin
+                        if (funct3[1]) begin : sw
+                            decoded_mop_next.instruction_data.operation = MEM_SW;
+                        end else begin
+                            if (funct3[0]) begin : sh
+                                decoded_mop_next.instruction_data.operation = MEM_SH;
+                            end else begin : sb
+                                decoded_mop_next.instruction_data.operation = MEM_SB;
+                            end
+                        end
+                    end
+                end
+            end
+            2'b11: begin
+                if (op[3]) begin : jal
+                    decoded_mop_next.instruction_data.uses_imm = 1'b1;
+                    decoded_mop_next.instruction_data.int_reg_write = 1'b1;
+                    decoded_mop_next.instruction_data.btb_write = 1'b1;
+                    decoded_mop_next.instruction_data.extended_imm_val = {
+                        {13{i_instruction_raw[31]}},
                         i_instruction_raw[31],
-                        i_instruction_raw[7],
-                        i_instruction_raw[30:25],
-                        i_instruction_raw[11:9]
-                    }
-                };
-                case (funct3)
-                    3'b000:
-                    decoded_mop_next.instruction_data.operation = 7'b01_00_001;
-                    3'b001:
-                    decoded_mop_next.instruction_data.operation = 7'b01_00_010;
-                    3'b100:
-                    decoded_mop_next.instruction_data.operation = 7'b01_00_011;
-                    3'b101:
-                    decoded_mop_next.instruction_data.operation = 7'b01_00_100;
-                    3'b110:
-                    decoded_mop_next.instruction_data.operation = 7'b01_00_101;
-                    3'b111:
-                    decoded_mop_next.instruction_data.operation = 7'b01_00_110;
-                    default: decoded_mop_next.instruction_data.invalid = 1'b1;
-                endcase
+                        i_instruction_raw[19:12],
+                        i_instruction_raw[20],
+                        i_instruction_raw[30:22]
+                    };
+                    decoded_mop_next.instruction_data.operation = BR_JAL;
+
+                end else begin
+                    if (op[2]) begin : jalr
+                        decoded_mop_next.instruction_data.uses_imm = 1'b1;
+                        decoded_mop_next.instruction_data.int_reg_write = 1'b1;
+                        decoded_mop_next.instruction_data.read_rs1 = 1'b1;
+                        decoded_mop_next.instruction_data.read_rs2 = 1'b0;
+                        decoded_mop_next.instruction_data.extended_imm_val = {
+                            {22{i_instruction_raw[31]}},
+                            i_instruction_raw[31:22]
+                        };
+                        decoded_mop_next.instruction_data.operation = BR_JALR;
+
+                    end else begin : branch
+                        decoded_mop_next.instruction_data.read_rs1 = 1'b1;
+                        decoded_mop_next.instruction_data.read_rs2 = 1'b1;
+                        decoded_mop_next.instruction_data.btb_write = 1'b1;
+                        decoded_mop_next.instruction_data.uses_imm = 1'b1;
+                        decoded_mop_next.instruction_data.extended_imm_val = {
+                            {21{i_instruction_raw[31]}},
+                            {
+                                i_instruction_raw[31],
+                                i_instruction_raw[7],
+                                i_instruction_raw[30:25],
+                                i_instruction_raw[11:9]
+                            }
+                        };
+                        if (funct3[2]) begin
+                            case (funct3[1:0])
+                                2'b00:
+                                decoded_mop_next.instruction_data.operation = BR_BLT;
+                                2'b01:
+                                decoded_mop_next.instruction_data.operation = BR_BGE;
+                                2'b10:
+                                decoded_mop_next.instruction_data.operation = BR_BLTU;
+                                2'b11:
+                                decoded_mop_next.instruction_data.operation = BR_BGEU;
+                            endcase
+                        end else begin
+                            if (funct3[0]) begin
+                                decoded_mop_next.instruction_data.operation = BR_BNE;
+                            end else begin
+                                decoded_mop_next.instruction_data.operation = BR_BEQ;
+                            end
+                        end
+                    end
+                end
             end
-            7'b1101111: begin : jal
-                decoded_mop_next.instruction_data.uses_imm = 1'b1;
-                decoded_mop_next.instruction_data.int_reg_write = 1'b1;
-                decoded_mop_next.instruction_data.btb_write = 1'b1;
-                decoded_mop_next.instruction_data.extended_imm_val = {
-                    {13{i_instruction_raw[31]}},
-                    i_instruction_raw[31],
-                    i_instruction_raw[19:12],
-                    i_instruction_raw[20],
-                    i_instruction_raw[30:22]
-                };
-                decoded_mop_next.instruction_data.operation = 7'b01_01_001;
-            end
-            7'b1100111: begin : jalr
-                decoded_mop_next.instruction_data.uses_imm = 1'b1;
-                decoded_mop_next.instruction_data.int_reg_write = 1'b1;
-                decoded_mop_next.instruction_data.read_rs1 = 1'b1;
-                decoded_mop_next.instruction_data.read_rs2 = 1'b0;
-                decoded_mop_next.instruction_data.extended_imm_val = {
-                    {22{i_instruction_raw[31]}}, i_instruction_raw[31:22]
-                };
-                decoded_mop_next.instruction_data.operation = 7'b01_01_000;
-            end
-            // memory operations
-            7'b0000011: begin : loads
-                decoded_mop_next.instruction_data.uses_imm = 1'b1;
-                decoded_mop_next.instruction_data.int_reg_write = 1'b1;
-                decoded_mop_next.instruction_data.mem_read = 1'b1;
-                decoded_mop_next.instruction_data.read_rs1 = 1'b1;
-                decoded_mop_next.instruction_data.read_rs2 = 1'b0;
-                decoded_mop_next.instruction_data.extended_imm_val = {
-                    {20{i_instruction_raw[31]}}, i_instruction_raw[31:20]
-                };
-                case (funct3)
-                    3'b000:
-                    decoded_mop_next.instruction_data.operation = 7'b10_01_000;
-                    3'b001:
-                    decoded_mop_next.instruction_data.operation = 7'b10_01_001;
-                    3'b010:
-                    decoded_mop_next.instruction_data.operation = 7'b10_01_010;
-                    3'b100:
-                    decoded_mop_next.instruction_data.operation = 7'b10_01_011;
-                    3'b101:
-                    decoded_mop_next.instruction_data.operation = 7'b10_01_100;
-                    default: decoded_mop_next.instruction_data.invalid = 1;
-                endcase
-            end
-            7'b0100011: begin : stores
-                decoded_mop_next.instruction_data.uses_imm = 1'b1;
-                decoded_mop_next.instruction_data.mem_write = 1'b1;
-                decoded_mop_next.instruction_data.read_rs1 = 1'b1;
-                decoded_mop_next.instruction_data.read_rs2 = 1'b1;
-                decoded_mop_next.instruction_data.extended_imm_val = {
-                    {20{i_instruction_raw[31]}},
-                    i_instruction_raw[31:25],
-                    i_instruction_raw[11:7]
-                };
-                case (funct3)
-                    3'b000:
-                    decoded_mop_next.instruction_data.operation = 7'b10_00_000;
-                    3'b001:
-                    decoded_mop_next.instruction_data.operation = 7'b10_00_001;
-                    3'b010:
-                    decoded_mop_next.instruction_data.operation = 7'b10_00_010;
-                    default: decoded_mop_next.instruction_data.invalid = 1;
-                endcase
-            end
-            default: decoded_mop_next.instruction_data.invalid = 1'b1;
         endcase
     end
-
     always_ff @(posedge clk) begin
         if (i_output_bubble) begin
-            o_decode.instruction_data <= '{default: 0, invalid : 1};
+            o_decode.instruction_data <= '{default: OP_INVALID, invalid : 1};
             o_decode.prediction_data  <= '{default: 0};
         end else if (i_enable) begin
             o_decode <= decoded_mop_next;

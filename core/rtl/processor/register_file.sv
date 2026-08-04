@@ -51,7 +51,7 @@ module register_file (
                 float_register_file[i]   <= 0;
             end
             o_register_read.decode_data.instruction_data <= '{
-                default: 0,
+                default: OP_INVALID,
                 invalid : 1
             };
             o_register_read.decode_data.prediction_data <= '{default: 0};
@@ -139,7 +139,7 @@ module register_file (
         end
         if (i_output_bubble) begin
             o_register_read.decode_data.instruction_data <= '{
-                default: 0,
+                default: OP_INVALID,
                 invalid : 1
             };
             o_register_read.decode_data.prediction_data <= '{default: 0};

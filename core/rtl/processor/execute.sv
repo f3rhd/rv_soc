@@ -52,8 +52,8 @@ module execute #(
     assign instruction_data = i_register_read_out.decode_data.instruction_data;
     assign read_data = i_register_read_out.read_data;
 
-    assign src1_match = (~exi.mem_read && ((exi.int_reg_write && instruction_data.read_rs1) | (exi.float_reg_write &instruction_data.read_fs1)) && (instruction_data.src1 == exi.dest));
-    assign src2_match = (~exi.mem_read && ((exi.int_reg_write && instruction_data.read_rs2) | (exi.float_reg_write &instruction_data.read_fs2)) && (instruction_data.src2 == exi.dest));
+    assign src1_match = (~exi.mem_read && ((exi.int_reg_write && instruction_data.read_rs1 && exi.dest != 5'd0) || (exi.float_reg_write && instruction_data.read_fs1)) && (instruction_data.src1 == exi.dest));
+    assign src2_match = (~exi.mem_read && ((exi.int_reg_write && instruction_data.read_rs2 && exi.dest != 5'd0) || (exi.float_reg_write && instruction_data.read_fs2)) && (instruction_data.src2 == exi.dest));
     assign src3_match = (~exi.mem_read && exi.float_reg_write && instruction_data.src3 == exi.dest);
 
     always_comb begin : stall_logic
@@ -272,6 +272,7 @@ module execute #(
             exi.dest                       <= 0;
             exi.mem_write                  <= 0;
             exi.int_reg_write              <= 0;
+            exi.float_reg_write            <= 0;
             exi.mem_read                   <= 0;
             exi.predictor_update           <= 0;
             exi.redirection_address        <= 0;
@@ -291,6 +292,7 @@ module execute #(
             exi.mem_write                  <= instruction_data.mem_write;
             exi.mem_read                   <= instruction_data.mem_read;
             exi.int_reg_write              <= instruction_data.int_reg_write;
+            exi.float_reg_write            <= instruction_data.float_reg_write;
             exi.predictor_update           <= predictor_update;
             exi.redirection_address        <= redirection_address;
             exi.redirect                   <= redirect;
