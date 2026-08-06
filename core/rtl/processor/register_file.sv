@@ -137,6 +137,18 @@ module register_file (
                 end
             end
         end
+        begin : fcsr
+            o_register_read.read_data.fcsr <= 0;
+            if (exi.float_reg_write & ~exi.mem_read & (exi.dest == 3)) begin
+                o_register_read.read_data.fcsr <= exi.exec_result;
+            end  // Priority 2: Forward from WB stage
+                else if (i_register_write.float_write_enable & (i_register_write.write_addr == 3)) begin
+                o_register_read.read_data.fcsr <= i_register_write.write_data;
+            end  // Priority 3: Read directly from Float Regfile
+                else begin
+                o_register_read.read_data.fcsr <= float_register_file[3];
+            end
+        end
         if (i_output_bubble) begin
             o_register_read.decode_data.instruction_data <= '{
                 default: OP_INVALID,

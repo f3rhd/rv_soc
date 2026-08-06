@@ -4,14 +4,17 @@
  * SPDX-License-Identifier: MIT
  */
 
-module multiplier (
+module multiplier #(
+    parameter unsigned IN_WIDTH = 32
+) (
     input logic clk,
-    input logic [31:0] i_multiplicand,
-    input logic [31:0] i_multiplier,
+    input logic [IN_WIDTH-1:0] i_multiplicand,
+    input logic [IN_WIDTH-1:0] i_multiplier,
     input logic [1:0] i_mul_type,
     input logic i_begin,
     input logic i_reset,
-    output logic [31:0] o_result,
+    output logic [IN_WIDTH*2-1:0] o_full_product,
+    output logic [IN_WIDTH-1:0] o_result,
     output logic o_done
 );
     typedef enum logic [2:0] {
@@ -28,18 +31,18 @@ module multiplier (
         S_DONE
     } _mul_state;
 
-    _mul_kind         mul_type;
-    _mul_kind         mul_kind;
-    _mul_state        mul_state;
+    _mul_kind                       mul_type;
+    _mul_kind                       mul_kind;
+    _mul_state                      mul_state;
 
-    logic      [ 5:0] iterator;
-    logic      [31:0] multiplicand;
-    logic      [63:0] product;
-    logic             booth_bit;
+    logic      [$clog2(IN_WIDTH):0] iterator;
+    logic      [      IN_WIDTH-1:0] multiplicand;
+    logic      [    2*IN_WIDTH-1:0] product;
+    logic                           booth_bit;
 
-    logic      [32:0] sum_sub;
-    logic      [32:0] unsigned_sum;
-    logic      [32:0] hsu_sum;
+    logic      [        IN_WIDTH:0] sum_sub;
+    logic      [        IN_WIDTH:0] unsigned_sum;
+    logic      [        IN_WIDTH:0] hsu_sum;
 
     always_comb begin
         case (i_mul_type)
@@ -54,17 +57,18 @@ module multiplier (
             product[0], booth_bit
         })
             2'b10:
-            sum_sub = {product[63], product[63:32]} - {multiplicand[31], multiplicand};
+            sum_sub = {product[2*IN_WIDTH-1], product[2*IN_WIDTH-1:IN_WIDTH]} - {multiplicand[IN_WIDTH-1], multiplicand};
             2'b01:
-            sum_sub = {product[63], product[63:32]} + {multiplicand[31], multiplicand};
-            default: sum_sub = {product[63], product[63:32]};
+            sum_sub = {product[2*IN_WIDTH-1], product[2*IN_WIDTH-1:IN_WIDTH]} + {multiplicand[IN_WIDTH-1], multiplicand};
+            default:
+            sum_sub = {product[2*IN_WIDTH-1], product[2*IN_WIDTH-1:IN_WIDTH]};
         endcase
 
 
-        unsigned_sum = product[63:32] + multiplicand;
+        unsigned_sum = product[2*IN_WIDTH-1:IN_WIDTH] + multiplicand;
 
 
-        hsu_sum = {product[63], product[63:32]} + {multiplicand[31], multiplicand};
+        hsu_sum = {product[2*IN_WIDTH-1], product[2*IN_WIDTH-1:IN_WIDTH]} + {multiplicand[IN_WIDTH-1], multiplicand};
     end
 
     always_ff @(posedge clk) begin
@@ -83,13 +87,14 @@ module multiplier (
                 S_IDLE: begin
                     o_done   <= 0;
                     iterator <= 0;
+                    product  <= 0;
 
                     if (o_done) begin
                     end else if (i_begin) begin
                         multiplicand <= i_multiplicand;
                         mul_kind     <= mul_type;
                         mul_state    <= S_EXECUTE;
-                        product      <= {32'b0, i_multiplier};
+                        product      <= {{IN_WIDTH{1'b0}}, i_multiplier};
                         booth_bit    <= 1'b0;
                     end
                 end
@@ -100,37 +105,41 @@ module multiplier (
                     if (mul_kind[2]) begin
 
                         if (product[0]) begin
-                            product <= {unsigned_sum, product[31:1]};
+                            product <= {unsigned_sum, product[IN_WIDTH-1:1]};
                         end else begin
-                            product <= {1'b0, product[63:1]};
+                            product <= {1'b0, product[2*IN_WIDTH-1:1]};
                         end
                     end else begin
                         // mulh
                         if (~mul_kind[0]) begin
-                            product   <= {sum_sub, product[31:1]};
+                            product   <= {sum_sub, product[IN_WIDTH-1:1]};
                             booth_bit <= product[0];
                         end else begin
 
                             if (product[0]) begin
-                                product <= {hsu_sum, product[31:1]};
+                                product <= {hsu_sum, product[IN_WIDTH-1:1]};
                             end else begin
-                                product <= {product[63], product[63:1]};
+                                product <= {
+                                    product[2*IN_WIDTH-1],
+                                    product[2*IN_WIDTH-1:1]
+                                };
                             end
                         end
                     end
 
-                    if (iterator == 31) begin
+                    if (iterator == IN_WIDTH - 1) begin
                         iterator  <= 0;
                         mul_state <= S_DONE;
                     end
                 end
 
                 S_DONE: begin
-                    o_done <= 1;
+                    o_done         <= 1;
+                    o_full_product <= product;
                     if (mul_kind[2] & ~mul_kind[0]) begin
-                        o_result <= product[31:0];
+                        o_result <= product[IN_WIDTH-1:0];
                     end else begin
-                        o_result <= product[63:32];
+                        o_result <= product[2*IN_WIDTH-1:IN_WIDTH];
                     end
                     mul_state <= S_IDLE;
                 end

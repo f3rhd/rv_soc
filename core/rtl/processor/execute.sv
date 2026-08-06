@@ -43,6 +43,7 @@ module execute #(
     logic div_begin;
     logic [31:0] div_result;
     logic div_done;
+    logic [31:0] alu_src2;
 
     decoded_instruction_t instruction_data;
     register_read_data_t read_data;
@@ -55,6 +56,9 @@ module execute #(
     assign src1_match = (~exi.mem_read && ((exi.int_reg_write && instruction_data.read_rs1 && exi.dest != 5'd0) || (exi.float_reg_write && instruction_data.read_fs1)) && (instruction_data.src1 == exi.dest));
     assign src2_match = (~exi.mem_read && ((exi.int_reg_write && instruction_data.read_rs2 && exi.dest != 5'd0) || (exi.float_reg_write && instruction_data.read_fs2)) && (instruction_data.src2 == exi.dest));
     assign src3_match = (~exi.mem_read && exi.float_reg_write && instruction_data.src3 == exi.dest);
+    assign src1_data = src1_match ? exi.exec_result : read_data.src1_data;
+    assign src2_data = src2_match ? exi.exec_result : read_data.src2_data;
+    assign src3_data = src3_match ? exi.exec_result : read_data.src3_data;
 
     always_comb begin : stall_logic
         exi.stall_pipeline_type1 = 0;
@@ -76,20 +80,23 @@ module execute #(
     end
 
 
-    multiplier multiplier (
+    multiplier #(
+        .IN_WIDTH(32)
+    ) multiplier (
         .clk(clk),
-        .i_multiplicand(src2_data),
+        .i_multiplicand(alu_src2),
         .i_multiplier(src1_data),
         .i_mul_type(mul_type),
         .i_begin(mul_begin & i_en & ~instruction_data.invalid),
         .i_reset(i_reset | exi.redirect),
         .o_result(mul_result),
-        .o_done(mul_done)
+        .o_done(mul_done),
+        .o_full_product()  // Left open intentionally; Not used by alu  in this case
     );
     divider divider (
         .clk       (clk),
         .i_dividend(src1_data),
-        .i_divisor (src2_data),
+        .i_divisor (alu_src2),
         .i_div_type(div_type),
         .i_begin   (div_begin & i_en & ~instruction_data.invalid),
         .i_reset   (i_reset | exi.redirect),
@@ -113,36 +120,34 @@ module execute #(
         mul_type = 0;
         div_begin = 0;
         div_type = 0;
+        alu_src2 = src2_data;
 
 
-        src1_data = src1_match ? exi.exec_result : read_data.src1_data;
-        src2_data = src2_match ? exi.exec_result : read_data.src2_data;
-        src3_data = src3_match ? exi.exec_result : read_data.src3_data;
         case (instruction_data.operation[6:5])
             2'b00: begin
-                src2_data = instruction_data.uses_imm ? instruction_data.extended_imm_val : src2_data;
+                alu_src2 = instruction_data.uses_imm ? instruction_data.extended_imm_val : src2_data;
                 case (instruction_data.operation[4:0])
-                    5'b00001: alu_out = src1_data + src2_data;
-                    5'b00010: alu_out = src1_data - src2_data;
-                    5'b00011: alu_out = src1_data << src2_data[4:0];
+                    5'b00001: alu_out = src1_data + alu_src2;
+                    5'b00010: alu_out = src1_data - alu_src2;
+                    5'b00011: alu_out = src1_data << alu_src2[4:0];
                     5'b00100:
                     alu_out = {
-                        {31{1'b0}}, $signed(src1_data) < $signed(src2_data)
+                        {31{1'b0}}, $signed(src1_data) < $signed(alu_src2)
                     };
                     5'b00101:
                     alu_out = {
-                        {31{1'b0}}, $unsigned(src1_data) < $unsigned(src2_data)
+                        {31{1'b0}}, $unsigned(src1_data) < $unsigned(alu_src2)
                     };
-                    5'b00110: alu_out = src1_data ^ src2_data;
-                    5'b00111: alu_out = src1_data >> src2_data[4:0];
-                    5'b01000: alu_out = $signed(src1_data) >>> src2_data[4:0];
-                    5'b01001: alu_out = src1_data | src2_data;
-                    5'b01010: alu_out = src1_data & src2_data;
+                    5'b00110: alu_out = src1_data ^ alu_src2;
+                    5'b00111: alu_out = src1_data >> alu_src2[4:0];
+                    5'b01000: alu_out = $signed(src1_data) >>> alu_src2[4:0];
+                    5'b01001: alu_out = src1_data | alu_src2;
+                    5'b01010: alu_out = src1_data & alu_src2;
                     // AUIPC
                     5'b01011:
-                    alu_out = instruction_data.instruction_addr + src2_data;
+                    alu_out = instruction_data.instruction_addr + alu_src2;
                     // LUI
-                    5'b01100: alu_out = src2_data;
+                    5'b01100: alu_out = alu_src2;
                     //MUL
                     5'b01110: begin
                         alu_out   = mul_result;

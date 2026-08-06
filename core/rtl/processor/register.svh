@@ -11,6 +11,7 @@ typedef struct packed {
     logic [31:0] src1_data;
     logic [31:0] src2_data;
     logic [31:0] src3_data;
+    logic [31:0] fcsr;
 } register_read_data_t;
 typedef struct packed {
     decode_output_t decode_data;
