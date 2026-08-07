@@ -27,34 +27,33 @@ module fmultiplier (
 
     fmul_state_e state;
 
-    logic [31:0] f1_r;
-    logic [31:0] f2_r;
-    logic [31:0] fcsr_r;
-    logic [2:0] round_mode_r;
     logic [7:0] exp_result_r;
 
 
     logic [47:0] mul_full_product;
     logic [47:0] normalized;
-    logic g, r, s;
+    logic r, s;
     logic mul_begin_r;
     logic mul_done;
     logic [23:0] final_p;
     logic rnd;
 
+    wire [31:0] f1 = i_f1;
+    wire [31:0] f2 = i_f2;
+    wire [31:0] fcsr = i_fcsr;
+    wire [2:0] round_mode = i_round_mode;
 
+    wire [23:0] f1_significand = {1'b1, f1[22:0]};
+    wire [7:0] f1_exp = f1[30:23];
+    wire f1_sign = f1[31];
 
-    wire [23:0] f1_significand = {1'b1, f1_r[22:0]};
-    wire [7:0] f1_exp = f1_r[30:23];
-    wire f1_sign = f1_r[31];
-
-    wire [23:0] f2_significand = {1'b1, f2_r[22:0]};
-    wire [7:0] f2_exp = f2_r[30:23];
-    wire f2_sign = f2_r[31];
+    wire [23:0] f2_significand = {1'b1, f2[22:0]};
+    wire [7:0] f2_exp = f2[30:23];
+    wire f2_sign = f2[31];
 
     wire final_sign = f1_sign ^ f2_sign;
 
-    wire [2:0] effective_rnd = round_mode_r == 3'd7 ? fcsr_r[7:5] : round_mode_r;
+    wire [2:0] effective_rnd = round_mode == 3'd7 ? fcsr[7:5] : round_mode;
     wire [23:0] P = normalized[47:24];
 
     wire is_nan1 = (f1_exp == 8'hFF) && (f1_significand[22:0] != 0);
@@ -103,27 +102,15 @@ module fmultiplier (
         o_done      <= 0;
         mul_begin_r <= 0;
         if (i_reset) begin
-            f1_r         <= 0;
-            f2_r         <= 0;
-            round_mode_r <= 0;
-            fcsr_r       <= 0;
-            o_result     <= 0;
-            o_inv_op     <= 0;
-            state        <= S_IDLE;
+            o_result <= 0;
+            o_inv_op <= 0;
+            state    <= S_IDLE;
         end else begin
             case (state)
                 S_IDLE: begin
-                    f1_r         <= 0;
-                    f2_r         <= 0;
-                    round_mode_r <= 0;
-                    state        <= S_IDLE;
                     if (o_done) begin
                     end else if (i_begin) begin
-                        f1_r         <= i_f1;
-                        f2_r         <= i_f2;
-                        fcsr_r       <= i_fcsr;
-                        round_mode_r <= i_round_mode;
-                        state        <= S_ZERO_CHECK;
+                        state <= S_ZERO_CHECK;
                     end
                 end
                 S_ZERO_CHECK: begin
@@ -157,7 +144,6 @@ module fmultiplier (
                     end
                 end
                 S_NORMALIZE: begin
-                    g <= mul_full_product[23];
                     if (mul_full_product[47]) begin
                         normalized   <= mul_full_product;
                         exp_result_r <= exp_result_r + 1;

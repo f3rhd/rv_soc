@@ -103,7 +103,7 @@ module execute #(
         .o_result  (div_result),
         .o_done    (div_done)
     );
-    always_comb begin
+    always_comb begin : integer_operations
         memory_operation = '0;
         alu_out = 0;
         branch_result = '0;
