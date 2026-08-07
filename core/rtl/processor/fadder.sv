@@ -266,6 +266,8 @@ module fadder (
                     state <= S_HANDLE_CARRY;
                     if (rnd) begin
                         {carry_out, preliminary_sig} <= preliminary_sig + 1;
+                    end else begin
+                        carry_out <= 0;
                     end
                 end
                 S_HANDLE_CARRY: begin
