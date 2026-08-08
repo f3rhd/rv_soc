@@ -1,3 +1,4 @@
+// Denormals are not handled
 module fadder (
     input logic clk,
     input logic i_reset,
