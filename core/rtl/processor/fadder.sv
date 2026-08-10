@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
 // Denormals are not handled
 module fadder (
     input logic clk,

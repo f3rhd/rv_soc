@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd 
+ *
+ * SPDX-License-Identifier: MIT
+ */
 module fsqrt (
     input  logic        clk,
     input  logic        i_reset,
