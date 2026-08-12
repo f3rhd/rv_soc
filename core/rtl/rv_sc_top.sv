@@ -73,12 +73,12 @@ module rv_sc_top (
         .D_CACHE_SIZE(D_CACHE_SIZE  /* default 1 << 10 */),
         .BTB_SIZE    (BTB_SIZE  /* default 128 */)
     ) rv_processor (
-        .clk                    (clk),
-        .reset                  (reset_edge),
-        .bootloader_if          (bootloaderi),
-        .graphics_if            (graphicsi),
-        .o_led                  (led),
-        .o_segment_display_value(segment_value)
+        .clk          (clk),
+        .reset        (reset_edge),
+        .bootloader_if(bootloaderi),
+        .graphics_if  (graphicsi),
+        .o_reg16_f8   (led),
+        .o_reg16_fc   (segment_value)
     );
     graphics_unit #(
         .GRAPHICS_INSTRUCTION_BUFFER_SIZE(GRAPHICS_INSTRUCTION_BUFFER_SIZE /* default 256 * 4 */),
