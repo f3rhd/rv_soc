@@ -17,13 +17,13 @@ module memory #(
     graphics_if.processor graphicsi,
     output register_write_data_t o_register_write,
     output logic o_graphics_write,
-    output logic [15:0] o_led_value,
-    output logic [15:0] o_segment_value
+    output logic [15:0] o_reg16_f8,
+    output logic [15:0] o_reg16_fc
 );
     localparam logic [31:0] GRAPHICS_PIXEL_ADDRESS = 32'hF0000000;
     localparam logic [31:0] GRAPHICS_COMMAND_ADDRESS = 32'hF0000004;
-    localparam logic [31:0] SEGMENT_ADDRESS = 32'hF0000008;
-    localparam logic [31:0] LED_ADDRESS = 32'hF000000C;
+    localparam logic [31:0] REG16_1_ADDR = 32'hF0000008;
+    localparam logic [31:0] REG16_2_ADDR = 32'hF000000C;
 
 `ifdef VIVADO
     (* ram_style = "block" *)
@@ -34,8 +34,9 @@ module memory #(
     wire [31:0] translated_address = ei.exec_result >> 2;
 
     logic [1:0] r_byte_offset;
-    logic alu_is_reg_write;
-    logic [31:0] reg_alu_out;
+    logic reg_int_write;
+    logic reg_float_write;
+    logic [31:0] reg_exec_result;
     logic [31:0] reg_raw_word;
     logic [2:0] reg_memory_op;
     logic reg_mem_read;
@@ -90,23 +91,24 @@ module memory #(
             o_register_write.write_addr          <= 0;
             o_register_write.int_write_enable    <= 0;
             o_register_write.float_write_enable  <= 0;
-            alu_is_reg_write                     <= 0;
+            reg_int_write                        <= 0;
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
             graphicsi.graphics_instruction_write <= 1'b0;
-            o_led_value                          <= 0;
-            o_segment_value                      <= 0;
+            o_reg16_f8                           <= 0;
+            o_reg16_fc                           <= 0;
         end else if (i_en) begin
             o_register_write.int_write_enable    <= ei.int_reg_write;
             o_register_write.float_write_enable  <= ei.float_reg_write;
             o_register_write.write_addr          <= ei.dest;
-            alu_is_reg_write                     <= 0;
+            reg_int_write                        <= 0;
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
             graphicsi.graphics_instruction_write <= 1'b0;
-            if (ei.int_reg_write & ~ei.mem_read & ~ei.mem_write) begin
-                alu_is_reg_write <= 1;
-                reg_alu_out      <= ei.exec_result;
+            if ((ei.int_reg_write | ei.float_reg_write )& ~ei.mem_read & ~ei.mem_write) begin
+                reg_int_write   <= ei.int_reg_write;
+                reg_float_write <= ei.float_reg_write;
+                reg_exec_result <= ei.exec_result;
             end else begin
                 if (ei.mem_write) begin
                     if (is_mmio) begin
@@ -123,17 +125,17 @@ module memory #(
                                 };
                                 graphicsi.graphics_instruction_write <=  1 /*~graphicsi.graphics_buffer_full*/ /*ei.memory_operation == 3'b010*/;
                             end
-                            SEGMENT_ADDRESS[3:0]: begin
+                            REG16_1_ADDR[3:0]: begin
                                 /*if (ei.memory_operation == 3'b001)*/
-                                o_segment_value <= ei.memory_write_data[15:0];
+                                o_reg16_fc <= ei.memory_write_data[15:0];
                             end
-                            LED_ADDRESS[3:0]: begin
+                            REG16_2_ADDR[3:0]: begin
                                 /*if (ei.memory_operation == 3'b001)*/
-                                o_led_value <= ei.memory_write_data[15:0];
+                                o_reg16_f8 <= ei.memory_write_data[15:0];
                             end
                             default: begin
-                                o_segment_value <= 16'hFFFF;
-                                o_led_value     <= 16'hFFFF;
+                                o_reg16_fc <= 16'hFFFF;
+                                o_reg16_f8 <= 16'hFFFF;
                             end
                         endcase
                     end else begin
@@ -160,8 +162,8 @@ module memory #(
         end
     end
     always_comb begin
-        if (alu_is_reg_write) begin
-            o_register_write.write_data = reg_alu_out;
+        if (reg_int_write | reg_float_write) begin
+            o_register_write.write_data = reg_exec_result;
         end else if (reg_mem_read) begin
             case (reg_memory_op)
                 // load byte (signed)
