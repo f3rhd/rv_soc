@@ -260,7 +260,7 @@ module decode #(
                                         decoded_mop_next.instruction_data.operation = FP_FMIN;
                                     endcase
                                 end else begin
-                                    if (funct3[2]) begin
+                                    if (funct3[1]) begin
                                         decoded_mop_next.instruction_data.operation = FP_FSGNJX;
                                     end else begin
                                         if (funct3[0])
