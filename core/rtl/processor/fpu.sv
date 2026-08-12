@@ -208,12 +208,16 @@ module fpu (
             state        <= S_IDLE;
             o_fpu_result <= 0;
             fcsr         <= 0;
+            negate       <= 0;
+            add          <= 0;
         end else begin
             case (state)
                 S_IDLE: begin
                     state        <= S_IDLE;
                     o_fpu_result <= 0;
                     fcsr         <= 0;
+                    negate       <= 0;
+                    add          <= 0;
                     if (o_done) begin
                     end else if (i_begin) begin
                         src1_data <= i_src1_data;
@@ -255,7 +259,9 @@ module fpu (
                                 // FSUB
                                 3'b001: begin
                                     adder_begin <= 1'b1;
-                                    src2_data   <= -src2_data;
+                                    src2_data <= {
+                                        ~src2_data[31], src2_data[30:0]
+                                    };
                                 end
                                 // FMUL
                                 3'b010: begin
@@ -269,7 +275,7 @@ module fpu (
                                 3'b100: begin
                                     o_done <= 1'b1;
                                     o_fpu_result <= {
-                                        src2_data[31], src2_data[30:0]
+                                        src2_data[31], src1_data[30:0]
                                     };
                                     state <= S_IDLE;
                                 end
@@ -277,7 +283,7 @@ module fpu (
                                 3'b101: begin
                                     o_done <= 1'b1;
                                     o_fpu_result <= {
-                                        ~src2_data[31], src2_data[30:0]
+                                        ~src2_data[31], src1_data[30:0]
                                     };
                                     state <= S_IDLE;
                                 end
@@ -286,7 +292,7 @@ module fpu (
                                     o_done <= 1'b1;
                                     o_fpu_result <= {
                                         src1_data[31] ^ src2_data[31],
-                                        src2_data[30:0]
+                                        src1_data[30:0]
                                     };
                                     state <= S_IDLE;
                                 end
@@ -392,10 +398,10 @@ module fpu (
                 end
                 S_EXECUTE: begin
                     if (adder_done) begin
-                        o_done       <= 1;
-                        o_fpu_result <= negate ? -adder_result : adder_result;
-                        o_inv_op     <= adder_inv_op;
-                        state        <= S_IDLE;
+                        o_done <= 1;
+                        o_fpu_result <= negate ? {~adder_result[31],adder_result[30:0]} : adder_result;
+                        o_inv_op <= adder_inv_op;
+                        state <= S_IDLE;
                     end else if (mul_done) begin
                         o_done       <= 1;
                         o_fpu_result <= mul_result;
