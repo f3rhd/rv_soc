@@ -68,7 +68,7 @@ ELF="__out_tmp.elf"
 BIN="__out_tmp.bin"
 BIN2HEX_PY="__bin2hex_tmp.py"
 
-CFLAGS="-march=rv32im -mabi=ilp32 -ffreestanding -nostdlib -fno-pic -fno-pie -ffunction-sections -fdata-sections -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables"
+CFLAGS="-march=rv32imf -mabi=ilp32 -ffreestanding -nostdlib -fno-pic -fno-pie -ffunction-sections -fdata-sections -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables"
 
 OBJLIST=()
 TMPFILELIST=()
