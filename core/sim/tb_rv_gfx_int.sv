@@ -8,7 +8,7 @@
 `include "../rtl/bootloader/bootloader_interface.svh"
 
 
-`define LOG_ENABLED
+`define LOG_ENABLED 
 
 module tb_rv_gfx_int;
 
@@ -54,8 +54,14 @@ module tb_rv_gfx_int;
 
             if (rv_processor.register_write_.int_write_enable && rv_processor.register_write_.write_addr != 0) begin
                 $fdisplay(soc_log_file,
-                          "[Time: \%0t] Register File[\%d] <- 0x\%h", $time,
-                          rv_processor.register_write_.write_addr,
+                          "[Time: \%0t] Integer Register File[\%d] <- 0x\%h",
+                          $time, rv_processor.register_write_.write_addr,
+                          rv_processor.register_write_.write_data);
+            end
+            if (rv_processor.register_write_.float_write_enable) begin
+                $fdisplay(soc_log_file,
+                          "[Time: \%0t] Float Register File[\%d] <- 0x\%h",
+                          $time, rv_processor.register_write_.write_addr,
                           rv_processor.register_write_.write_data);
             end
 
@@ -168,11 +174,16 @@ module tb_rv_gfx_int;
 
     initial begin
 
+`ifdef WRITE_TO_FILE
         soc_log_file = $fopen("simulate.log", "w");
         graphics_dispatch_log_file = $fopen("graphics_only.log", "w");
         graphics_instr_complete_file =
             $fopen("graphics_instr_success.log", "w");
-
+`else
+        soc_log_file                 = 32'h8000_0001;
+        graphics_dispatch_log_file   = 32'h8000_0001;
+        graphics_instr_complete_file = 32'h8000_0001;
+`endif
         if (!soc_log_file) begin
             $display("ERROR: Could not open simulate.log for writing!");
             $finish;
@@ -183,7 +194,7 @@ module tb_rv_gfx_int;
         end
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/asm/string_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/float_test.hex",
             rv_processor.fetch.instructions);
 
         reset = 1;
