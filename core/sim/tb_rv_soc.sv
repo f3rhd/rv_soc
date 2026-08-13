@@ -6,23 +6,26 @@
 
 `include "../rtl/graphics_unit/graphics_interface.svh"
 `include "../rtl/bootloader/bootloader_interface.svh"
+`include "../rtl/gpio_interface.svh"
 
 
 `define LOG_ENABLED 
 
-module tb_rv_gfx_int;
+module tb_rv_soc;
 
     logic clk = 0;
     logic reset = 0;
     logic print = 1;
 
 
-    int   soc_log_file;
-    int   graphics_dispatch_log_file;
-    int   graphics_instr_complete_file;
+    int soc_log_file;
+    int graphics_dispatch_log_file;
+    int graphics_instr_complete_file;
+    wire [0:26] pins_io;
 
     bootloader_if bootloader_if ();
     graphics_if graphics_if ();
+    gpio_if gpio_if ();
 
     rv_processor #(
         .HISTORY_SIZE(8  /* default 10 */),
@@ -32,6 +35,7 @@ module tb_rv_gfx_int;
     ) rv_processor (
         .clk          (clk),
         .reset        (reset),
+        .gpio_if      (gpio_if),
         .bootloader_if(bootloader_if),
         .graphics_if  (graphics_if)
     );
@@ -46,8 +50,18 @@ module tb_rv_gfx_int;
         .graphics_if(graphics_if)
     );
 
+    gpio_controller #(
+        .PIN_AMOUNT(27)
+    ) gpio_controller (
+        .clk    (clk),
+        .i_reset(reset),
+        .gpioi  (gpio_if),
+        .pins_io(pins_io)
+    );
+
     always #5 clk = ~clk;
 
+    pulldown (pins_io[0]);
     always_ff @(posedge clk) begin
 `ifdef LOG_ENABLED
         if (soc_log_file) begin
@@ -135,7 +149,7 @@ module tb_rv_gfx_int;
             end
 
 
-            if (rv_processor.execution_if.redirect) begin
+            if (rv_processor.execution_if.redirect && rv_processor.fetch_en) begin
                 $fdisplay(
                     soc_log_file,
                     "[Time: %0t] Execution stage redirected pc to the address 0x%h",
@@ -194,7 +208,7 @@ module tb_rv_gfx_int;
         end
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/float_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/pin_test.hex",
             rv_processor.fetch.instructions);
 
         reset = 1;

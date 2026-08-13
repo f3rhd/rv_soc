@@ -7,6 +7,7 @@
 `include "execution_interface.svh"
 `include "../graphics_unit/graphics_interface.svh"
 `include "register.svh"
+`include "../gpio_interface.svh"
 module memory #(
     parameter SIZE = 2048
 ) (
@@ -15,15 +16,20 @@ module memory #(
     input logic i_en,
     execution_if.mem_consumer ei,
     graphics_if.processor graphicsi,
+    gpio_if.processor gpioi,
     output register_write_data_t o_register_write,
     output logic o_graphics_write,
+    output logic o_gpio_stall,
     output logic [15:0] o_reg16_f8,
     output logic [15:0] o_reg16_fc
 );
-    localparam logic [31:0] GRAPHICS_PIXEL_ADDRESS = 32'hF0000000;
-    localparam logic [31:0] GRAPHICS_COMMAND_ADDRESS = 32'hF0000004;
-    localparam logic [31:0] REG16_1_ADDR = 32'hF0000008;
-    localparam logic [31:0] REG16_2_ADDR = 32'hF000000C;
+    localparam logic [31:0] GRAPHICS_PIXEL_ADDRESS = 32'hF0000001;
+    localparam logic [31:0] GRAPHICS_COMMAND_ADDRESS = 32'hF0000002;
+    localparam logic [31:0] REG16_1_ADDR = 32'hF0000004;
+    localparam logic [31:0] REG16_2_ADDR = 32'hF0000008;
+    localparam logic [31:0] PIN_MODE_ADDR = 32'hF0000010;
+    localparam logic [31:0] PIN_DRIVE_ADDR = 32'hF0000020;
+    localparam logic [31:0] PIN_READ_ADDR = 32'hF0000040;
 
 `ifdef VIVADO
     (* ram_style = "block" *)
@@ -40,6 +46,7 @@ module memory #(
     logic [31:0] reg_raw_word;
     logic [2:0] reg_memory_op;
     logic reg_mem_read;
+    logic sent_read;
 
     wire [7:0] selected_byte = (r_byte_offset == 2'b00) ? reg_raw_word[31:24]   :
         (r_byte_offset == 2'b01) ? reg_raw_word[23:16]  :
@@ -60,6 +67,7 @@ module memory #(
 
 
     assign o_graphics_write = graphicsi.graphics_instruction_write/*is_mmio && ei.mem_write && (ei.exec_result[3:0] == GRAPHICS_COMMAND_ADDRESS[3:0] | ei.exec_result[3:0] == GRAPHICS_PIXEL_ADDRESS[3:0])*/;
+    assign o_gpio_stall = sent_read && !gpioi.pin_read_done;
 
 
     always_comb begin
@@ -94,9 +102,13 @@ module memory #(
             reg_int_write                        <= 0;
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
-            graphicsi.graphics_instruction_write <= 1'b0;
+            graphicsi.graphics_instruction_write <= 0;
             o_reg16_f8                           <= 0;
             o_reg16_fc                           <= 0;
+            gpioi.pin_drive_enable               <= 0;
+            gpioi.pin_set_enable                 <= 0;
+            gpioi.pin_read_enable                <= 0;
+            sent_read                            <= 0;
         end else if (i_en) begin
             o_register_write.int_write_enable    <= ei.int_reg_write;
             o_register_write.float_write_enable  <= ei.float_reg_write;
@@ -104,40 +116,43 @@ module memory #(
             reg_int_write                        <= 0;
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
-            graphicsi.graphics_instruction_write <= 1'b0;
-            if ((ei.int_reg_write | ei.float_reg_write )& ~ei.mem_read & ~ei.mem_write) begin
+            graphicsi.graphics_instruction_write <= 0;
+            gpioi.pin_drive_enable               <= 0;
+            gpioi.pin_set_enable                 <= 0;
+            gpioi.pin_read_enable                <= 0;
+            if (sent_read && gpioi.pin_read_done) begin
+                sent_read <= 0;
+            end
+            if ((ei.int_reg_write | ei.float_reg_write ) & ~ei.mem_read & ~ei.mem_write) begin
                 reg_int_write   <= ei.int_reg_write;
                 reg_float_write <= ei.float_reg_write;
                 reg_exec_result <= ei.exec_result;
             end else begin
                 if (ei.mem_write) begin
                     if (is_mmio) begin
-                        case (ei.exec_result[3:0])
-                            GRAPHICS_COMMAND_ADDRESS[3:0]: begin
-                                graphicsi.graphics_instruction <= {
-                                    1'b1, ei.memory_write_data
-                                };
-                                graphicsi.graphics_instruction_write <= 1 /*~graphicsi.graphics_buffer_full*/ /*ei.memory_operation == 3'b010*/;
-                            end
-                            GRAPHICS_PIXEL_ADDRESS[3:0]: begin
-                                graphicsi.graphics_instruction <= {
-                                    1'b0, ei.memory_write_data
-                                };
-                                graphicsi.graphics_instruction_write <=  1 /*~graphicsi.graphics_buffer_full*/ /*ei.memory_operation == 3'b010*/;
-                            end
-                            REG16_1_ADDR[3:0]: begin
-                                /*if (ei.memory_operation == 3'b001)*/
-                                o_reg16_fc <= ei.memory_write_data[15:0];
-                            end
-                            REG16_2_ADDR[3:0]: begin
-                                /*if (ei.memory_operation == 3'b001)*/
-                                o_reg16_f8 <= ei.memory_write_data[15:0];
-                            end
-                            default: begin
-                                o_reg16_fc <= 16'hFFFF;
-                                o_reg16_f8 <= 16'hFFFF;
-                            end
-                        endcase
+                        if (ei.exec_result[0]) begin
+                            graphicsi.graphics_instruction <= {
+                                1'b0, ei.memory_write_data
+                            };
+                            graphicsi.graphics_instruction_write <= 1;
+                        end else if (ei.exec_result[1]) begin
+                            graphicsi.graphics_instruction <= {
+                                1'b1, ei.memory_write_data
+                            };
+                            graphicsi.graphics_instruction_write <= 1;
+                        end else if (ei.exec_result[2]) begin
+                            o_reg16_fc <= ei.memory_write_data[15:0];
+                        end else if (ei.exec_result[3]) begin
+                            o_reg16_f8 <= ei.memory_write_data[15:0];
+                        end else if (ei.exec_result[4]) begin
+                            gpioi.pin_set_enable <= 1;
+                            gpioi.pin_id         <= ei.memory_write_data[5:1];
+                            gpioi.pin_mode       <= ei.memory_write_data[0];
+                        end else if (ei.exec_result[5]) begin
+                            gpioi.pin_drive_enable <= 1;
+                            gpioi.pin_drive_val    <= ei.memory_write_data[0];
+                            gpioi.pin_id           <= ei.memory_write_data[5:1];
+                        end
                     end else begin
                         if (byte_en[0]) begin
                             ram[translated_address][0:7] <= byte0_write;
@@ -153,6 +168,11 @@ module memory #(
                         end
                     end
                 end else if (ei.mem_read) begin
+                    if (ei.exec_result[6] && !sent_read && is_mmio) begin
+                        gpioi.pin_read_enable <= 1;
+                        gpioi.pin_id          <= ei.exec_result[12:8];
+                        sent_read             <= 1;
+                    end
                     reg_raw_word  <= ram[translated_address];
                     reg_memory_op <= ei.memory_operation;
                     reg_mem_read  <= 1;
@@ -179,13 +199,30 @@ module memory #(
                     selected_half[15:8]
                 };
                 // load word integer and float
-                3'b010, 3'b101:
-                o_register_write.write_data = {
-                    reg_raw_word[7:0],
-                    reg_raw_word[15:8],
-                    reg_raw_word[23:16],
-                    reg_raw_word[31:24]
-                };
+                3'b010: begin
+                    if (sent_read && gpioi.pin_read_done) begin
+                        o_register_write.write_data = {
+                            {31{1'b0}}, gpioi.pin_read_val
+                        };
+                    end else if (sent_read) begin
+                        o_register_write.write_data = 0;
+                    end else begin
+                        o_register_write.write_data = {
+                            reg_raw_word[7:0],
+                            reg_raw_word[15:8],
+                            reg_raw_word[23:16],
+                            reg_raw_word[31:24]
+                        };
+                    end
+                end
+                3'b101: begin
+                    o_register_write.write_data = {
+                        reg_raw_word[7:0],
+                        reg_raw_word[15:8],
+                        reg_raw_word[23:16],
+                        reg_raw_word[31:24]
+                    };
+                end
                 // load byte unsigned
                 3'b011: o_register_write.write_data = {24'b0, selected_byte};
                 // load half unsigned

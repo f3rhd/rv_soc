@@ -7,6 +7,7 @@
 `include "execution_interface.svh"
 `include "decode_output.svh"
 `include "register.svh"
+`include "../gpio_interface.svh"
 `include "../bootloader/bootloader_interface.svh"
 `include "../graphics_unit/graphics_interface.svh"
 
@@ -20,6 +21,7 @@ module rv_processor #(
     input logic reset,
     bootloader_if.processor bootloader_if,
     graphics_if.processor graphics_if,
+    gpio_if.processor gpio_if,
     output logic [15:0] o_reg16_f8,
     output logic [15:0] o_reg16_fc
 );
@@ -74,6 +76,7 @@ module rv_processor #(
 
     logic memory_graphics_write;
     logic memory_en;
+    logic memory_gpio_stall;
 
 
     stage_controller stage_controller (
@@ -82,7 +85,7 @@ module rv_processor #(
         .i_load_stall_type0(execution_if.stall_pipeline_type0),
         .i_load_stall_type1(execution_if.stall_pipeline_type1),
         .i_load_stall_type2(execution_if.stall_pipeline_type2),
-        .i_graphics_instruction_write_fail(graphics_if.graphics_buffer_full & memory_graphics_write),
+        .i_graphics_instruction_write_fail((graphics_if.graphics_buffer_full && memory_graphics_write) || memory_gpio_stall),
         .flush_vector(stage_controller_flush_vector),
         .stall_vector(stage_controller_stall_vector)
     );
@@ -178,8 +181,10 @@ module rv_processor #(
         .ei              (execution_if),
         .i_en            (memory_en),
         .graphicsi       (graphics_if),
+        .gpioi           (gpio_if),
         .o_register_write(register_write_),
         .o_graphics_write(memory_graphics_write),
+        .o_gpio_stall    (memory_gpio_stall),
         .o_reg16_f8      (o_reg16_f8),
         .o_reg16_fc      (o_reg16_fc)
     );

@@ -2,7 +2,7 @@
 
 void led_write(int value) {
 
-    volatile int* data_address = (volatile int*)0xF000000C;
+    volatile int* data_address = (volatile int*)0xF0000008;
 
         asm volatile("sh %0, 0(%1) \n\t"
                      :
@@ -10,7 +10,7 @@ void led_write(int value) {
                      : "memory");
 }
 void seg_write_hex(int value) {
-    volatile int* data_address = (volatile int*)0xF0000008;
+    volatile int* data_address = (volatile int*)0xF0000004;
 
         asm volatile("sh %0, 0(%1) \n\t"
                      :

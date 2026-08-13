@@ -205,8 +205,8 @@ void st7735_draw_circle(
 }
 
 static inline void st7735_stream_pixel(unsigned int color, int amount) {
-    volatile int* data_address = (volatile int*)0xF0000000;
-    volatile int* command_address = (volatile int*)0xF0000004;
+    volatile int* data_address = (volatile int*)0xF0000001;
+    volatile int* command_address = (volatile int*)0xF0000002;
 
 #ifdef NEW_GRAPHICS_ENCODING
     int stream_cmd = (0x2C << 24) | (amount & 0x00FFFFFFFF);
@@ -237,7 +237,7 @@ static inline void st7735_stream_pixel(unsigned int color, int amount) {
 
 static inline void
 st7735_set_rectangle(int x_start, int y_start, int x_end, int y_end) {
-    volatile int* command_address = (volatile int*)0xF0000004;
+    volatile int* command_address = (volatile int*)0xF0000002;
     int col_value =
         (0x2A << 24) | ((x_start & 0xFF) << 16) | ((x_end & 0xFF) << 8);
     int row_value =
