@@ -24,7 +24,7 @@ module gpio_controller #(
     always_ff @(posedge clk) begin
         if (i_reset) begin
             pins_out_reg        <= '0;
-            pins_dir_reg        <= {PIN_AMOUNT{PIN_OUTPUT}};
+            pins_dir_reg        <= {PIN_AMOUNT{PIN_INPUT}};
             gpioi.pin_read_done <= 1'b0;
             gpioi.pin_read_val  <= 1'b0;
         end else begin
