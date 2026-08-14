@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 #include "../include/led.h"
 
 void led_write(int value) {

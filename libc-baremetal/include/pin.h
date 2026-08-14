@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 #ifndef PIN_H
 #define PIN_H
 #define PIN_INPUT 0

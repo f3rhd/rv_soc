@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 `include "decode_output.svh"
 module alu #(
     parameter unsigned HISTORY_SIZE = 10

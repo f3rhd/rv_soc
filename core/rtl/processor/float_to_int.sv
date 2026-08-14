@@ -1,7 +1,7 @@
 /*
- * SPDX-FileCopyrightText: 2026 f3rhd 
+ * SPDX-FileCopyrightText: 2026 f3rhd
  *
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 module float_to_int (

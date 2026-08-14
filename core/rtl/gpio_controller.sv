@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 `include "gpio_interface.svh"
 module gpio_controller #(
     parameter unsigned PIN_AMOUNT = 27

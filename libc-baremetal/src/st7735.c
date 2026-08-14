@@ -1,10 +1,8 @@
 /*
  * SPDX-FileCopyrightText: 2026 f3rhd
- * SPDX-FileCopyrightText: 2026 f3rhd
  *
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identifier: Apache-2.0
  */
-
 #include "../include/st7735.h"
 #define NEW_GRAPHICS_ENCODING
 #define ST7735_DISPLAY_WIDTH 128

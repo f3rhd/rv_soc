@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 `ifndef GPIO_INTERFACE_SVH
 `define GPIO_INTERFACE_SVH
 interface gpio_if;

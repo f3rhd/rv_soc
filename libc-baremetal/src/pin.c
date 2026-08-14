@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 #include "../include/pin.h"
 void set_pin_mode(int pin_id, int pin_mode) {
     volatile int* pin_mode_addr = (volatile int*)0xF0000010;
