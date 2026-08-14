@@ -4,7 +4,7 @@
 #define SCREEN_WIDTH  128
 #define SCREEN_HEIGHT 160
 
-#define CELL_PX 8
+#define CELL_PX 3
 #define MAZE_W (SCREEN_WIDTH / CELL_PX)   
 #define MAZE_H (SCREEN_HEIGHT / CELL_PX)  
 
@@ -208,9 +208,9 @@ int main() {
 
     for (;;) {
         generate_maze(maze, &seed);
-        delay(200000 * 15); 
+        delay(200000); 
         solve_maze(maze);
-        delay(600000 * 15); 
+        delay(600000); 
 
         seed = seed * 2654435761u + 12345u;
         st7735_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
