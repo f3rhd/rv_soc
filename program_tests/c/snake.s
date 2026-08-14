@@ -12,7 +12,7 @@ Disassembly of section .text:
    8:	0000006f          	j	8 <halt_loop>
 
 0000000c <delay>:
-   c:	ff010113          	addi	sp,sp,-16 # 7ff0 <st7735_draw_rectangle+0x79f4>
+   c:	ff010113          	addi	sp,sp,-16 # 7ff0 <read_pin+0x799c>
   10:	00012623          	sw	zero,12(sp)
   14:	00c12783          	lw	a5,12(sp)
   18:	00a7e663          	bltu	a5,a0,24 <delay+0x18>
@@ -26,10 +26,10 @@ Disassembly of section .text:
 00000034 <rand_next>:
   34:	00052783          	lw	a5,0(a0)
   38:	41c65737          	lui	a4,0x41c65
-  3c:	e6d70713          	addi	a4,a4,-403 # 41c64e6d <st7735_draw_rectangle+0x41c64871>
+  3c:	e6d70713          	addi	a4,a4,-403 # 41c64e6d <read_pin+0x41c64819>
   40:	02e787b3          	mul	a5,a5,a4
   44:	00003737          	lui	a4,0x3
-  48:	03970713          	addi	a4,a4,57 # 3039 <st7735_draw_rectangle+0x2a3d>
+  48:	03970713          	addi	a4,a4,57 # 3039 <read_pin+0x29e5>
   4c:	00e787b3          	add	a5,a5,a4
   50:	00179713          	slli	a4,a5,0x1
   54:	00f52023          	sw	a5,0(a0)
@@ -43,7 +43,7 @@ Disassembly of section .text:
   6c:	00070693          	mv	a3,a4
   70:	00351593          	slli	a1,a0,0x3
   74:	00078513          	mv	a0,a5
-  78:	5840006f          	j	5fc <st7735_draw_rectangle>
+  78:	5240006f          	j	59c <st7735_draw_rectangle>
 
 0000007c <is_on_snake>:
   7c:	00000793          	li	a5,0
@@ -117,18 +117,18 @@ Disassembly of section .text:
  17c:	00000593          	li	a1,0
  180:	d7010113          	addi	sp,sp,-656
  184:	00b00513          	li	a0,11
- 188:	3c4000ef          	jal	54c <set_pin_mode>
+ 188:	4ac000ef          	jal	634 <set_pin_mode>
  18c:	00000593          	li	a1,0
- 190:	00a00513          	li	a0,10
- 194:	3b8000ef          	jal	54c <set_pin_mode>
+ 190:	01300513          	li	a0,19
+ 194:	4a0000ef          	jal	634 <set_pin_mode>
  198:	00000593          	li	a1,0
  19c:	00900513          	li	a0,9
- 1a0:	3ac000ef          	jal	54c <set_pin_mode>
+ 1a0:	494000ef          	jal	634 <set_pin_mode>
  1a4:	00000593          	li	a1,0
  1a8:	00800513          	li	a0,8
- 1ac:	3a0000ef          	jal	54c <set_pin_mode>
+ 1ac:	488000ef          	jal	634 <set_pin_mode>
  1b0:	00c10737          	lui	a4,0xc10
- 1b4:	fee70713          	addi	a4,a4,-18 # c0ffee <st7735_draw_rectangle+0xc0f9f2>
+ 1b4:	fee70713          	addi	a4,a4,-18 # c0ffee <read_pin+0xc0f99a>
  1b8:	00000b93          	li	s7,0
  1bc:	00000b13          	li	s6,0
  1c0:	00000a93          	li	s5,0
@@ -167,12 +167,12 @@ Disassembly of section .text:
  244:	00000513          	li	a0,0
  248:	00f12423          	sw	a5,8(sp)
  24c:	01898493          	addi	s1,s3,24
- 250:	3ac000ef          	jal	5fc <st7735_draw_rectangle>
+ 250:	34c000ef          	jal	59c <st7735_draw_rectangle>
  254:	00098413          	mv	s0,s3
  258:	00442583          	lw	a1,4(s0)
  25c:	00042503          	lw	a0,0(s0)
  260:	07e00637          	lui	a2,0x7e00
- 264:	7e060613          	addi	a2,a2,2016 # 7e007e0 <st7735_draw_rectangle+0x7e001e4>
+ 264:	7e060613          	addi	a2,a2,2016 # 7e007e0 <read_pin+0x7e0018c>
  268:	00840413          	addi	s0,s0,8
  26c:	df5ff0ef          	jal	60 <draw_cell>
  270:	fe8494e3          	bne	s1,s0,258 <main+0x114>
@@ -183,7 +183,7 @@ Disassembly of section .text:
  284:	00812583          	lw	a1,8(sp)
  288:	00c12503          	lw	a0,12(sp)
  28c:	001f0637          	lui	a2,0x1f0
- 290:	01f60613          	addi	a2,a2,31 # 1f001f <st7735_draw_rectangle+0x1efa23>
+ 290:	01f60613          	addi	a2,a2,31 # 1f001f <read_pin+0x1ef9cb>
  294:	dcdff0ef          	jal	60 <draw_cell>
  298:	000b8813          	mv	a6,s7
  29c:	000b0593          	mv	a1,s6
@@ -201,16 +201,16 @@ Disassembly of section .text:
  2cc:	02d12223          	sw	a3,36(sp)
  2d0:	02b12023          	sw	a1,32(sp)
  2d4:	00c12e23          	sw	a2,28(sp)
- 2d8:	294000ef          	jal	56c <read_pin>
+ 2d8:	37c000ef          	jal	654 <read_pin>
  2dc:	00050a13          	mv	s4,a0
- 2e0:	00a00513          	li	a0,10
- 2e4:	288000ef          	jal	56c <read_pin>
+ 2e0:	01300513          	li	a0,19
+ 2e4:	370000ef          	jal	654 <read_pin>
  2e8:	00050a93          	mv	s5,a0
  2ec:	00900513          	li	a0,9
- 2f0:	27c000ef          	jal	56c <read_pin>
+ 2f0:	364000ef          	jal	654 <read_pin>
  2f4:	00050b13          	mv	s6,a0
  2f8:	00800513          	li	a0,8
- 2fc:	270000ef          	jal	56c <read_pin>
+ 2fc:	358000ef          	jal	654 <read_pin>
  300:	02412683          	lw	a3,36(sp)
  304:	01c12603          	lw	a2,28(sp)
  308:	02012583          	lw	a1,32(sp)
@@ -296,7 +296,7 @@ Disassembly of section .text:
  448:	c69ff0ef          	jal	b0 <place_food>
  44c:	5f8d2783          	lw	a5,1528(s10)
  450:	001f0637          	lui	a2,0x1f0
- 454:	01f60613          	addi	a2,a2,31 # 1f001f <st7735_draw_rectangle+0x1efa23>
+ 454:	01f60613          	addi	a2,a2,31 # 1f001f <read_pin+0x1ef9cb>
  458:	00f12623          	sw	a5,12(sp)
  45c:	5fcd2783          	lw	a5,1532(s10)
  460:	00c12503          	lw	a0,12(sp)
@@ -306,18 +306,18 @@ Disassembly of section .text:
  470:	60cd2583          	lw	a1,1548(s10)
  474:	608d2503          	lw	a0,1544(s10)
  478:	07e00637          	lui	a2,0x7e00
- 47c:	7e060613          	addi	a2,a2,2016 # 7e007e0 <st7735_draw_rectangle+0x7e001e4>
+ 47c:	7e060613          	addi	a2,a2,2016 # 7e007e0 <read_pin+0x7e0018c>
  480:	be1ff0ef          	jal	60 <draw_cell>
  484:	fff00613          	li	a2,-1
  488:	00040593          	mv	a1,s0
  48c:	00048513          	mv	a0,s1
  490:	bd1ff0ef          	jal	60 <draw_cell>
  494:	01012503          	lw	a0,16(sp)
- 498:	104000ef          	jal	59c <seg_write_hex>
+ 498:	18c000ef          	jal	624 <seg_write_hex>
  49c:	00090513          	mv	a0,s2
- 4a0:	0ec000ef          	jal	58c <led_write>
+ 4a0:	174000ef          	jal	614 <led_write>
  4a4:	000dc537          	lui	a0,0xdc
- 4a8:	ba050513          	addi	a0,a0,-1120 # dbba0 <st7735_draw_rectangle+0xdb5a4>
+ 4a8:	ba050513          	addi	a0,a0,-1120 # dbba0 <read_pin+0xdb54c>
  4ac:	b61ff0ef          	jal	c <delay>
  4b0:	000c0713          	mv	a4,s8
  4b4:	000c8693          	mv	a3,s9
@@ -335,112 +335,112 @@ Disassembly of section .text:
  4e4:	08000693          	li	a3,128
  4e8:	00000613          	li	a2,0
  4ec:	00000593          	li	a1,0
- 4f0:	01f50513          	addi	a0,a0,31 # 1f001f <st7735_draw_rectangle+0x1efa23>
- 4f4:	108000ef          	jal	5fc <st7735_draw_rectangle>
+ 4f0:	01f50513          	addi	a0,a0,31 # 1f001f <read_pin+0x1ef9cb>
+ 4f4:	0a8000ef          	jal	59c <st7735_draw_rectangle>
  4f8:	00025537          	lui	a0,0x25
- 4fc:	9f050513          	addi	a0,a0,-1552 # 249f0 <st7735_draw_rectangle+0x243f4>
+ 4fc:	9f050513          	addi	a0,a0,-1552 # 249f0 <read_pin+0x2439c>
  500:	b0dff0ef          	jal	c <delay>
  504:	0a000713          	li	a4,160
  508:	08000693          	li	a3,128
  50c:	00000613          	li	a2,0
  510:	00000593          	li	a1,0
  514:	00000513          	li	a0,0
- 518:	0e4000ef          	jal	5fc <st7735_draw_rectangle>
+ 518:	084000ef          	jal	59c <st7735_draw_rectangle>
  51c:	00025537          	lui	a0,0x25
- 520:	9f050513          	addi	a0,a0,-1552 # 249f0 <st7735_draw_rectangle+0x243f4>
+ 520:	9f050513          	addi	a0,a0,-1552 # 249f0 <read_pin+0x2439c>
  524:	fff40413          	addi	s0,s0,-1
  528:	ae5ff0ef          	jal	c <delay>
  52c:	fa0418e3          	bnez	s0,4dc <main+0x398>
  530:	5f4d2703          	lw	a4,1524(s10)
  534:	9e3786b7          	lui	a3,0x9e378
- 538:	9b168693          	addi	a3,a3,-1615 # 9e3779b1 <st7735_draw_rectangle+0x9e3773b5>
+ 538:	9b168693          	addi	a3,a3,-1615 # 9e3779b1 <read_pin+0x9e37735d>
  53c:	02d70733          	mul	a4,a4,a3
  540:	01012783          	lw	a5,16(sp)
  544:	00f70733          	add	a4,a4,a5
  548:	c89ff06f          	j	1d0 <main+0x8c>
 
-0000054c <set_pin_mode>:
- 54c:	00151513          	slli	a0,a0,0x1
- 550:	0015f593          	andi	a1,a1,1
- 554:	03e57513          	andi	a0,a0,62
- 558:	f00007b7          	lui	a5,0xf0000
- 55c:	00b56533          	or	a0,a0,a1
- 560:	01078793          	addi	a5,a5,16 # f0000010 <st7735_draw_rectangle+0xeffffa14>
- 564:	00a7a023          	sw	a0,0(a5)
- 568:	00008067          	ret
-
-0000056c <read_pin>:
- 56c:	01f57513          	andi	a0,a0,31
- 570:	f00007b7          	lui	a5,0xf0000
- 574:	04078793          	addi	a5,a5,64 # f0000040 <st7735_draw_rectangle+0xeffffa44>
- 578:	00851513          	slli	a0,a0,0x8
- 57c:	00f56533          	or	a0,a0,a5
- 580:	00052503          	lw	a0,0(a0)
- 584:	00157513          	andi	a0,a0,1
- 588:	00008067          	ret
-
-0000058c <led_write>:
- 58c:	f00007b7          	lui	a5,0xf0000
- 590:	00878793          	addi	a5,a5,8 # f0000008 <st7735_draw_rectangle+0xeffffa0c>
- 594:	00a79023          	sh	a0,0(a5)
+0000054c <st7735_set_rectangle>:
+ 54c:	00ff07b7          	lui	a5,0xff0
+ 550:	01059593          	slli	a1,a1,0x10
+ 554:	0ff6f693          	zext.b	a3,a3
+ 558:	00f5f5b3          	and	a1,a1,a5
+ 55c:	00869693          	slli	a3,a3,0x8
+ 560:	01051513          	slli	a0,a0,0x10
+ 564:	0ff67613          	zext.b	a2,a2
+ 568:	00f57533          	and	a0,a0,a5
+ 56c:	00861613          	slli	a2,a2,0x8
+ 570:	00d5e5b3          	or	a1,a1,a3
+ 574:	2b0007b7          	lui	a5,0x2b000
+ 578:	00c56533          	or	a0,a0,a2
+ 57c:	2a000737          	lui	a4,0x2a000
+ 580:	00f5e5b3          	or	a1,a1,a5
+ 584:	f00007b7          	lui	a5,0xf0000
+ 588:	00e56533          	or	a0,a0,a4
+ 58c:	00278793          	addi	a5,a5,2 # f0000002 <read_pin+0xeffff9ae>
+ 590:	00a7a023          	sw	a0,0(a5)
+ 594:	00b7a023          	sw	a1,0(a5)
  598:	00008067          	ret
 
-0000059c <seg_write_hex>:
- 59c:	f00007b7          	lui	a5,0xf0000
- 5a0:	00478793          	addi	a5,a5,4 # f0000004 <st7735_draw_rectangle+0xeffffa08>
- 5a4:	00a79023          	sh	a0,0(a5)
- 5a8:	00008067          	ret
+0000059c <st7735_draw_rectangle>:
+ 59c:	fe010113          	addi	sp,sp,-32
+ 5a0:	00812c23          	sw	s0,24(sp)
+ 5a4:	00912a23          	sw	s1,20(sp)
+ 5a8:	00068413          	mv	s0,a3
+ 5ac:	00050493          	mv	s1,a0
+ 5b0:	00058513          	mv	a0,a1
+ 5b4:	00e606b3          	add	a3,a2,a4
+ 5b8:	00060593          	mv	a1,a2
+ 5bc:	00850633          	add	a2,a0,s0
+ 5c0:	fff68693          	addi	a3,a3,-1
+ 5c4:	fff60613          	addi	a2,a2,-1
+ 5c8:	00112e23          	sw	ra,28(sp)
+ 5cc:	00e12623          	sw	a4,12(sp)
+ 5d0:	f7dff0ef          	jal	54c <st7735_set_rectangle>
+ 5d4:	00c12703          	lw	a4,12(sp)
+ 5d8:	2c0007b7          	lui	a5,0x2c000
+ 5dc:	02e40433          	mul	s0,s0,a4
+ 5e0:	40145413          	srai	s0,s0,0x1
+ 5e4:	00f46433          	or	s0,s0,a5
+ 5e8:	f00007b7          	lui	a5,0xf0000
+ 5ec:	00278793          	addi	a5,a5,2 # f0000002 <read_pin+0xeffff9ae>
+ 5f0:	0087a023          	sw	s0,0(a5)
+ 5f4:	f00007b7          	lui	a5,0xf0000
+ 5f8:	00178793          	addi	a5,a5,1 # f0000001 <read_pin+0xeffff9ad>
+ 5fc:	0097a023          	sw	s1,0(a5)
+ 600:	01c12083          	lw	ra,28(sp)
+ 604:	01812403          	lw	s0,24(sp)
+ 608:	01412483          	lw	s1,20(sp)
+ 60c:	02010113          	addi	sp,sp,32
+ 610:	00008067          	ret
 
-000005ac <st7735_set_rectangle>:
- 5ac:	00ff07b7          	lui	a5,0xff0
- 5b0:	01059593          	slli	a1,a1,0x10
- 5b4:	0ff6f693          	zext.b	a3,a3
- 5b8:	00f5f5b3          	and	a1,a1,a5
- 5bc:	00869693          	slli	a3,a3,0x8
- 5c0:	01051513          	slli	a0,a0,0x10
- 5c4:	0ff67613          	zext.b	a2,a2
- 5c8:	00f57533          	and	a0,a0,a5
- 5cc:	00861613          	slli	a2,a2,0x8
- 5d0:	00d5e5b3          	or	a1,a1,a3
- 5d4:	2b0007b7          	lui	a5,0x2b000
- 5d8:	00c56533          	or	a0,a0,a2
- 5dc:	2a000737          	lui	a4,0x2a000
- 5e0:	00f5e5b3          	or	a1,a1,a5
- 5e4:	f00007b7          	lui	a5,0xf0000
- 5e8:	00e56533          	or	a0,a0,a4
- 5ec:	00278793          	addi	a5,a5,2 # f0000002 <st7735_draw_rectangle+0xeffffa06>
- 5f0:	00a7a023          	sw	a0,0(a5)
- 5f4:	00b7a023          	sw	a1,0(a5)
- 5f8:	00008067          	ret
+00000614 <led_write>:
+ 614:	f00007b7          	lui	a5,0xf0000
+ 618:	00878793          	addi	a5,a5,8 # f0000008 <read_pin+0xeffff9b4>
+ 61c:	00a79023          	sh	a0,0(a5)
+ 620:	00008067          	ret
 
-000005fc <st7735_draw_rectangle>:
- 5fc:	fe010113          	addi	sp,sp,-32
- 600:	00812c23          	sw	s0,24(sp)
- 604:	00912a23          	sw	s1,20(sp)
- 608:	00068413          	mv	s0,a3
- 60c:	00050493          	mv	s1,a0
- 610:	00058513          	mv	a0,a1
- 614:	00e606b3          	add	a3,a2,a4
- 618:	00060593          	mv	a1,a2
- 61c:	00850633          	add	a2,a0,s0
- 620:	fff68693          	addi	a3,a3,-1
- 624:	fff60613          	addi	a2,a2,-1
- 628:	00112e23          	sw	ra,28(sp)
- 62c:	00e12623          	sw	a4,12(sp)
- 630:	f7dff0ef          	jal	5ac <st7735_set_rectangle>
- 634:	00c12703          	lw	a4,12(sp)
- 638:	2c0007b7          	lui	a5,0x2c000
- 63c:	02e40433          	mul	s0,s0,a4
- 640:	40145413          	srai	s0,s0,0x1
- 644:	00f46433          	or	s0,s0,a5
- 648:	f00007b7          	lui	a5,0xf0000
- 64c:	00278793          	addi	a5,a5,2 # f0000002 <st7735_draw_rectangle+0xeffffa06>
- 650:	0087a023          	sw	s0,0(a5)
- 654:	f00007b7          	lui	a5,0xf0000
- 658:	00178793          	addi	a5,a5,1 # f0000001 <st7735_draw_rectangle+0xeffffa05>
- 65c:	0097a023          	sw	s1,0(a5)
- 660:	01c12083          	lw	ra,28(sp)
- 664:	01812403          	lw	s0,24(sp)
- 668:	01412483          	lw	s1,20(sp)
- 66c:	02010113          	addi	sp,sp,32
+00000624 <seg_write_hex>:
+ 624:	f00007b7          	lui	a5,0xf0000
+ 628:	00478793          	addi	a5,a5,4 # f0000004 <read_pin+0xeffff9b0>
+ 62c:	00a79023          	sh	a0,0(a5)
+ 630:	00008067          	ret
+
+00000634 <set_pin_mode>:
+ 634:	00151513          	slli	a0,a0,0x1
+ 638:	0015f593          	andi	a1,a1,1
+ 63c:	03e57513          	andi	a0,a0,62
+ 640:	f00007b7          	lui	a5,0xf0000
+ 644:	00b56533          	or	a0,a0,a1
+ 648:	01078793          	addi	a5,a5,16 # f0000010 <read_pin+0xeffff9bc>
+ 64c:	00a7a023          	sw	a0,0(a5)
+ 650:	00008067          	ret
+
+00000654 <read_pin>:
+ 654:	01f57513          	andi	a0,a0,31
+ 658:	f00007b7          	lui	a5,0xf0000
+ 65c:	04078793          	addi	a5,a5,64 # f0000040 <read_pin+0xeffff9ec>
+ 660:	00851513          	slli	a0,a0,0x8
+ 664:	00f56533          	or	a0,a0,a5
+ 668:	00052503          	lw	a0,0(a0)
+ 66c:	00157513          	andi	a0,a0,1
  670:	00008067          	ret

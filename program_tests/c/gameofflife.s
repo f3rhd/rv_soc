@@ -12,7 +12,7 @@ Disassembly of section .text:
    8:	0000006f          	j	8 <halt_loop>
 
 0000000c <delay>:
-   c:	ff010113          	addi	sp,sp,-16 # 7ff0 <seg_write_hex+0x7c24>
+   c:	ff010113          	addi	sp,sp,-16 # 7ff0 <seg_write_hex+0x7c20>
   10:	00012623          	sw	zero,12(sp)
   14:	00c12783          	lw	a5,12(sp)
   18:	00a7e663          	bltu	a5,a0,24 <delay+0x18>
@@ -26,10 +26,10 @@ Disassembly of section .text:
 00000034 <rand_next>:
   34:	00052783          	lw	a5,0(a0)
   38:	41c65737          	lui	a4,0x41c65
-  3c:	e6d70713          	addi	a4,a4,-403 # 41c64e6d <seg_write_hex+0x41c64aa1>
+  3c:	e6d70713          	addi	a4,a4,-403 # 41c64e6d <seg_write_hex+0x41c64a9d>
   40:	02e787b3          	mul	a5,a5,a4
   44:	00003737          	lui	a4,0x3
-  48:	03970713          	addi	a4,a4,57 # 3039 <seg_write_hex+0x2c6d>
+  48:	03970713          	addi	a4,a4,57 # 3039 <seg_write_hex+0x2c69>
   4c:	00e787b3          	add	a5,a5,a4
   50:	00179713          	slli	a4,a5,0x1
   54:	00f52023          	sw	a5,0(a0)
@@ -98,7 +98,7 @@ Disassembly of section .text:
  138:	00c78023          	sb	a2,0(a5)
  13c:	00060663          	beqz	a2,148 <seed_grid+0x64>
  140:	07e00637          	lui	a2,0x7e00
- 144:	7e060613          	addi	a2,a2,2016 # 7e007e0 <seg_write_hex+0x7e00414>
+ 144:	7e060613          	addi	a2,a2,2016 # 7e007e0 <seg_write_hex+0x7e00410>
  148:	00040513          	mv	a0,s0
  14c:	00048593          	mv	a1,s1
  150:	00140413          	addi	s0,s0,1
@@ -126,7 +126,7 @@ Disassembly of section .text:
  1a0:	7d312e23          	sw	s3,2012(sp)
  1a4:	7d712623          	sw	s7,1996(sp)
  1a8:	7da12023          	sw	s10,1984(sp)
- 1ac:	ce178793          	addi	a5,a5,-799 # ace1 <seg_write_hex+0xa915>
+ 1ac:	ce178793          	addi	a5,a5,-799 # ace1 <seg_write_hex+0xa911>
  1b0:	7f212023          	sw	s2,2016(sp)
  1b4:	7d412c23          	sw	s4,2008(sp)
  1b8:	7d512a23          	sw	s5,2004(sp)
@@ -149,7 +149,7 @@ Disassembly of section .text:
  1fc:	ee9ff0ef          	jal	e4 <seed_grid>
  200:	00000493          	li	s1,0
  204:	52010993          	addi	s3,sp,1312
- 208:	9b1b8b93          	addi	s7,s7,-1615 # 9e3779b1 <seg_write_hex+0x9e3775e5>
+ 208:	9b1b8b93          	addi	s7,s7,-1615 # 9e3779b1 <seg_write_hex+0x9e3775e1>
  20c:	03100d13          	li	s10,49
  210:	00000a93          	li	s5,0
  214:	00000c93          	li	s9,0
@@ -172,7 +172,7 @@ Disassembly of section .text:
  258:	00000613          	li	a2,0
  25c:	00078663          	beqz	a5,268 <main+0xdc>
  260:	07e00637          	lui	a2,0x7e00
- 264:	7e060613          	addi	a2,a2,2016 # 7e007e0 <seg_write_hex+0x7e00414>
+ 264:	7e060613          	addi	a2,a2,2016 # 7e007e0 <seg_write_hex+0x7e00410>
  268:	000c8593          	mv	a1,s9
  26c:	000c0513          	mv	a0,s8
  270:	00f12623          	sw	a5,12(sp)
@@ -187,9 +187,9 @@ Disassembly of section .text:
  294:	f8fc92e3          	bne	s9,a5,218 <main+0x8c>
  298:	00148493          	addi	s1,s1,1
  29c:	00048513          	mv	a0,s1
- 2a0:	12c000ef          	jal	3cc <seg_write_hex>
+ 2a0:	130000ef          	jal	3d0 <seg_write_hex>
  2a4:	000a8513          	mv	a0,s5
- 2a8:	114000ef          	jal	3bc <led_write>
+ 2a8:	118000ef          	jal	3c0 <led_write>
  2ac:	01c12783          	lw	a5,28(sp)
  2b0:	037787b3          	mul	a5,a5,s7
  2b4:	015d6e63          	bltu	s10,s5,2d0 <main+0x144>
@@ -200,7 +200,7 @@ Disassembly of section .text:
  2c8:	00000493          	li	s1,0
  2cc:	e19ff0ef          	jal	e4 <seed_grid>
  2d0:	00014537          	lui	a0,0x14
- 2d4:	88050513          	addi	a0,a0,-1920 # 13880 <seg_write_hex+0x134b4>
+ 2d4:	88050513          	addi	a0,a0,-1920 # 13880 <seg_write_hex+0x134b0>
  2d8:	d35ff0ef          	jal	c <delay>
  2dc:	00040793          	mv	a5,s0
  2e0:	00098413          	mv	s0,s3
@@ -227,7 +227,7 @@ Disassembly of section .text:
  32c:	00f5e5b3          	or	a1,a1,a5
  330:	f00007b7          	lui	a5,0xf0000
  334:	00e56533          	or	a0,a0,a4
- 338:	00478793          	addi	a5,a5,4 # f0000004 <seg_write_hex+0xeffffc38>
+ 338:	00278793          	addi	a5,a5,2 # f0000002 <seg_write_hex+0xeffffc32>
  33c:	00a7a023          	sw	a0,0(a5)
  340:	00b7a023          	sw	a1,0(a5)
  344:	00008067          	ret
@@ -253,24 +253,25 @@ Disassembly of section .text:
  38c:	40145413          	srai	s0,s0,0x1
  390:	00f46433          	or	s0,s0,a5
  394:	f00007b7          	lui	a5,0xf0000
- 398:	00478793          	addi	a5,a5,4 # f0000004 <seg_write_hex+0xeffffc38>
+ 398:	00278793          	addi	a5,a5,2 # f0000002 <seg_write_hex+0xeffffc32>
  39c:	0087a023          	sw	s0,0(a5)
  3a0:	f00007b7          	lui	a5,0xf0000
- 3a4:	0097a023          	sw	s1,0(a5) # f0000000 <seg_write_hex+0xeffffc34>
- 3a8:	01c12083          	lw	ra,28(sp)
- 3ac:	01812403          	lw	s0,24(sp)
- 3b0:	01412483          	lw	s1,20(sp)
- 3b4:	02010113          	addi	sp,sp,32
- 3b8:	00008067          	ret
+ 3a4:	00178793          	addi	a5,a5,1 # f0000001 <seg_write_hex+0xeffffc31>
+ 3a8:	0097a023          	sw	s1,0(a5)
+ 3ac:	01c12083          	lw	ra,28(sp)
+ 3b0:	01812403          	lw	s0,24(sp)
+ 3b4:	01412483          	lw	s1,20(sp)
+ 3b8:	02010113          	addi	sp,sp,32
+ 3bc:	00008067          	ret
 
-000003bc <led_write>:
- 3bc:	f00007b7          	lui	a5,0xf0000
- 3c0:	00c78793          	addi	a5,a5,12 # f000000c <seg_write_hex+0xeffffc40>
- 3c4:	00a79023          	sh	a0,0(a5)
- 3c8:	00008067          	ret
+000003c0 <led_write>:
+ 3c0:	f00007b7          	lui	a5,0xf0000
+ 3c4:	00878793          	addi	a5,a5,8 # f0000008 <seg_write_hex+0xeffffc38>
+ 3c8:	00a79023          	sh	a0,0(a5)
+ 3cc:	00008067          	ret
 
-000003cc <seg_write_hex>:
- 3cc:	f00007b7          	lui	a5,0xf0000
- 3d0:	00878793          	addi	a5,a5,8 # f0000008 <seg_write_hex+0xeffffc3c>
- 3d4:	00a79023          	sh	a0,0(a5)
- 3d8:	00008067          	ret
+000003d0 <seg_write_hex>:
+ 3d0:	f00007b7          	lui	a5,0xf0000
+ 3d4:	00478793          	addi	a5,a5,4 # f0000004 <seg_write_hex+0xeffffc34>
+ 3d8:	00a79023          	sh	a0,0(a5)
+ 3dc:	00008067          	ret

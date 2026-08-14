@@ -12,7 +12,7 @@ Disassembly of section .text:
    8:	0000006f          	j	8 <halt_loop>
 
 0000000c <delay>:
-   c:	ff010113          	addi	sp,sp,-16 # 7ff0 <seg_write_hex+0x7c6c>
+   c:	ff010113          	addi	sp,sp,-16 # 7ff0 <seg_write_hex+0x7c68>
   10:	00012623          	sw	zero,12(sp)
   14:	00c12783          	lw	a5,12(sp)
   18:	00a7e663          	bltu	a5,a0,24 <delay+0x18>
@@ -131,12 +131,12 @@ Disassembly of section .text:
  1bc:	00a00913          	li	s2,10
  1c0:	001f0537          	lui	a0,0x1f0
  1c4:	00600593          	li	a1,6
- 1c8:	01f50513          	addi	a0,a0,31 # 1f001f <seg_write_hex+0x1efc9b>
+ 1c8:	01f50513          	addi	a0,a0,31 # 1f001f <seg_write_hex+0x1efc97>
  1cc:	e69ff0ef          	jal	34 <draw_paddle>
  1d0:	00c12603          	lw	a2,12(sp)
  1d4:	f8010537          	lui	a0,0xf8010
  1d8:	07600593          	li	a1,118
- 1dc:	80050513          	addi	a0,a0,-2048 # f800f800 <seg_write_hex+0xf800f47c>
+ 1dc:	80050513          	addi	a0,a0,-2048 # f800f800 <seg_write_hex+0xf800f478>
  1e0:	e55ff0ef          	jal	34 <draw_paddle>
  1e4:	00048613          	mv	a2,s1
  1e8:	00090593          	mv	a1,s2
@@ -144,12 +144,12 @@ Disassembly of section .text:
  1f0:	e51ff0ef          	jal	40 <draw_ball>
  1f4:	008a1513          	slli	a0,s4,0x8
  1f8:	01356533          	or	a0,a0,s3
- 1fc:	188000ef          	jal	384 <seg_write_hex>
+ 1fc:	18c000ef          	jal	388 <seg_write_hex>
  200:	00891513          	slli	a0,s2,0x8
  204:	00956533          	or	a0,a0,s1
- 208:	16c000ef          	jal	374 <led_write>
+ 208:	170000ef          	jal	378 <led_write>
  20c:	00025537          	lui	a0,0x25
- 210:	9f050513          	addi	a0,a0,-1552 # 249f0 <seg_write_hex+0x2466c>
+ 210:	9f050513          	addi	a0,a0,-1552 # 249f0 <seg_write_hex+0x24668>
  214:	df9ff0ef          	jal	c <delay>
  218:	ef9ff06f          	j	110 <main+0x7c>
  21c:	f49b58e3          	bge	s6,s1,16c <main+0xd8>
@@ -207,7 +207,7 @@ Disassembly of section .text:
  2e4:	00f5e5b3          	or	a1,a1,a5
  2e8:	f00007b7          	lui	a5,0xf0000
  2ec:	00e56533          	or	a0,a0,a4
- 2f0:	00478793          	addi	a5,a5,4 # f0000004 <seg_write_hex+0xeffffc80>
+ 2f0:	00278793          	addi	a5,a5,2 # f0000002 <seg_write_hex+0xeffffc7a>
  2f4:	00a7a023          	sw	a0,0(a5)
  2f8:	00b7a023          	sw	a1,0(a5)
  2fc:	00008067          	ret
@@ -233,24 +233,25 @@ Disassembly of section .text:
  344:	40145413          	srai	s0,s0,0x1
  348:	00f46433          	or	s0,s0,a5
  34c:	f00007b7          	lui	a5,0xf0000
- 350:	00478793          	addi	a5,a5,4 # f0000004 <seg_write_hex+0xeffffc80>
+ 350:	00278793          	addi	a5,a5,2 # f0000002 <seg_write_hex+0xeffffc7a>
  354:	0087a023          	sw	s0,0(a5)
  358:	f00007b7          	lui	a5,0xf0000
- 35c:	0097a023          	sw	s1,0(a5) # f0000000 <seg_write_hex+0xeffffc7c>
- 360:	01c12083          	lw	ra,28(sp)
- 364:	01812403          	lw	s0,24(sp)
- 368:	01412483          	lw	s1,20(sp)
- 36c:	02010113          	addi	sp,sp,32
- 370:	00008067          	ret
+ 35c:	00178793          	addi	a5,a5,1 # f0000001 <seg_write_hex+0xeffffc79>
+ 360:	0097a023          	sw	s1,0(a5)
+ 364:	01c12083          	lw	ra,28(sp)
+ 368:	01812403          	lw	s0,24(sp)
+ 36c:	01412483          	lw	s1,20(sp)
+ 370:	02010113          	addi	sp,sp,32
+ 374:	00008067          	ret
 
-00000374 <led_write>:
- 374:	f00007b7          	lui	a5,0xf0000
- 378:	00c78793          	addi	a5,a5,12 # f000000c <seg_write_hex+0xeffffc88>
- 37c:	00a79023          	sh	a0,0(a5)
- 380:	00008067          	ret
+00000378 <led_write>:
+ 378:	f00007b7          	lui	a5,0xf0000
+ 37c:	00878793          	addi	a5,a5,8 # f0000008 <seg_write_hex+0xeffffc80>
+ 380:	00a79023          	sh	a0,0(a5)
+ 384:	00008067          	ret
 
-00000384 <seg_write_hex>:
- 384:	f00007b7          	lui	a5,0xf0000
- 388:	00878793          	addi	a5,a5,8 # f0000008 <seg_write_hex+0xeffffc84>
- 38c:	00a79023          	sh	a0,0(a5)
- 390:	00008067          	ret
+00000388 <seg_write_hex>:
+ 388:	f00007b7          	lui	a5,0xf0000
+ 38c:	00478793          	addi	a5,a5,4 # f0000004 <seg_write_hex+0xeffffc7c>
+ 390:	00a79023          	sh	a0,0(a5)
+ 394:	00008067          	ret
