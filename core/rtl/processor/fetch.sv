@@ -37,8 +37,6 @@ module fetch #(
     logic [ADDRESS_WIDTH-1:0] program_pointer;
     logic [ADDRESS_WIDTH-1:0] program_counter;
     logic [ADDRESS_WIDTH-1:0] btb_target_addr;
-    logic [ADDRESS_WIDTH-1:0] instruction_count;
-    logic end_of_program;
     typedef enum logic {
         LOAD,
         FETCH
@@ -70,7 +68,6 @@ module fetch #(
         end
     end
 
-    assign end_of_program = program_pointer > instruction_count;
 
     always_ff @(posedge clk) begin
 
@@ -79,7 +76,6 @@ module fetch #(
             o_instruction_raw   <= 0;
             o_instruction_valid <= 0;
             o_instruction_addr  <= 32'h0;
-            instruction_count   <= 0;
             state               <= LOAD;
         end else begin
             case (state)
@@ -88,19 +84,18 @@ module fetch #(
                         instructions[program_counter] <= bootloaderi.instruction;
                         program_counter <= program_counter + 1;
                     end
-                    if (bootloaderi.program_load_done & i_graphics_init_done) begin
-                        program_counter   <= 0;
-                        instruction_count <= program_counter;
-                        state             <= FETCH;
+                    else if (bootloaderi.load_done & i_graphics_init_done) begin
+                        program_counter <= 0;
+                        state           <= FETCH;
                     end
                 end
                 FETCH: begin
-                    if (i_en & !end_of_program) begin
+                    if (i_en) begin
                         program_counter     <= program_pointer + 1;
                         o_instruction_raw   <= instructions[program_pointer];
                         o_instruction_valid <= 1'b1;
                         o_instruction_addr  <= program_pointer;
-                    end else if (i_output_bubble | end_of_program) begin
+                    end else if (i_output_bubble) begin
                         o_instruction_raw   <= 0;
                         o_instruction_valid <= 0;
                         o_instruction_addr  <= 32'h0;
