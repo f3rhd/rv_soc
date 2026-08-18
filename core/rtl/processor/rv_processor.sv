@@ -182,6 +182,7 @@ module rv_processor #(
         .i_en            (memory_en),
         .graphicsi       (graphics_if),
         .gpioi           (gpio_if),
+        .bootloaderi     (bootloader_if),
         .o_register_write(register_write_),
         .o_graphics_write(memory_graphics_write),
         .o_gpio_stall    (memory_gpio_stall),

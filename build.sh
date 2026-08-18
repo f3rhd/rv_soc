@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 # ============================================================
-#  build.sh - RV32IM freestanding C build (multi-TU)
+#  build.sh - RV32IM freestanding C build (multi-TU, Harvard)
 #  Usage: build.sh <src1.c> [src2.c ...] [O0|O1|O2|O3|Os]
+#
+#  Produces TWO separate hex images (instruction memory and
+#  data memory are physically separate on this core, so they
+#  cannot share one flat binary):
+#     <base>_imem.hex   -> .text                (code only)
+#     <base>_dmem.hex   -> .rodata/.data/.sdata/.bss (globals)
 # ============================================================
 
 set -u
@@ -47,9 +53,42 @@ done
 
 OPTFLAG="-$OPTLEVEL"
 
+# ============================================================
+#  Memory geometry - EDIT THESE ONLY. Everything else derives
+#  from these values, so re-synthesizing with a different
+#  depth/width just means changing a number here once.
+# ============================================================
+
+# Instruction memory: IMEM_SIZE = IMEM_DEPTH * IMEM_UNIT bytes
+IMEM_DEPTH=1024
+IMEM_UNIT=32
+IMEM_BASE=0x00000000
+
+# Data memory: DMEM_SIZE = DMEM_DEPTH * DMEM_UNIT * DMEM_MULT bytes
+DMEM_DEPTH=1024
+DMEM_UNIT=32
+DMEM_MULT=4
+DMEM_BASE=0x00000000
+
+# KB of DMEM carved out at the bottom for globals/statics
+# (.rodata + .data + .sdata + .bss + .sbss). The rest of DMEM,
+# from the top down, is stack.
+STATIC_RESERVE_KB=4
+
+IMEM_SIZE=$((IMEM_DEPTH * IMEM_UNIT))
+DMEM_SIZE=$((DMEM_DEPTH * DMEM_UNIT * DMEM_MULT))
+STATIC_RESERVE=$((STATIC_RESERVE_KB * 1024))
+
+if [ "$STATIC_RESERVE" -ge "$DMEM_SIZE" ]; then
+    echo "ERROR: STATIC_RESERVE ($STATIC_RESERVE bytes) >= DMEM_SIZE ($DMEM_SIZE bytes)."
+    echo "       Leave room for a stack."
+    exit 1
+fi
+
 GCC="riscv64-unknown-elf-gcc"
 OBJCOPY="riscv64-unknown-elf-objcopy"
 OBJDUMP="riscv64-unknown-elf-objdump"
+NM="riscv64-unknown-elf-nm"
 
 command -v "$GCC" >/dev/null 2>&1 || { echo "ERROR: $GCC not found in PATH."; exit 1; }
 command -v "$OBJCOPY" >/dev/null 2>&1 || { echo "ERROR: $OBJCOPY not found in PATH."; exit 1; }
@@ -59,13 +98,15 @@ FIRST_SRC="${SOURCES[0]}"
 BASE_NOEXT="$(basename "$FIRST_SRC")"
 BASENAME="${BASE_NOEXT%.*}"
 OUT_ASM="${BASENAME}.s"
-OUT_HEX="${BASENAME}.hex"
+OUT_IMEM_HEX="${BASENAME}_imem.hex"
+OUT_DMEM_HEX="${BASENAME}_dmem.hex"
 
 STARTUP_S="__startup_tmp.s"
 STARTUP_O="__startup_tmp.o"
 LDSCRIPT="__link_tmp.ld"
 ELF="__out_tmp.elf"
-BIN="__out_tmp.bin"
+IMEM_BIN="__out_tmp_imem.bin"
+DMEM_BIN="__out_tmp_dmem.bin"
 BIN2HEX_PY="__bin2hex_tmp.py"
 
 CFLAGS="-march=rv32imf -mabi=ilp32 -ffreestanding -nostdlib -fno-pic -fno-pie -ffunction-sections -fdata-sections -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables"
@@ -74,7 +115,7 @@ OBJLIST=()
 TMPFILELIST=()
 
 cleanup() {
-    for F in "$STARTUP_S" "$STARTUP_O" "$LDSCRIPT" "$ELF" "$BIN" "$BIN2HEX_PY"; do
+    for F in "$STARTUP_S" "$STARTUP_O" "$LDSCRIPT" "$ELF" "$IMEM_BIN" "$DMEM_BIN" "$BIN2HEX_PY"; do
         [ -e "$F" ] && rm -f "$F"
     done
     for F in "${TMPFILELIST[@]:-}"; do
@@ -94,11 +135,25 @@ build_error() {
 
 cleanup
 
+# ------------------------------------------------------------
+# Startup code: sets gp (for gp-relative small-data access),
+# then sp (top of DMEM), then jumps into main.
+# ------------------------------------------------------------
 cat > "$STARTUP_S" <<'EOF'
     .section .text.start,"ax"
     .globl _start
 _start:
-    li sp, 0x8000
+    /* gp must be set with relaxation disabled for this one
+       instruction: relaxation is what turns other loads/stores
+       into gp-relative accesses, so gp itself can't rely on
+       that not-yet-initialized value while being set. */
+    .option push
+    .option norelax
+    la gp, __global_pointer$
+    .option pop
+
+    la sp, __stack_top
+
     call main
 halt_loop:
     j halt_loop
@@ -120,28 +175,64 @@ for ((I=0; I<SRCCOUNT; I++)); do
     TMPFILELIST+=("$OBJ")
 done
 
-cat > "$LDSCRIPT" <<'EOF'
+# ------------------------------------------------------------
+# Linker script: two distinct memory regions (Harvard).
+# IMEM gets .text only. DMEM gets everything a load/store can
+# touch: .rodata, .data, .sdata (small data), .bss/.sbss.
+# The whole DMEM footprint must fit in STATIC_RESERVE bytes,
+# enforced by the ASSERT below - the build fails loudly if you
+# blow the budget instead of silently corrupting the stack.
+# ------------------------------------------------------------
+cat > "$LDSCRIPT" <<EOF
 ENTRY(_start)
+
 MEMORY
 {
-    RAM (rwx) : ORIGIN = 0x00000000, LENGTH = 32K
+    IMEM (rx) : ORIGIN = $IMEM_BASE, LENGTH = $IMEM_SIZE
+    DMEM (rw) : ORIGIN = $DMEM_BASE, LENGTH = $DMEM_SIZE
 }
+
+__static_reserve = $STATIC_RESERVE;
+__stack_top      = ALIGN(ORIGIN(DMEM) + LENGTH(DMEM), 32);
+
 SECTIONS
 {
-    . = 0x00000000;
-    .text : { KEEP(*(.text.start)) *(.text*) } > RAM
-    .rodata : { *(.rodata*) } > RAM
-    .data : { *(.data*) } > RAM
-    .bss : { *(.bss*) *(COMMON) } > RAM
+    . = ORIGIN(IMEM);
+    .text : { KEEP(*(.text.start)) *(.text*) } > IMEM
+
+    . = ORIGIN(DMEM);
+    .rodata : { *(.rodata .rodata.*) } > DMEM
+    .data   : { *(.data .data.*) } > DMEM
+
+    .sdata : {
+        . = ALIGN(32);
+        PROVIDE(__global_pointer\$ = . + 0x800);
+        *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2) *(.srodata*)
+        *(.sdata .sdata.*) *(.gnu.linkonce.s.*)
+    } > DMEM
+
+    .bss : {
+        *(.sbss .sbss.*) *(.gnu.linkonce.sb.*)
+        *(.bss .bss.*)
+        *(COMMON)
+    } > DMEM
+
+    __static_end  = .;
+    __static_used = __static_end - ORIGIN(DMEM);
 }
+
+ASSERT(__static_used <= __static_reserve, "ERROR: global/static data footprint exceeds STATIC_RESERVE_KB budget - shrink your globals or raise the reserve in build.sh")
 EOF
 
-# shellcheck disable=SC2086
-"$GCC" $CFLAGS $OPTFLAG -nostartfiles -T "$LDSCRIPT" -Wl,-e,_start -Wl,--gc-sections -o "$ELF" "${OBJLIST[@]}" || build_error
+"$GCC" $CFLAGS $OPTFLAG -nostartfiles -T "$LDSCRIPT" -Wl,-e,_start -Wl,--gc-sections -Wl,--no-check-sections -o "$ELF" "${OBJLIST[@]}" || build_error
 
 "$OBJDUMP" -d "$ELF" > "$OUT_ASM" || build_error
 
-"$OBJCOPY" -O binary "$ELF" "$BIN" || build_error
+# Two independent flat binaries - IMEM and DMEM never overlap
+# on the wire even though both regions are ORIGIN 0x0 in the
+# core's address space.
+"$OBJCOPY" -O binary -j .text "$ELF" "$IMEM_BIN" || build_error
+"$OBJCOPY" -O binary -j .rodata -j .data -j .sdata -j .bss "$ELF" "$DMEM_BIN" || build_error
 
 cat > "$BIN2HEX_PY" <<'EOF'
 import sys
@@ -164,12 +255,21 @@ with open(hex_file, "w", newline="\n") as f:
     f.write("\n".join(lines))
 EOF
 
-python3 "$BIN2HEX_PY" "$BIN" "$OUT_HEX" || build_error
+python3 "$BIN2HEX_PY" "$IMEM_BIN" "$OUT_IMEM_HEX" || build_error
+python3 "$BIN2HEX_PY" "$DMEM_BIN" "$OUT_DMEM_HEX" || build_error
 
 echo
 echo "Build succeeded ($SRCCOUNT source file(s), optimization $OPTLEVEL):"
 echo "  $OUT_ASM"
-echo "  $OUT_HEX"
+echo "  $OUT_IMEM_HEX   (IMEM, $IMEM_SIZE bytes total)"
+echo "  $OUT_DMEM_HEX   (DMEM, $DMEM_SIZE bytes total, $STATIC_RESERVE bytes reserved for statics)"
+echo
+
+if command -v "$NM" >/dev/null 2>&1; then
+    echo "Symbol check:"
+    "$NM" "$ELF" 2>/dev/null | grep -E '__static_used|__static_reserve|__global_pointer|__stack_top' | sort -k3
+    echo
+fi
 
 cleanup
 exit 0

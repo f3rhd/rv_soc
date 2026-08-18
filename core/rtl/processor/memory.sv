@@ -8,6 +8,7 @@
 `include "../graphics_unit/graphics_interface.svh"
 `include "register.svh"
 `include "../gpio_interface.svh"
+`include "../bootloader/bootloader_interface.svh"
 module memory #(
     parameter SIZE = 2048
 ) (
@@ -17,6 +18,7 @@ module memory #(
     execution_if.mem_consumer ei,
     graphics_if.processor graphicsi,
     gpio_if.processor gpioi,
+    bootloader_if.processor bootloaderi,
     output register_write_data_t o_register_write,
     output logic o_graphics_write,
     output logic o_gpio_stall,
@@ -37,7 +39,9 @@ module memory #(
     (* ramstyle = "block" *)
 `endif
     logic [0:31] ram[0:SIZE/4-1];
-    wire [31:0] translated_address = ei.exec_result >> 2;
+    logic [31:0] static_data_counter;
+
+    wire [31:0] address = bootloaderi.static_data_ready ? static_data_counter : ei.exec_result >> 2;
 
     logic [1:0] r_byte_offset;
     logic reg_int_write;
@@ -63,11 +67,9 @@ module memory #(
 
 
 
-    assign is_mmio = ei.exec_result[31] == 1'b1;
-
-
-    assign o_graphics_write = graphicsi.graphics_instruction_write/*is_mmio && ei.mem_write && (ei.exec_result[3:0] == GRAPHICS_COMMAND_ADDRESS[3:0] | ei.exec_result[3:0] == GRAPHICS_PIXEL_ADDRESS[3:0])*/;
-    assign o_gpio_stall = sent_read && !gpioi.pin_read_done;
+    assign is_mmio          = ei.exec_result[31] == 1'b1;
+    assign o_graphics_write = graphicsi.graphics_instruction_write;
+    assign o_gpio_stall     = sent_read && !gpioi.pin_read_done;
 
 
     always_comb begin
@@ -109,6 +111,7 @@ module memory #(
             gpioi.pin_set_enable                 <= 0;
             gpioi.pin_read_enable                <= 0;
             sent_read                            <= 0;
+            static_data_counter                  <= 0;
         end else if (i_en) begin
             o_register_write.int_write_enable    <= ei.int_reg_write;
             o_register_write.float_write_enable  <= ei.float_reg_write;
@@ -123,7 +126,11 @@ module memory #(
             if (sent_read && gpioi.pin_read_done) begin
                 sent_read <= 0;
             end
-            if ((ei.int_reg_write | ei.float_reg_write ) & ~ei.mem_read & ~ei.mem_write) begin
+            if (bootloaderi.static_data_ready) begin
+                ram[address]        <= bootloaderi.static_data;
+                static_data_counter <= static_data_counter + 1;
+            end
+            else if ((ei.int_reg_write | ei.float_reg_write ) & ~ei.mem_read & ~ei.mem_write) begin
                 reg_int_write   <= ei.int_reg_write;
                 reg_float_write <= ei.float_reg_write;
                 reg_exec_result <= ei.exec_result;
@@ -155,16 +162,16 @@ module memory #(
                         end
                     end else begin
                         if (byte_en[0]) begin
-                            ram[translated_address][0:7] <= byte0_write;
+                            ram[address][0:7] <= byte0_write;
                         end
                         if (byte_en[1]) begin
-                            ram[translated_address][8:15] <= byte1_write;
+                            ram[address][8:15] <= byte1_write;
                         end
                         if (byte_en[2]) begin
-                            ram[translated_address][16:23] <= byte2_write;
+                            ram[address][16:23] <= byte2_write;
                         end
                         if (byte_en[3]) begin
-                            ram[translated_address][24:31] <= byte3_write;
+                            ram[address][24:31] <= byte3_write;
                         end
                     end
                 end else if (ei.mem_read) begin
@@ -173,7 +180,7 @@ module memory #(
                         gpioi.pin_id          <= ei.exec_result[12:8];
                         sent_read             <= 1;
                     end
-                    reg_raw_word  <= ram[translated_address];
+                    reg_raw_word  <= ram[address];
                     reg_memory_op <= ei.memory_operation;
                     reg_mem_read  <= 1;
                     r_byte_offset <= ei.exec_result[1:0];
