@@ -30,7 +30,7 @@ module tb_rv_soc;
     rv_processor #(
         .HISTORY_SIZE(8  /* default 10 */),
         .I_CACHE_SIZE(1024 * 32  /* default 1024 */),
-        .D_CACHE_SIZE(1024 * 32  /* default 1 << 10 */),
+        .D_CACHE_SIZE(1024 * 32 * 4  /* default 1 << 10 */),
         .BTB_SIZE    (32  /* default 128 */)
     ) rv_processor (
         .clk          (clk),
@@ -208,8 +208,12 @@ module tb_rv_soc;
         end
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/pin_test.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/float_test2_imem.hex",
             rv_processor.fetch.instructions);
+
+        $readmemh(
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/float_test2_dmem.hex",
+            rv_processor.memory.ram);
 
         reset = 1;
 
@@ -221,7 +225,7 @@ module tb_rv_soc;
         graphics_unit.graphics_execute.graphics_state = graphics_unit.graphics_execute.EXECUTE;
         graphics_unit.graphics_execute.exec_state = graphics_unit.graphics_execute.EXEC_KIND_DO_NOTHING;
         rv_processor.fetch.state = rv_processor.fetch.FETCH;
-        rv_processor.fetch.instruction_count = 32'hFFFFFFFF;
+        bootloader_if.static_data_ready = 0;
         #1;
 
 
