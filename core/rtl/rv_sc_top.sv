@@ -31,7 +31,7 @@ module rv_sc_top (
     localparam unsigned BAUD_RATE = 115200;
     localparam unsigned HISTORY_SIZE = 8;
     localparam unsigned I_CACHE_SIZE = 1024 * 32;
-    localparam unsigned D_CACHE_SIZE = 1024 * 32;
+    localparam unsigned D_CACHE_SIZE = 1024 * 32 * 4;
     localparam unsigned BTB_SIZE = 32;
     localparam unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 8192 / 4 * 4;
     localparam unsigned GPIO_PIN_AMOUNT = 27;
