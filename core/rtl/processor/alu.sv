@@ -115,7 +115,7 @@ module alu #(
                     5'b01010: alu_out = i_src1_data & alu_src2;
                     // AUIPC
                     5'b01011:
-                    alu_out = i_instruction_data.instruction_addr + alu_src2;
+                    alu_out = (i_instruction_data.instruction_addr << 2) + alu_src2;
                     // LUI
                     5'b01100: alu_out = alu_src2;
                     //MUL
