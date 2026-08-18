@@ -4,39 +4,42 @@ __out_tmp.elf:     file format elf32-littleriscv
 
 Disassembly of section .text:
 
-00000000 <_start>:
-   0:	00008137          	lui	sp,0x8
-   4:	034000ef          	jal	38 <main>
+00000000 <__static_end>:
+   0:	00001197          	auipc	gp,0x1
+   4:	80018193          	addi	gp,gp,-2048 # 800 <__global_pointer$>
+   8:	00020117          	auipc	sp,0x20
+   c:	ff810113          	addi	sp,sp,-8 # 20000 <__stack_top>
+  10:	034000ef          	jal	44 <main>
 
-00000008 <halt_loop>:
-   8:	0000006f          	j	8 <halt_loop>
+00000014 <halt_loop>:
+  14:	0000006f          	j	14 <halt_loop>
 
-0000000c <fac>:
-   c:	00100793          	li	a5,1
-  10:	00078713          	mv	a4,a5
-  14:	00200693          	li	a3,2
-  18:	00a77a63          	bgeu	a4,a0,2c <fac+0x20>
-  1c:	00d50a63          	beq	a0,a3,30 <fac+0x24>
-  20:	02a787b3          	mul	a5,a5,a0
-  24:	fff50513          	addi	a0,a0,-1
-  28:	ff1ff06f          	j	18 <fac+0xc>
-  2c:	00100513          	li	a0,1
-  30:	02f50533          	mul	a0,a0,a5
-  34:	00008067          	ret
+00000018 <fac>:
+  18:	00100793          	li	a5,1
+  1c:	00078713          	mv	a4,a5
+  20:	00200693          	li	a3,2
+  24:	00a77a63          	bgeu	a4,a0,38 <fac+0x20>
+  28:	00d50a63          	beq	a0,a3,3c <fac+0x24>
+  2c:	02a787b3          	mul	a5,a5,a0
+  30:	fff50513          	addi	a0,a0,-1
+  34:	ff1ff06f          	j	24 <fac+0xc>
+  38:	00100513          	li	a0,1
+  3c:	02f50533          	mul	a0,a0,a5
+  40:	00008067          	ret
 
-00000038 <main>:
-  38:	ff010113          	addi	sp,sp,-16 # 7ff0 <seg_write_hex+0x7f94>
-  3c:	00500513          	li	a0,5
-  40:	00112623          	sw	ra,12(sp)
-  44:	fc9ff0ef          	jal	c <fac>
-  48:	014000ef          	jal	5c <seg_write_hex>
-  4c:	00c12083          	lw	ra,12(sp)
-  50:	00000513          	li	a0,0
-  54:	01010113          	addi	sp,sp,16
-  58:	00008067          	ret
+00000044 <main>:
+  44:	ff010113          	addi	sp,sp,-16
+  48:	00500513          	li	a0,5
+  4c:	00112623          	sw	ra,12(sp)
+  50:	fc9ff0ef          	jal	18 <fac>
+  54:	014000ef          	jal	68 <seg_write_hex>
+  58:	00c12083          	lw	ra,12(sp)
+  5c:	00000513          	li	a0,0
+  60:	01010113          	addi	sp,sp,16
+  64:	00008067          	ret
 
-0000005c <seg_write_hex>:
-  5c:	f00007b7          	lui	a5,0xf0000
-  60:	00478793          	addi	a5,a5,4 # f0000004 <seg_write_hex+0xefffffa8>
-  64:	00a79023          	sh	a0,0(a5)
-  68:	00008067          	ret
+00000068 <seg_write_hex>:
+  68:	f00007b7          	lui	a5,0xf0000
+  6c:	00478793          	addi	a5,a5,4 # f0000004 <__stack_top+0xeffe0004>
+  70:	00a79023          	sh	a0,0(a5)
+  74:	00008067          	ret
