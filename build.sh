@@ -107,7 +107,9 @@ LDSCRIPT="__link_tmp.ld"
 ELF="__out_tmp.elf"
 IMEM_BIN="__out_tmp_imem.bin"
 DMEM_BIN="__out_tmp_dmem.bin"
-BIN2HEX_PY="__bin2hex_tmp.py"
+BIN2HEX_PY_HIGH_ENDIAN="__bin2hex_tmp_high_endian.py"
+BIN2HEX_PY_LITTLE_ENDIAN="__bin2hex_tmp_little_endian.py"
+
 
 CFLAGS="-march=rv32imf -mabi=ilp32 -ffreestanding -nostdlib -fno-pic -fno-pie -ffunction-sections -fdata-sections -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables"
 
@@ -115,7 +117,7 @@ OBJLIST=()
 TMPFILELIST=()
 
 cleanup() {
-    for F in "$STARTUP_S" "$STARTUP_O" "$LDSCRIPT" "$ELF" "$IMEM_BIN" "$DMEM_BIN" "$BIN2HEX_PY"; do
+    for F in "$STARTUP_S" "$STARTUP_O" "$LDSCRIPT" "$ELF" "$IMEM_BIN" "$DMEM_BIN" "$BIN2HEX_PY_LITTLE_ENDIAN" "$BIN2HEX_PY_HIGH_ENDIAN"; do
         [ -e "$F" ] && rm -f "$F"
     done
     for F in "${TMPFILELIST[@]:-}"; do
@@ -234,7 +236,7 @@ EOF
 "$OBJCOPY" -O binary -j .text "$ELF" "$IMEM_BIN" || build_error
 "$OBJCOPY" -O binary -j .rodata -j .data -j .sdata -j .bss "$ELF" "$DMEM_BIN" || build_error
 
-cat > "$BIN2HEX_PY" <<'EOF'
+cat > "$BIN2HEX_PY_HIGH_ENDIAN" <<'EOF'
 import sys
 
 bin_file, hex_file = sys.argv[1], sys.argv[2]
@@ -254,9 +256,28 @@ for i in range(0, len(data), 4):
 with open(hex_file, "w", newline="\n") as f:
     f.write("\n".join(lines))
 EOF
+cat > "$BIN2HEX_PY_LITTLE_ENDIAN" <<'EOF'
+import sys
 
-python3 "$BIN2HEX_PY" "$IMEM_BIN" "$OUT_IMEM_HEX" || build_error
-python3 "$BIN2HEX_PY" "$DMEM_BIN" "$OUT_DMEM_HEX" || build_error
+bin_file, hex_file = sys.argv[1], sys.argv[2]
+
+with open(bin_file, "rb") as f:
+    data = f.read()
+
+pad = (4 - (len(data) % 4)) % 4
+if pad:
+    data += b"\x00" * pad
+
+lines = []
+for i in range(0, len(data), 4):
+    b0, b1, b2, b3 = data[i], data[i+1], data[i+2], data[i+3]
+    lines.append("{:02x}{:02x}{:02x}{:02x}".format(b0, b1, b2, b3))
+
+with open(hex_file, "w", newline="\n") as f:
+    f.write("\n".join(lines))
+EOF
+python3 "$BIN2HEX_PY_HIGH_ENDIAN" "$IMEM_BIN" "$OUT_IMEM_HEX" || build_error
+python3 "$BIN2HEX_PY_LITTLE_ENDIAN" "$DMEM_BIN" "$OUT_DMEM_HEX" || build_error
 
 echo
 echo "Build succeeded ($SRCCOUNT source file(s), optimization $OPTLEVEL):"
