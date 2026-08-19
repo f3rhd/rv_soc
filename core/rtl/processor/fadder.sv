@@ -230,14 +230,15 @@ module fadder (
                     end
                 end
                 S_NORMALIZE_PRELIMINARY: begin
-                    if (preliminary_sig == 0 && g == 0) begin
-                        exp_result <= 8'd0;
-                        state      <= S_COMPUTE_SIGN;
-                    end else if (f1_sign == f2_sign && carry_out) begin
+                    if (f1_sign == f2_sign && carry_out) begin
                         preliminary_sig <= {carry_out, preliminary_sig[23:1]};
                         preliminary_before_normalization <= preliminary_sig;
                         normalization_right_shift <= 1;
+                        exp_result <= exp_result + 1;
                         state <= S_ADJUST_R_S;
+                    end else if (preliminary_sig == 0 && g == 0) begin
+                        exp_result <= 8'd0;
+                        state      <= S_COMPUTE_SIGN;
                     end else begin
                         if (preliminary_sig[23]) begin
                             // it is normalized

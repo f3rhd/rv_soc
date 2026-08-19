@@ -60,7 +60,7 @@ module execute #(
     assign btb_write =  instruction_data.btb_write & ~prediction_data.btb_was_hit & ~instruction_data.invalid;
     assign instruction_addr = instruction_data.instruction_addr;
     assign btb_branch_target_addr = instruction_data.instruction_addr + instruction_data.extended_imm_val;
-    assign fpu_begin = instruction_data.operation[6:5] == 2'b11;
+    assign fpu_begin = instruction_data.operation[6:5] == 2'b11 && i_en && !instruction_data.invalid;
 
     alu #(
         .HISTORY_SIZE(HISTORY_SIZE)
@@ -85,19 +85,18 @@ module execute #(
         .o_stall              (alu_stall)
     );
     fpu fpu (
-        .clk          (clk),
-        .i_reset      (i_reset),
-        .i_begin      (fpu_begin),
-        .i_op         (instruction_data.operation),
-        .i_flush_units(exi.redirect),
-        .i_rnd_mode   (instruction_data.round_mode),
-        .i_src1_data  (src1_data),
-        .i_src2_data  (src2_data),
-        .i_src3_data  (src3_data),
-        .i_fcsr       (read_data.fcsr),
-        .o_fpu_result (fpu_result),
-        .o_done       (fpu_done),
-        .o_inv_op     (fpu_inv_op)
+        .clk         (clk),
+        .i_reset     (i_reset | exi.redirect),
+        .i_begin     (fpu_begin),
+        .i_op        (instruction_data.operation),
+        .i_rnd_mode  (instruction_data.round_mode),
+        .i_src1_data (src1_data),
+        .i_src2_data (src2_data),
+        .i_src3_data (src3_data),
+        .i_fcsr      (read_data.fcsr),
+        .o_fpu_result(fpu_result),
+        .o_done      (fpu_done),
+        .o_inv_op    (fpu_inv_op)
     );
 
     always_comb begin : stall_logic

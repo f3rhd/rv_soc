@@ -44,13 +44,11 @@ module memory #(
     wire [31:0] address = bootloaderi.static_data_ready ? static_data_counter : ei.exec_result >> 2;
 
     logic [1:0] r_byte_offset;
-    logic reg_int_write;
-    logic reg_float_write;
     logic [31:0] reg_exec_result;
     logic [31:0] reg_raw_word;
     logic [2:0] reg_memory_op;
     logic reg_mem_read;
-    logic sent_read;
+    logic sent_gpio_read;
 
     wire [7:0] selected_byte = (r_byte_offset == 2'b00) ? reg_raw_word[31:24]   :
         (r_byte_offset == 2'b01) ? reg_raw_word[23:16]  :
@@ -69,7 +67,7 @@ module memory #(
 
     assign is_mmio          = ei.exec_result[31] == 1'b1;
     assign o_graphics_write = graphicsi.graphics_instruction_write;
-    assign o_gpio_stall     = sent_read && !gpioi.pin_read_done;
+    assign o_gpio_stall     = sent_gpio_read && !gpioi.pin_read_done;
 
 
     always_comb begin
@@ -101,7 +99,7 @@ module memory #(
             o_register_write.write_addr          <= 0;
             o_register_write.int_write_enable    <= 0;
             o_register_write.float_write_enable  <= 0;
-            reg_int_write                        <= 0;
+            //reg_int_write                        <= 0;
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
             graphicsi.graphics_instruction_write <= 0;
@@ -110,30 +108,26 @@ module memory #(
             gpioi.pin_drive_enable               <= 0;
             gpioi.pin_set_enable                 <= 0;
             gpioi.pin_read_enable                <= 0;
-            sent_read                            <= 0;
+            sent_gpio_read                       <= 0;
             static_data_counter                  <= 0;
         end else if (i_en) begin
             o_register_write.int_write_enable    <= ei.int_reg_write;
             o_register_write.float_write_enable  <= ei.float_reg_write;
             o_register_write.write_addr          <= ei.dest;
-            reg_int_write                        <= 0;
+            //reg_int_write                        <= 0;
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
             graphicsi.graphics_instruction_write <= 0;
             gpioi.pin_drive_enable               <= 0;
             gpioi.pin_set_enable                 <= 0;
             gpioi.pin_read_enable                <= 0;
-            if (sent_read && gpioi.pin_read_done) begin
-                sent_read <= 0;
+            reg_exec_result                      <= ei.exec_result;
+            if (sent_gpio_read && gpioi.pin_read_done) begin
+                sent_gpio_read <= 0;
             end
             if (bootloaderi.static_data_ready) begin
                 ram[address]        <= bootloaderi.static_data;
                 static_data_counter <= static_data_counter + 1;
-            end
-            else if ((ei.int_reg_write | ei.float_reg_write ) & ~ei.mem_read & ~ei.mem_write) begin
-                reg_int_write   <= ei.int_reg_write;
-                reg_float_write <= ei.float_reg_write;
-                reg_exec_result <= ei.exec_result;
             end else begin
                 if (ei.mem_write) begin
                     if (is_mmio) begin
@@ -175,10 +169,10 @@ module memory #(
                         end
                     end
                 end else if (ei.mem_read) begin
-                    if (ei.exec_result[6] && !sent_read && is_mmio) begin
+                    if (ei.exec_result[6] && !sent_gpio_read && is_mmio) begin
                         gpioi.pin_read_enable <= 1;
                         gpioi.pin_id          <= ei.exec_result[12:8];
-                        sent_read             <= 1;
+                        sent_gpio_read        <= 1;
                     end
                     reg_raw_word  <= ram[address];
                     reg_memory_op <= ei.memory_operation;
@@ -189,9 +183,7 @@ module memory #(
         end
     end
     always_comb begin
-        if (reg_int_write | reg_float_write) begin
-            o_register_write.write_data = reg_exec_result;
-        end else if (reg_mem_read) begin
+        if (reg_mem_read) begin
             case (reg_memory_op)
                 // load byte (signed)
                 3'b000:
@@ -207,11 +199,11 @@ module memory #(
                 };
                 // load word integer and float
                 3'b010: begin
-                    if (sent_read && gpioi.pin_read_done) begin
+                    if (sent_gpio_read && gpioi.pin_read_done) begin
                         o_register_write.write_data = {
                             {31{1'b0}}, gpioi.pin_read_val
                         };
-                    end else if (sent_read) begin
+                    end else if (sent_gpio_read) begin
                         o_register_write.write_data = 0;
                     end else begin
                         o_register_write.write_data = {
@@ -240,7 +232,7 @@ module memory #(
                 default: o_register_write.write_data = 33'b0;
             endcase
         end else begin
-            o_register_write.write_data = 33'b0;
+            o_register_write.write_data = reg_exec_result;
         end
     end
 endmodule

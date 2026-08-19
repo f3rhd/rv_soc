@@ -8,7 +8,6 @@ module fpu (
     input logic clk,
     input logic i_reset,
     input logic i_begin,
-    input logic i_flush_units,
     input opcode_e i_op,
     input logic [2:0] i_rnd_mode,
     input logic [31:0] i_src1_data,
@@ -128,7 +127,7 @@ module fpu (
     wire fle_core = flt_core || feq_core;
     fadder fadder (
         .clk         (clk),
-        .i_reset     (i_reset | o_done | i_flush_units),
+        .i_reset     (i_reset),
         .i_f1        (src1_data),
         .i_f2        (src2_data),
         .i_fcsr      (fcsr),
@@ -140,7 +139,7 @@ module fpu (
     );
     fmultiplier fmultiplier (
         .clk         (clk),
-        .i_reset     (i_reset | o_done | i_flush_units),
+        .i_reset     (i_reset),
         .i_f1        (src1_data),
         .i_f2        (src2_data),
         .i_fcsr      (fcsr),
@@ -152,7 +151,7 @@ module fpu (
     );
     fdivider fdivider (
         .clk         (clk),
-        .i_reset     (i_reset | o_done | i_flush_units),
+        .i_reset     (i_reset),
         .i_f1        (src1_data),
         .i_f2        (src2_data),
         .i_fcsr      (fcsr),
@@ -164,7 +163,7 @@ module fpu (
     );
     fsqrt fsqrt (
         .clk         (clk),
-        .i_reset     (i_reset | o_done | i_flush_units),
+        .i_reset     (i_reset),
         .i_f         (src1_data),
         .i_fcsr      (fcsr),
         .i_round_mode(rnd_mode),
@@ -175,7 +174,7 @@ module fpu (
     );
     int_to_float int_to_float (
         .clk       (clk),
-        .i_reset   (i_reset | o_done | i_flush_units),
+        .i_reset   (i_reset),
         .i_begin   (int_to_float_begin),
         .i_signed  (int_to_float_signed),
         .i_rnd_mode(rnd_mode),
@@ -186,7 +185,7 @@ module fpu (
     );
     float_to_int float_to_int (
         .clk       (clk),
-        .i_reset   (i_reset | o_done | i_flush_units),
+        .i_reset   (i_reset),
         .i_begin   (float_to_int_begin),
         .i_signed  (float_to_int_signed),
         .i_rnd_mode(rnd_mode),

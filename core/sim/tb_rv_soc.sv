@@ -74,9 +74,10 @@ module tb_rv_soc;
             end
             if (rv_processor.register_write_.float_write_enable) begin
                 $fdisplay(soc_log_file,
-                          "[Time: \%0t] Float Register File[\%d] <- 0x\%h",
+                          "[Time: \%0t] Float Register File[\%d] <- \%f",
                           $time, rv_processor.register_write_.write_addr,
-                          rv_processor.register_write_.write_data);
+                          $bitstoshortreal(
+                              rv_processor.register_write_.write_data));
             end
 
 
@@ -157,7 +158,7 @@ module tb_rv_soc;
             end
 
 
-            if (rv_processor.fetch_btb_hit & rv_processor.fetch_instruction_valid) begin
+            if (rv_processor.fetch_btb_hit & rv_processor.fetch_instruction_valid & rv_processor.fetch.i_en) begin
                 if (print) begin
                     $fdisplay(
                         soc_log_file,
@@ -165,7 +166,7 @@ module tb_rv_soc;
                         $time, rv_processor.fetch_instruction_addr * 4,
                         rv_processor.fetch.btb_target_addr * 4);
                 end
-                if (rv_processor.fetch_instruction_addr == 2) begin
+                if (rv_processor.fetch_instruction_addr == 5) begin
                     print <= 0;
                 end
             end
@@ -187,7 +188,6 @@ module tb_rv_soc;
     end
 
     initial begin
-
 `ifdef WRITE_TO_FILE
         soc_log_file = $fopen("simulate.log", "w");
         graphics_dispatch_log_file = $fopen("graphics_only.log", "w");
@@ -208,11 +208,11 @@ module tb_rv_soc;
         end
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/float_test2_imem.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/mandelbrot_imem.hex",
             rv_processor.fetch.instructions);
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/float_test2_dmem.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/mandelbrot_dmem.hex",
             rv_processor.memory.ram);
 
         reset = 1;
