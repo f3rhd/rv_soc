@@ -25,7 +25,7 @@ inline void st7735_draw_rectangle(
     int y_end = y_start + height;
     st7735_set_rectangle(x_start, y_start, x_end - 1, y_end - 1);
     // each color data corresponds to two pixel values
-    st7735_stream_pixel(color, (width * height) >> 1);
+    st7735_stream_pixel(color, (width * height + 1) >> 1);
 }
 #define __SWAP(x, y)                                                           \
     do {                                                                       \
