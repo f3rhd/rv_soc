@@ -22,8 +22,8 @@ module rv_processor #(
     bootloader_if.processor bootloader_if,
     graphics_if.processor graphics_if,
     gpio_if.processor gpio_if,
-    output logic [15:0] o_reg16_f8,
-    output logic [15:0] o_reg16_fc
+    output logic [15:0] o_reg16_f4,
+    output logic [15:0] o_reg16_f8
 );
 
     localparam ADDRESS_WIDTH = $clog2(I_CACHE_SIZE / 4);
@@ -186,8 +186,8 @@ module rv_processor #(
         .o_register_write(register_write_),
         .o_graphics_write(memory_graphics_write),
         .o_gpio_stall    (memory_gpio_stall),
-        .o_reg16_f8      (o_reg16_f8),
-        .o_reg16_fc      (o_reg16_fc)
+        .o_reg16_f4      (o_reg16_f4),
+        .o_reg16_f8      (o_reg16_f8)
     );
 
     always_comb begin

@@ -22,8 +22,8 @@ module memory #(
     output register_write_data_t o_register_write,
     output logic o_graphics_write,
     output logic o_gpio_stall,
-    output logic [15:0] o_reg16_f8,
-    output logic [15:0] o_reg16_fc
+    output logic [15:0] o_reg16_f4,
+    output logic [15:0] o_reg16_f8
 );
     localparam logic [31:0] GRAPHICS_PIXEL_ADDRESS = 32'hF0000001;
     localparam logic [31:0] GRAPHICS_COMMAND_ADDRESS = 32'hF0000002;
@@ -103,8 +103,8 @@ module memory #(
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
             graphicsi.graphics_instruction_write <= 0;
+            o_reg16_f4                           <= 0;
             o_reg16_f8                           <= 0;
-            o_reg16_fc                           <= 0;
             gpioi.pin_drive_enable               <= 0;
             gpioi.pin_set_enable                 <= 0;
             gpioi.pin_read_enable                <= 0;
@@ -142,9 +142,9 @@ module memory #(
                             };
                             graphicsi.graphics_instruction_write <= 1;
                         end else if (ei.exec_result[2]) begin
-                            o_reg16_fc <= ei.memory_write_data[15:0];
-                        end else if (ei.exec_result[3]) begin
                             o_reg16_f8 <= ei.memory_write_data[15:0];
+                        end else if (ei.exec_result[3]) begin
+                            o_reg16_f4 <= ei.memory_write_data[15:0];
                         end else if (ei.exec_result[4]) begin
                             gpioi.pin_set_enable <= 1;
                             gpioi.pin_id         <= ei.memory_write_data[5:1];

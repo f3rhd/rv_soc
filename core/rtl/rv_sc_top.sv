@@ -83,8 +83,8 @@ module rv_sc_top (
         .bootloader_if(bootloaderi),
         .graphics_if  (graphicsi),
         .gpio_if      (gpioi),
-        .o_reg16_f8   (led),
-        .o_reg16_fc   (segment_value)
+        .o_reg16_f4   (led),
+        .o_reg16_f8   (segment_value)
     );
     graphics_unit #(
         .GRAPHICS_INSTRUCTION_BUFFER_SIZE(GRAPHICS_INSTRUCTION_BUFFER_SIZE /* default 256 * 4 */),
