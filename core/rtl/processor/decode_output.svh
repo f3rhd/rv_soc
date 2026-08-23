@@ -98,12 +98,34 @@ typedef enum logic [6:0] {
 } opcode_e;
 
 typedef struct packed {
+    /*
+        address of the fetched instruction
+        addresses in this design increment by 1 
+    */
     logic [31:0] instruction_addr;
+    /*
+        immediate values used by I-type instructions
+    */
     logic [31:0] extended_imm_val;
+    /*
+        rs1,fs1 register index
+    */
     logic [4:0] src1;
+    /*
+        rs2,fs2 register index
+    */
     logic [4:0] src2;
+    /*
+        rd,fd register index
+    */
     logic [4:0] dest;
+    /*
+        translated mop used by the system internally
+    */
     opcode_e operation;
+    /*
+        flags
+    */
     logic uses_imm;
     logic read_rs1;
     logic read_rs2;
@@ -121,6 +143,9 @@ typedef struct packed {
     logic read_fs3;
 } decoded_instruction_t;
 typedef struct packed {
+    /*
+        pht entry of the predicted branch instruction
+    */
     logic [9:0] pht_index;
     logic btb_was_hit;
     logic prediction;
