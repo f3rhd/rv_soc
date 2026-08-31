@@ -67,7 +67,7 @@ module rv_processor #(
     execution_if #(.HISTORY_SIZE(HISTORY_SIZE)) execution_if ();
     logic execution_output_bubble;
     logic execution_enable;
-    logic execution_reset; // resets the internal state of multiplier and divider units
+    logic execution_reset; // resets the internal state of multiplier, divider and fpu units
 
 
     // Stage control signals
@@ -78,7 +78,15 @@ module rv_processor #(
     logic memory_en;
     logic memory_gpio_stall;
 
+    logic [63:0] system_counter;
 
+    always_ff @(posedge clk) begin
+        if (reset) begin
+            system_counter <= 0;
+        end else begin
+            system_counter <= system_counter + 1;
+        end
+    end
     stage_controller stage_controller (
         .clk(clk),
         .i_misprediction(execution_if.redirect),
@@ -180,6 +188,7 @@ module rv_processor #(
         .i_reset         (reset),
         .ei              (execution_if),
         .i_en            (memory_en),
+        .i_system_counter(system_counter),
         .graphicsi       (graphics_if),
         .gpioi           (gpio_if),
         .bootloaderi     (bootloader_if),

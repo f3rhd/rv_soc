@@ -15,6 +15,7 @@ module memory #(
     input logic clk,
     input logic i_reset,
     input logic i_en,
+    input logic [63:0] i_system_counter,
     execution_if.mem_consumer ei,
     graphics_if.processor graphicsi,
     gpio_if.processor gpioi,
@@ -32,6 +33,8 @@ module memory #(
     localparam logic [31:0] PIN_MODE_ADDR = 32'hF0000010;
     localparam logic [31:0] PIN_DRIVE_ADDR = 32'hF0000020;
     localparam logic [31:0] PIN_READ_ADDR = 32'hF0000040;
+    localparam logic [31:0] SYSTEM_CNTR_READ_LOW = 32'hF0000080;
+    localparam logic [31:0] SYSTEM_CNTR_READ_HIGH = 32'hF0000100;
 
 `ifdef VIVADO
     (* ram_style = "block" *)
@@ -62,6 +65,8 @@ module memory #(
     logic [7:0] byte2_write;
     logic [7:0] byte3_write;
     logic is_mmio;
+    logic [31:0] reg_system_counter_read_val;
+    logic reg_system_counter_read;
 
 
 
@@ -99,7 +104,6 @@ module memory #(
             o_register_write.write_addr          <= 0;
             o_register_write.int_write_enable    <= 0;
             o_register_write.float_write_enable  <= 0;
-            //reg_int_write                        <= 0;
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
             graphicsi.graphics_instruction_write <= 0;
@@ -114,13 +118,13 @@ module memory #(
             o_register_write.int_write_enable    <= ei.int_reg_write;
             o_register_write.float_write_enable  <= ei.float_reg_write;
             o_register_write.write_addr          <= ei.dest;
-            //reg_int_write                        <= 0;
             reg_mem_read                         <= 0;
             graphicsi.graphics_instruction       <= 0;
             graphicsi.graphics_instruction_write <= 0;
             gpioi.pin_drive_enable               <= 0;
             gpioi.pin_set_enable                 <= 0;
             gpioi.pin_read_enable                <= 0;
+            reg_system_counter_read              <= 0;
             reg_exec_result                      <= ei.exec_result;
             if (sent_gpio_read && gpioi.pin_read_done) begin
                 sent_gpio_read <= 0;
@@ -169,15 +173,21 @@ module memory #(
                         end
                     end
                 end else if (ei.mem_read) begin
+                    reg_memory_op <= ei.memory_operation;
+                    reg_mem_read  <= 1;
+                    r_byte_offset <= ei.exec_result[1:0];
                     if (ei.exec_result[6] && !sent_gpio_read && is_mmio) begin
                         gpioi.pin_read_enable <= 1;
                         gpioi.pin_id          <= ei.exec_result[12:8];
                         sent_gpio_read        <= 1;
+                    end else if (ei.exec_result[7] && is_mmio) begin
+                        reg_system_counter_read_val <= i_system_counter[31:0];
+                        reg_system_counter_read     <= 1;
+                    end else if (ei.exec_result[8] && is_mmio) begin
+                        reg_system_counter_read_val <= i_system_counter[63:32];
+                        reg_system_counter_read     <= 1;
                     end
-                    reg_raw_word  <= ram[address];
-                    reg_memory_op <= ei.memory_operation;
-                    reg_mem_read  <= 1;
-                    r_byte_offset <= ei.exec_result[1:0];
+                    reg_raw_word <= ram[address];
                 end
             end
         end
@@ -197,7 +207,7 @@ module memory #(
                     selected_half[7:0],
                     selected_half[15:8]
                 };
-                // load word integer and float
+                // load word integer 
                 3'b010: begin
                     if (sent_gpio_read && gpioi.pin_read_done) begin
                         o_register_write.write_data = {
@@ -205,6 +215,8 @@ module memory #(
                         };
                     end else if (sent_gpio_read) begin
                         o_register_write.write_data = 0;
+                    end else if (reg_system_counter_read) begin
+                        o_register_write.write_data = reg_system_counter_read_val;
                     end else begin
                         o_register_write.write_data = {
                             reg_raw_word[7:0],
@@ -214,6 +226,7 @@ module memory #(
                         };
                     end
                 end
+                // load word float 
                 3'b101: begin
                     o_register_write.write_data = {
                         reg_raw_word[7:0],

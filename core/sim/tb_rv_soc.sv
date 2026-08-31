@@ -208,11 +208,11 @@ module tb_rv_soc;
         end
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/mandelbrot_imem.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/delay_test_imem.hex",
             rv_processor.fetch.instructions);
 
         $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/mandelbrot_dmem.hex",
+            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/delay_test_dmem.hex",
             rv_processor.memory.ram);
 
         reset = 1;
@@ -226,6 +226,8 @@ module tb_rv_soc;
         graphics_unit.graphics_execute.exec_state = graphics_unit.graphics_execute.EXEC_KIND_DO_NOTHING;
         rv_processor.fetch.state = rv_processor.fetch.FETCH;
         bootloader_if.static_data_ready = 0;
+        bootloader_if.load_done = 1;
+        graphics_if.graphics_init_done = 1;
         #1;
 
 
