@@ -1,4 +1,4 @@
-#include "../../libc-baremetal/include/led.h"
+#include "../libc-baremetal/include/led.h"
 int main() {
     int val = 0;
     while (1) {

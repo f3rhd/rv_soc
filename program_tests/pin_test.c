@@ -1,5 +1,5 @@
-#include "../../libc-baremetal/include/led.h"
-#include "../../libc-baremetal/include/pin.h"
+#include "../libc-baremetal/include/led.h"
+#include "../libc-baremetal/include/pin.h"
 
 
 int main() {

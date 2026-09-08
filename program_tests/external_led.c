@@ -1,4 +1,4 @@
-#include "../../libc-baremetal/include/pin.h"
+#include "../libc-baremetal/include/pin.h"
 
 int main() {
     set_pin_mode(8, PIN_OUTPUT);

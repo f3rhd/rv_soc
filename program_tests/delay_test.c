@@ -1,5 +1,5 @@
-#include "../../libc-baremetal/include/system.h"
-#include "../../libc-baremetal/include/led.h"
+#include "../libc-baremetal/include/system.h"
+#include "../libc-baremetal/include/led.h"
 
 int main() {
     int counter = 0;

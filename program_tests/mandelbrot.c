@@ -1,6 +1,6 @@
-#include "../../libc-baremetal/include/led.h"
-#include "../../libc-baremetal/include/pin.h"
-#include "../../libc-baremetal/include/st7735.h"
+#include "../libc-baremetal/include/led.h"
+#include "../libc-baremetal/include/pin.h"
+#include "../libc-baremetal/include/st7735.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 160
