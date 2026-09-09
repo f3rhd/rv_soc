@@ -177,11 +177,11 @@ module alu #(
             2'b01: begin
                 case (i_instruction_data.operation[3])
                     1'b1: begin
-                        alu_out = i_instruction_data.instruction_addr + 1;
+                        alu_out = (i_instruction_data.instruction_addr << 2) + 4;
                         case (i_instruction_data.operation[0])
                             1'b0: begin
                                 redirect = 1'b1 & ~i_instruction_data.invalid;
-                                redirection_address = i_src1_data + i_instruction_data.extended_imm_val;
+                                redirection_address = (i_src1_data >> 2) + i_instruction_data.extended_imm_val;
                             end
                             1'b1: begin
                                 redirect = ~i_instruction_data.invalid & ~i_btb_was_hit;
