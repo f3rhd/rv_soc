@@ -10,9 +10,9 @@ interface bootloader_if;
     logic [31:0] instruction;
     logic [31:0] static_data;
     logic static_data_ready;
+    logic core_reset;
     logic instruction_ready;
     logic load_done;
-    logic bootloader_begin;
     logic rx;
     logic tx;
 
@@ -20,7 +20,7 @@ interface bootloader_if;
         output instruction,
         output instruction_ready,
         output load_done,
-        input bootloader_begin,
+        output core_reset,
         output static_data,
         output static_data_ready,
         input rx,

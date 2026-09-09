@@ -5,6 +5,7 @@ import sys
 SERIAL_PORT = 'COM3'
 BAUD_RATE   =  115200     
 
+BEGIN_SIGNAL = b'\x72'
 BOOT_SIGNAL = b'\x69'
 STATIC_DATA_SIGNAL = b'\x31'
 
@@ -53,6 +54,8 @@ def send_program():
         print(f"Connected to {SERIAL_PORT} @ {BAUD_RATE} baud")
         time.sleep(2)
 
+        ser.write(BEGIN_SIGNAL)
+        print("Sent begin signal to the core.")
         wait_and_send_data(ser, BOOT_SIGNAL, "boot", program_hex_path)
         wait_and_send_data(ser, STATIC_DATA_SIGNAL, "static data", memory_hex_path)
 

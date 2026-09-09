@@ -15,6 +15,8 @@ module bootloader #(
 );
     typedef enum logic [2:0] {
         IDLE,
+        CORE_RESET,
+        SEND_BOOT_SIGNAL,
         GET_PROGRAM_SIZE,
         INSTRUCTION_BUILD,
         STATIC_DATA_SIGNAL_SEND,
@@ -23,6 +25,7 @@ module bootloader #(
     } bootloader_state;
     bootloader_state state = IDLE;
 
+    localparam unsigned BEGIN_SIGNAL = 'h72;
     localparam unsigned BOOT_SIGNAL = 'h69;
     localparam unsigned MEMORY_SIGNAL = 'h31;
     logic [7:0] rx_byte_out;
@@ -65,11 +68,13 @@ module bootloader #(
             program_size                    <= 0;
             program_size_byte_counter       <= 0;
             sent_instruction_bytes_counter  <= 0;
+            bootloader_if.core_reset        <= 0;
             state                           <= IDLE;
         end else begin
             tx_begin                        <= 0;
             bootloader_if.instruction_ready <= 0;
             bootloader_if.static_data_ready <= 0;
+            bootloader_if.core_reset        <= 0;
             case (state)
                 IDLE: begin
                     instruction_byte_counter       <= 0;
@@ -77,11 +82,21 @@ module bootloader #(
                     program_size_byte_counter      <= 0;
                     sent_instruction_bytes_counter <= 0;
                     bootloader_if.instruction      <= 0;
-                    if (bootloader_if.bootloader_begin) begin
-                        tx_begin <= 1;
-                        tx_data  <= BOOT_SIGNAL;
-                        state    <= GET_PROGRAM_SIZE;
+                    if (rx_byte_ready && rx_byte_out == BEGIN_SIGNAL) begin
+                        // Each time we load a new program we should set this flag to 0
+                        // So fetch unit in the processor can write the program to its instruction memory
+                        bootloader_if.load_done <= 0;
+                        state                   <= CORE_RESET;
                     end
+                end
+                CORE_RESET: begin
+                    bootloader_if.core_reset <= 1;
+                    state                    <= SEND_BOOT_SIGNAL;
+                end
+                SEND_BOOT_SIGNAL: begin
+                    tx_begin <= 1;
+                    tx_data  <= BOOT_SIGNAL;
+                    state    <= GET_PROGRAM_SIZE;
                 end
                 GET_PROGRAM_SIZE: begin
                     if (rx_byte_ready) begin

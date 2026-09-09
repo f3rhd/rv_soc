@@ -9,8 +9,6 @@
 `include "gpio_interface.svh"
 module rv_sc_top (
     input logic clk,
-    input logic reset,
-    input logic boot,
     input logic rx,
     output logic tx,
     // graphics display ports
@@ -40,36 +38,36 @@ module rv_sc_top (
     graphics_if graphicsi ();
     gpio_if gpioi ();
     logic boot_edge;
-    logic reset_edge;
     logic [15:0] segment_value;
+    logic sys_reset;
+    logic sys_reset_done = 0;
 
-    assign sck                          = graphicsi.display_sck;
-    assign sda                          = graphicsi.display_sda;
-    assign res                          = graphicsi.display_res;
-    assign dc                           = graphicsi.display_dc;
-    assign cs                           = graphicsi.display_cs;
-    assign bootloaderi.bootloader_begin = boot_edge;
-    assign graphicsi.graphics_init      = boot_edge;
-    assign bootloaderi.rx               = rx;
-    assign tx                           = bootloaderi.tx;
+    always_ff @(posedge clk) begin
+        sys_reset <= 0;
+        if (!sys_reset_done) begin
+            sys_reset      <= 1;
+            sys_reset_done <= 1;
+        end
+        graphicsi.graphics_init <= 0;
+        if (sys_reset_done && !graphicsi.graphics_init_done) begin
+            graphicsi.graphics_init <= 1;
+        end
+    end
 
-    button_edge_detect button_edge_detect_boot (
-        .clk   (clk),
-        .i_btn (boot),
-        .o_edge(boot_edge)
-    );
-    button_edge_detect button_edge_detect_reset (
-        .clk   (clk),
-        .i_btn (reset),
-        .o_edge(reset_edge)
-    );
+    assign sck            = graphicsi.display_sck;
+    assign sda            = graphicsi.display_sda;
+    assign res            = graphicsi.display_res;
+    assign dc             = graphicsi.display_dc;
+    assign cs             = graphicsi.display_cs;
+    assign bootloaderi.rx = rx;
+    assign tx             = bootloaderi.tx;
 
     bootloader #(
         .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
         .BAUD_RATE    (BAUD_RATE  /* default 115200 */)
     ) bootloader (
         .clk          (clk),
-        .i_reset      (reset_edge),
+        .i_reset      (sys_reset),
         .bootloader_if(bootloaderi)
     );
     rv_processor #(
@@ -79,7 +77,7 @@ module rv_sc_top (
         .BTB_SIZE    (BTB_SIZE  /* default 128 */)
     ) rv_processor (
         .clk          (clk),
-        .reset        (reset_edge),
+        .reset        (bootloaderi.core_reset || sys_reset),
         .bootloader_if(bootloaderi),
         .graphics_if  (graphicsi),
         .gpio_if      (gpioi),
@@ -92,12 +90,12 @@ module rv_sc_top (
         .SPI_CLK_HZ(GRAPHICS_SPI_CLK_HZ  /* default 25_000_000 */)
     ) graphics_unit (
         .clk        (clk),
-        .i_reset    (reset_edge),
+        .i_reset    (sys_reset),
         .graphics_if(graphicsi)
     );
     seven_seg_display seven_seg_display (
         .clk(clk),
-        .reset(reset_edge),
+        .reset(bootloaderi.core_reset || sys_reset),
         .i_display_val(segment_value),
         .o_seg(seg),
         .o_an(an)
@@ -106,7 +104,7 @@ module rv_sc_top (
         .PIN_AMOUNT(GPIO_PIN_AMOUNT  /* default 27 */)
     ) gpio_controller (
         .clk    (clk),
-        .i_reset(reset_edge),
+        .i_reset(bootloaderi.core_reset || sys_reset),
         .gpioi  (gpioi),
         .pins_io(pins_io)
     );
