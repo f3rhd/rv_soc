@@ -54,7 +54,7 @@ module uart_rx_engine #(
                     end
                 end
                 READING_PHASE_1: begin
-                    if (phase1_counter < PHASE1_WAIT - 1) begin
+                    if (phase1_counter < PHASE1_WAIT) begin
                         phase1_counter <= phase1_counter + 1;
                     end else begin
                         o_byte_out           <= o_byte_out >> 1;
@@ -65,7 +65,7 @@ module uart_rx_engine #(
                     end
                 end
                 READING_PHASE_2: begin
-                    if (baud_counter < CLKS_PER_BIT - 1) begin
+                    if (baud_counter < CLKS_PER_BIT) begin
                         baud_counter <= baud_counter + 1;
                     end else begin
                         if (received_bit_counter < 8) begin

@@ -52,7 +52,6 @@ def send_program():
     try:
         ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=5)
         print(f"Connected to {SERIAL_PORT} @ {BAUD_RATE} baud")
-        time.sleep(2)
 
         ser.write(BEGIN_SIGNAL)
         print("Sent begin signal to the core.")
