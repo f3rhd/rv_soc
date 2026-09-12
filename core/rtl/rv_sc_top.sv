@@ -37,7 +37,6 @@ module rv_sc_top (
     bootloader_if bootloaderi ();
     graphics_if graphicsi ();
     gpio_if gpioi ();
-    logic boot_edge;
     logic [15:0] segment_value;
     logic sys_reset;
     logic sys_reset_done = 0;
