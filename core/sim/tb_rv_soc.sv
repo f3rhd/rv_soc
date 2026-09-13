@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-`include "../rtl/graphics_unit/graphics_interface.svh"
+`include "../rtl/graphics_unit/common/graphics_interface.svh"
 `include "../rtl/bootloader/bootloader_interface.svh"
 `include "../rtl/gpio_interface.svh"
 
@@ -43,7 +43,7 @@ module tb_rv_soc;
     graphics_unit #(
         .GRAPHICS_INSTRUCTION_BUFFER_SIZE(8192 / 8 * 4  /* default 256 * 4 */),
         .SYSTEM_CLK_HZ(100_000_000  /* default 100_000_000 */),
-        .SPI_CLK_HZ(25_000_000  /* default 25_000_000 */)
+        .SPI_CLK_HZ(50_000_000  /* default 25_000_000 */)
     ) graphics_unit (
         .clk        (clk),
         .i_reset    (reset),
@@ -171,18 +171,6 @@ module tb_rv_soc;
                 end
             end
 
-
-            if (graphics_unit.execute_complete) begin
-                $fdisplay(soc_log_file,
-                          "[Time: \%0t] Graphics Instruction : 0x\%h complete",
-                          $time,
-                          graphics_unit.graphics_execute.r_decode.instruction);
-
-                $fdisplay(graphics_instr_complete_file,
-                          "Graphics Instruction : 0x\%h complete",
-                          graphics_unit.graphics_execute.r_decode.instruction);
-
-            end
         end
 `endif
     end
@@ -207,13 +195,11 @@ module tb_rv_soc;
             $finish;
         end
 
-        $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/delay_test_imem.hex",
-            rv_processor.fetch.instructions);
+        $readmemh("C:/Users/me/Xarabaxana/rv_soc/triangle_imem.hex",
+                  rv_processor.fetch.instructions);
 
-        $readmemh(
-            "C:/Users/me/Xarabaxana/rv32ia-basys3-pipeline/program_tests/c/delay_test_dmem.hex",
-            rv_processor.memory.ram);
+        $readmemh("C:/Users/me/Xarabaxana/rv_soc/triangle_dmem.hex",
+                  rv_processor.memory.ram);
 
         reset = 1;
 
@@ -222,8 +208,8 @@ module tb_rv_soc;
         reset = 0;
         @(posedge clk);
         #2;
-        graphics_unit.graphics_execute.graphics_state = graphics_unit.graphics_execute.EXECUTE;
-        graphics_unit.graphics_execute.exec_state = graphics_unit.graphics_execute.EXEC_KIND_DO_NOTHING;
+        graphics_unit.st7735_controller.graphics_state = graphics_unit.st7735_controller.EXECUTE;
+        graphics_unit.st7735_controller.exec_state = graphics_unit.st7735_controller.EXEC_DO_NOTHING;
         rv_processor.fetch.state = rv_processor.fetch.FETCH;
         bootloader_if.static_data_ready = 0;
         bootloader_if.load_done = 1;

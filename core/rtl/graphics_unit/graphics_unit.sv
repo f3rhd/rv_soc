@@ -4,20 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-`include "graphics_interface.svh"
-`include "graphics_decode_output.svh"
+`include "common/graphics_interface.svh"
+`include "common/graphics_decode_output.svh"
 module graphics_unit #(
     parameter unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 256 * 4,
     parameter unsigned SYSTEM_CLK_HZ = 100_000_000,
     parameter unsigned SPI_CLK_HZ = 25_000_000
 ) (
-    input logic clk,
-    input logic i_reset,
-    graphics_if.graphics_unit graphics_if
+    input  logic                     clk,
+    input  logic                     i_reset,
+           graphics_if.graphics_unit graphics_if,
+    output logic                     st7735_sck,
+    output logic                     st7735_sda,
+    output logic                     st7735_res,
+    output logic                     st7735_dc,
+    output logic                     st7735_cs
 );
 
     logic instruction_buffer_advance_head;
-    logic [32:0] instruction_buffer_instruction;
+    logic [31:0] instruction_buffer_instruction;
     logic instruction_buffer_instruction_is_valid;
     logic decode_output_bubble;
     logic execute_complete;
@@ -50,20 +55,20 @@ module graphics_unit #(
         .decode_output      (decode_output)
     );
 
-    graphics_execute #(
+    st7735_controller #(
         .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ /* default 100_000_000 */),
         .SPI_CLK_HZ   (SPI_CLK_HZ /* default 25_000_000 */)
-    ) graphics_execute (
+    ) st7735_controller (
         .clk               (clk),
         .i_boot            (graphics_if.graphics_init),
         .i_reset           (local_gfx_reset),
         .decode_result     (decode_output),
         .o_execute_complete(execute_complete),
-        .o_sck             (graphics_if.display_sck),
-        .o_sda             (graphics_if.display_sda),
-        .o_dc              (graphics_if.display_dc),
-        .o_cs              (graphics_if.display_cs),
-        .o_res             (graphics_if.display_res),
+        .o_sck             (st7735_sck),
+        .o_sda             (st7735_sda),
+        .o_dc              (st7735_dc),
+        .o_cs              (st7735_cs),
+        .o_res             (st7735_res),
         .o_init_done       (graphics_if.graphics_init_done)
     );
     assign instruction_buffer_advance_head = execute_complete;

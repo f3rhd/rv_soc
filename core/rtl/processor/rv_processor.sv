@@ -9,7 +9,7 @@
 `include "register.svh"
 `include "../gpio_interface.svh"
 `include "../bootloader/bootloader_interface.svh"
-`include "../graphics_unit/graphics_interface.svh"
+`include "../graphics_unit/common/graphics_interface.svh"
 
 module rv_processor #(
     parameter HISTORY_SIZE = 10,

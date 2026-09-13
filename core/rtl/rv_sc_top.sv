@@ -5,7 +5,7 @@
  */
 
 `include "bootloader/bootloader_interface.svh"
-`include "graphics_unit/graphics_interface.svh"
+`include "graphics_unit/common/graphics_interface.svh"
 `include "gpio_interface.svh"
 module rv_sc_top (
     input logic clk,
@@ -34,6 +34,9 @@ module rv_sc_top (
     localparam unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 8192 / 4 * 4;
     localparam unsigned GPIO_PIN_AMOUNT = 27;
 
+    assign bootloaderi.rx = rx;
+    assign tx             = bootloaderi.tx;
+
     bootloader_if bootloaderi ();
     graphics_if graphicsi ();
     gpio_if gpioi ();
@@ -53,13 +56,6 @@ module rv_sc_top (
         end
     end
 
-    assign sck            = graphicsi.display_sck;
-    assign sda            = graphicsi.display_sda;
-    assign res            = graphicsi.display_res;
-    assign dc             = graphicsi.display_dc;
-    assign cs             = graphicsi.display_cs;
-    assign bootloaderi.rx = rx;
-    assign tx             = bootloaderi.tx;
 
     bootloader #(
         .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
@@ -90,7 +86,12 @@ module rv_sc_top (
     ) graphics_unit (
         .clk        (clk),
         .i_reset    (sys_reset),
-        .graphics_if(graphicsi)
+        .graphics_if(graphicsi),
+        .st7735_sck (sck),
+        .st7735_sda (sda),
+        .st7735_res (res),
+        .st7735_dc  (dc),
+        .st7735_cs  (cs)
     );
     seven_seg_display seven_seg_display (
         .clk(clk),

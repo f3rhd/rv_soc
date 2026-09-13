@@ -9,10 +9,10 @@ module graphics_instruction_buffer #(
 ) (
     input logic clk,
     input logic i_reset,
-    input logic [32:0] i_instruction,
+    input logic [31:0] i_instruction,
     input logic i_instruction_write,
     input logic i_advance_head,
-    output logic [32:0] o_instruction,
+    output logic [31:0] o_instruction,
     output logic o_instruction_is_valid,
     output logic o_buffer_is_full
 );
@@ -24,12 +24,12 @@ module graphics_instruction_buffer #(
 `elsif QUARTUS
     (* ramstyle = "block" *)
 `endif
-    logic [32:0] instruction_buffer[0 : INSTRUCTION_BUFFER_BOTTOM_INDEX];
+    logic [31:0] instruction_buffer[0 : INSTRUCTION_BUFFER_BOTTOM_INDEX];
 
     logic [$clog2(INSTRUCTION_BUFFER_BOTTOM_INDEX + 1) - 1:0] head;
     logic [$clog2(INSTRUCTION_BUFFER_BOTTOM_INDEX + 1) - 1:0] tail;
 
-    logic [32:0] read_entry;
+    logic [31:0] read_entry;
     logic [$clog2(INSTRUCTION_BUFFER_BOTTOM_INDEX):0] fill_count;
 
     assign o_instruction = read_entry;

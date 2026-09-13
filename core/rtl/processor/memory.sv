@@ -5,7 +5,7 @@
  */
 
 `include "execution_interface.svh"
-`include "../graphics_unit/graphics_interface.svh"
+`include "../graphics_unit/common/graphics_interface.svh"
 `include "register.svh"
 `include "../gpio_interface.svh"
 `include "../bootloader/bootloader_interface.svh"
@@ -26,8 +26,7 @@ module memory #(
     output logic [15:0] o_reg16_f4,
     output logic [15:0] o_reg16_f8
 );
-    localparam logic [31:0] GRAPHICS_PIXEL_ADDRESS = 32'hF0000001;
-    localparam logic [31:0] GRAPHICS_COMMAND_ADDRESS = 32'hF0000002;
+    localparam logic [31:0] GRAPHICS_ADDR = 32'hF0000001;
     localparam logic [31:0] REG16_1_ADDR = 32'hF0000004;
     localparam logic [31:0] REG16_2_ADDR = 32'hF0000008;
     localparam logic [31:0] PIN_MODE_ADDR = 32'hF0000010;
@@ -136,14 +135,7 @@ module memory #(
                 if (ei.mem_write) begin
                     if (is_mmio) begin
                         if (ei.exec_result[0]) begin
-                            graphicsi.graphics_instruction <= {
-                                1'b0, ei.memory_write_data
-                            };
-                            graphicsi.graphics_instruction_write <= 1;
-                        end else if (ei.exec_result[1]) begin
-                            graphicsi.graphics_instruction <= {
-                                1'b1, ei.memory_write_data
-                            };
+                            graphicsi.graphics_instruction <= ei.memory_write_data;
                             graphicsi.graphics_instruction_write <= 1;
                         end else if (ei.exec_result[2]) begin
                             o_reg16_f8 <= ei.memory_write_data[15:0];
