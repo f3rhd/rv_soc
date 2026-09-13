@@ -207,10 +207,17 @@ module rasterizer #(
                             end
                             S_FILL_SPAN_PREP: begin
                                 rasterizer_state <= S_TRIANGLE_FILL_SPAN;
-                                span_data.xa <= long_edge.p0.x;
-                                span_data.xb <= short_edge.p0.x;
+                                span_data.xa     <= long_edge.p0.x;
+
+                                if (!first_loop_done && triangle_data.points[0].y == triangle_data.points[1].y) begin
+                                    span_data.xb <= triangle_data.points[1].x;
+                                end else if (first_loop_done && triangle_data.points[1].y == triangle_data.points[2].y) begin
+                                    span_data.xb <= triangle_data.points[2].x;
+                                end else begin
+                                    span_data.xb <= short_edge.p0.x;
+                                end
                                 span_data.y <= iterator;
-                                fill_state <= S_ADVANCE_TO_NEXT_ROW_LONG_EDGE;
+                                fill_state  <= S_ADVANCE_TO_NEXT_ROW_LONG_EDGE;
                             end
                             S_ADVANCE_TO_NEXT_ROW_LONG_EDGE: begin
                                 fill_state <= S_ADVANCE_TO_NEXT_ROW_SHORT_EDGE;
