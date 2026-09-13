@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 f3rhd
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 `ifndef RASTERIZER_INTERFACE_SVH
 `define RASTERIZER_INTERFACE_SVH
 typedef struct packed {
@@ -45,7 +50,8 @@ interface rasterizer_if;
         input pixel_data_ready,
         input rasterizer_done,
         output triangle_data,
-        output pixel_draw_complete 
+        output pixel_draw_complete,
+        output rasterizer_begin
     );
 endinterface
 `endif

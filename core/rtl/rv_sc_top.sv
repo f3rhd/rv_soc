@@ -84,14 +84,15 @@ module rv_sc_top (
         .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
         .SPI_CLK_HZ(GRAPHICS_SPI_CLK_HZ  /* default 25_000_000 */)
     ) graphics_unit (
-        .clk        (clk),
-        .i_reset    (sys_reset),
-        .graphics_if(graphicsi),
-        .st7735_sck (sck),
-        .st7735_sda (sda),
-        .st7735_res (res),
-        .st7735_dc  (dc),
-        .st7735_cs  (cs)
+        .clk         (clk),
+        .i_reset     (sys_reset),
+        .i_soft_reset(bootloaderi.core_reset),
+        .graphics_if (graphicsi),
+        .st7735_sck  (sck),
+        .st7735_sda  (sda),
+        .st7735_res  (res),
+        .st7735_dc   (dc),
+        .st7735_cs   (cs)
     );
     seven_seg_display seven_seg_display (
         .clk(clk),

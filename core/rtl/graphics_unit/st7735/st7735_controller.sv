@@ -13,7 +13,9 @@ module st7735_controller #(
     input logic clk,
     input logic i_boot,
     input logic i_reset,
+    input logic i_soft_reset,
     input graphics_decode_output_t decode_result,
+    rasterizer_if.controller rasterizeri,
     output logic o_execute_complete,
     output logic o_sck,
     output logic o_sda,
@@ -100,16 +102,6 @@ module st7735_controller #(
         .o_sck      (o_sck),
         .o_sda      (o_sda),
         .o_tx_busy  (tx_busy)
-    );
-    rasterizer_if rasterizeri ();
-
-    rasterizer #(
-        .DISPLAY_WIDTH (DISPLAY_WIDTH  /* default 128 */),
-        .DISPLAY_HEIGHT(DISPLAY_HEIGHT  /* default 16 */)
-    ) rasterizer (
-        .clk        (clk),
-        .reset      (i_reset),
-        .rasterizeri(rasterizeri)
     );
 
     always_ff @(posedge clk) begin
@@ -207,6 +199,9 @@ module st7735_controller #(
             graphics_state    <= IDLE;
             boot_state        <= UNDEFINED;
             sent_command      <= 0;
+        end else if (i_soft_reset) begin
+            graphics_state <= EXECUTE;
+            exec_state     <= EXEC_DO_NOTHING;
         end else begin
             unique case (graphics_state)
                 IDLE: begin
