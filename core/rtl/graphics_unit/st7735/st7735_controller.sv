@@ -5,6 +5,7 @@
  */
 
 `include "../common/graphics_decode_output.svh"
+`include "../common/rasterizer_interface.svh"
 module st7735_controller #(
     parameter unsigned SYSTEM_CLK_HZ = 100_000_000,
     parameter unsigned SPI_CLK_HZ = 25_000_000
@@ -25,6 +26,8 @@ module st7735_controller #(
     localparam unsigned DATA_WIDTH = 8;
     localparam unsigned TICKS_PER_MS = SYSTEM_CLK_HZ / 1000;
     localparam unsigned TICK_BITS = $clog2(TICKS_PER_MS);
+    localparam signed [13:0] DISPLAY_WIDTH = 128;
+    localparam signed [13:0] DISPLAY_HEIGHT = 160;
 
 
     logic [DATA_WIDTH-1:0] tx_data;
@@ -33,7 +36,6 @@ module st7735_controller #(
     logic [2:0] sent_byte_counter;
     logic sent_command;
     logic is_caset;
-    logic pixel_draw_complete;
 
     logic dly_start, dly_done;
     logic [          7:0] dly_ms;
@@ -58,12 +60,9 @@ module st7735_controller #(
     } graphics_state_e;
 
     typedef enum logic [2:0] {
-        EXEC_DRAW_LINE_PREP,
-        EXEC_DRAW_LINE,
-        EXEC_DRAW_TRIANGLE_PREP,
         EXEC_PIXEL_DRAW_COORD,
         EXEC_PIXEL_DRAW_RAMRW,
-        EXEC_DRAW_TRIANGLE,
+        EXEC_WAIT_RASTERIZER,
         EXEC_DO_NOTHING,
         EXEC_WAIT
     } execution_state_e;
@@ -84,47 +83,10 @@ module st7735_controller #(
         BOOT_BOOT_DONE
     } boot_state_e;
 
-    typedef struct packed {
-        logic [11:0] x;
-        logic [11:0] y;
-    } point_data_t;
-
-    typedef struct packed {
-        logic hollow;
-        logic [15:0] color;
-        point_data_t [0:2] points;
-    } triangle_data_t;
-
-    typedef struct packed {
-        logic [11:0] dx;
-        logic [11:0] sx;
-        logic [11:0] dy;
-        logic [11:0] sy;
-        logic [15:0] err;
-        point_data_t p0;
-        point_data_t p1;
-    } line_data_t;
-
     graphics_state_e graphics_state;
     boot_state_e boot_state;
     execution_state_e exec_state = EXEC_DO_NOTHING;
     execution_state_e send_byte_return = EXEC_DO_NOTHING;
-    triangle_data_t triangle_data;
-    line_data_t line_data;
-    point_data_t pixel_data;
-
-
-    wire [11:0] w_dx = (line_data.p0.x < line_data.p1.x) ? line_data.p1.x - line_data.p0.x : line_data.p0.x - line_data.p1.x;
-    wire [11:0] w_dy = (line_data.p0.y < line_data.p1.y) ? line_data.p1.y - line_data.p0.y : line_data.p0.y - line_data.p1.y;
-    wire [11:0] w_sx = (line_data.p0.x < line_data.p1.x) ? 1 : {12{1'b1}};
-    wire [11:0] w_sy = (line_data.p0.y < line_data.p1.y) ? 1 : {12{1'b1}};
-    wire [15:0] w_err_prep = w_dx + (~w_dy + 1'b1);
-    wire [15:0] w_err2 = line_data.err << 1;
-    wire [1:0] line_data_update_case = {
-        $signed(w_err2) >= $signed(line_data.dy),
-        $signed(w_err2) <= $signed(line_data.dx)
-    };
-    logic [1:0] triangle_prep_phase_counter;
 
     spi_tx_engine #(
         .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ),
@@ -138,6 +100,16 @@ module st7735_controller #(
         .o_sck      (o_sck),
         .o_sda      (o_sda),
         .o_tx_busy  (tx_busy)
+    );
+    rasterizer_if rasterizeri ();
+
+    rasterizer #(
+        .DISPLAY_WIDTH (DISPLAY_WIDTH  /* default 128 */),
+        .DISPLAY_HEIGHT(DISPLAY_HEIGHT  /* default 16 */)
+    ) rasterizer (
+        .clk        (clk),
+        .reset      (i_reset),
+        .rasterizeri(rasterizeri)
     );
 
     always_ff @(posedge clk) begin
@@ -216,10 +188,11 @@ module st7735_controller #(
     end
 
     always_ff @(posedge clk) begin
-        tx_begin            <= 0;
-        dly_start           <= 0;
-        pixel_draw_complete <= 0;
-        o_execute_complete  <= 0;
+        tx_begin                        <= 0;
+        dly_start                       <= 0;
+        rasterizeri.pixel_draw_complete <= 0;
+        rasterizeri.rasterizer_begin    <= 0;
+        o_execute_complete              <= 0;
 
         if (i_reset) begin
             tx_data           <= 0;
@@ -358,148 +331,51 @@ module st7735_controller #(
                     endcase
                 end
                 EXECUTE: begin
-                    case (exec_state)
-                        default: begin
-                        end
+                    unique case (exec_state)
                         EXEC_DO_NOTHING: begin
-                            o_cs                        <= 1;
-                            sent_byte_counter           <= 0;
-                            triangle_prep_phase_counter <= 0;
-                            sent_command                <= 0;
-                            sent_byte_counter           <= 0;
-                            pixel_draw_complete         <= 0;
-                            is_caset                    <= 0;
+                            o_cs                            <= 1;
+                            sent_byte_counter               <= 0;
+                            sent_command                    <= 0;
+                            sent_byte_counter               <= 0;
+                            rasterizeri.pixel_draw_complete <= 0;
+                            is_caset                        <= 0;
                             if (o_execute_complete) begin
                                 // do nothing for 1 cycle
                             end else if (decode_result.valid) begin
                                 unique case (decode_result.instr_id)
                                     P0: begin
-                                        triangle_data.points[0].x <= decode_result.instr.point.x;
-                                        triangle_data.points[0].y <= decode_result.instr.point.y;
+                                        rasterizeri.triangle_data.points[0].x <= decode_result.instr.point.x;
+                                        rasterizeri.triangle_data.points[0].y <= decode_result.instr.point.y;
                                         o_execute_complete <= 1;
                                     end
                                     P1: begin
-                                        triangle_data.points[1].x <= decode_result.instr.point.x;
-                                        triangle_data.points[1].y <= decode_result.instr.point.y;
+                                        rasterizeri.triangle_data.points[1].x <= decode_result.instr.point.x;
+                                        rasterizeri.triangle_data.points[1].y <= decode_result.instr.point.y;
                                         o_execute_complete <= 1;
                                     end
                                     P2: begin
-                                        triangle_data.points[2].x <= decode_result.instr.point.x;
-                                        triangle_data.points[2].y <= decode_result.instr.point.y;
+                                        rasterizeri.triangle_data.points[2].x <= decode_result.instr.point.x;
+                                        rasterizeri.triangle_data.points[2].y <= decode_result.instr.point.y;
                                         o_execute_complete <= 1;
                                     end
                                     CLR: begin
-                                        triangle_data.color <= decode_result.instr.color[15:0];
-                                        triangle_data.hollow <= decode_result.hollow;
-                                        exec_state <= EXEC_DRAW_TRIANGLE_PREP;
+                                        rasterizeri.triangle_data.color <= decode_result.instr.color[15:0];
+                                        rasterizeri.triangle_data.hollow <= decode_result.hollow;
+                                        rasterizeri.rasterizer_begin <= 1;
+                                        exec_state <= EXEC_WAIT_RASTERIZER;
                                         o_cs <= 0;
-                                        triangle_prep_phase_counter <= 0;
                                     end
                                 endcase
                             end
 
                         end
-                        EXEC_DRAW_TRIANGLE_PREP: begin
-                            triangle_prep_phase_counter <= triangle_prep_phase_counter + 1;
-                            if (triangle_prep_phase_counter == 2) begin
-                                exec_state <= EXEC_DRAW_TRIANGLE;
-                                triangle_prep_phase_counter <= 0;
-                            end
-                            unique case (triangle_prep_phase_counter)
-                                'd0: begin
-                                    if (triangle_data.points[0].y > triangle_data.points[1].y) begin
-                                        triangle_data.points[0].x <= triangle_data.points[1].x;
-                                        triangle_data.points[0].y <= triangle_data.points[1].y;
-                                        triangle_data.points[1].x <= triangle_data.points[0].x;
-                                        triangle_data.points[1].y <= triangle_data.points[0].y;
-                                    end
-                                end
-                                'd1: begin
-                                    if (triangle_data.points[0].y > triangle_data.points[2].y) begin
-                                        triangle_data.points[0].x <= triangle_data.points[2].x;
-                                        triangle_data.points[0].y <= triangle_data.points[2].y;
-                                        triangle_data.points[2].x <= triangle_data.points[0].x;
-                                        triangle_data.points[2].y <= triangle_data.points[0].y;
-                                    end
-                                end
-                                'd2: begin
-                                    if (triangle_data.points[1].y > triangle_data.points[2].y) begin
-                                        triangle_data.points[1].x <= triangle_data.points[2].x;
-                                        triangle_data.points[1].y <= triangle_data.points[2].y;
-                                        triangle_data.points[2].x <= triangle_data.points[1].x;
-                                        triangle_data.points[2].y <= triangle_data.points[1].y;
-                                    end
-                                end
-                            endcase
-                        end
-                        EXEC_DRAW_TRIANGLE: begin
-                            if (triangle_data.hollow) begin
-                                // we are going to use triangle_prep_phase_counter here as well. 
-                                // It's going to be used to count the number of lines drawn in hollow call
-                                triangle_prep_phase_counter <= triangle_prep_phase_counter + 1;
-                                exec_state <= EXEC_DRAW_LINE_PREP;
-                                if (triangle_prep_phase_counter == 3) begin
-                                    exec_state         <= EXEC_DO_NOTHING;
-                                    o_execute_complete <= 1;
-                                end
-                                unique case (triangle_prep_phase_counter)
-                                    'd0: begin
-                                        line_data.p0.x <= triangle_data.points[0].x;
-                                        line_data.p0.y <= triangle_data.points[0].y;
-                                        line_data.p1.x <= triangle_data.points[1].x;
-                                        line_data.p1.y <= triangle_data.points[1].y;
-                                    end
-                                    'd1: begin
-                                        line_data.p0.x <= triangle_data.points[0].x;
-                                        line_data.p0.y <= triangle_data.points[0].y;
-                                        line_data.p1.x <= triangle_data.points[2].x;
-                                        line_data.p1.y <= triangle_data.points[2].y;
-                                    end
-                                    'd2: begin
-                                        line_data.p0.x <= triangle_data.points[1].x;
-                                        line_data.p0.y <= triangle_data.points[1].y;
-                                        line_data.p1.x <= triangle_data.points[2].x;
-                                        line_data.p1.y <= triangle_data.points[2].y;
-                                    end
-                                endcase
+                        EXEC_WAIT_RASTERIZER: begin
+                            unique if (rasterizeri.pixel_data_ready) begin
+                                exec_state <= EXEC_PIXEL_DRAW_COORD;
+                            end else if (rasterizeri.rasterizer_done) begin
+                                exec_state         <= EXEC_DO_NOTHING;
+                                o_execute_complete <= 1;
                             end else begin
-                            end
-                        end
-                        EXEC_DRAW_LINE_PREP: begin
-                            exec_state    <= EXEC_DRAW_LINE;
-                            line_data.dx  <= w_dx;
-                            line_data.dy  <= ~w_dy + 1'b1;
-                            line_data.sx  <= w_sx;
-                            line_data.sy  <= w_sy;
-                            line_data.err <= w_err_prep;
-                        end
-                        EXEC_DRAW_LINE: begin
-                            if (!pixel_draw_complete) begin
-                                pixel_data.x <= line_data.p0.x;
-                                pixel_data.y <= line_data.p0.y;
-                                exec_state   <= EXEC_PIXEL_DRAW_COORD;
-                            end else begin
-                                if (line_data.p0.x == line_data.p1.x && line_data.p0.y == line_data.p1.y) begin
-                                    exec_state <= EXEC_DRAW_TRIANGLE;
-                                end else begin
-                                    unique case (line_data_update_case)
-                                        2'b00: begin
-                                        end
-                                        2'b01: begin
-                                            line_data.err <= line_data.err + {{4{line_data.dx[11]}},line_data.dx};
-                                            line_data.p0.y <= line_data.p0.y + line_data.sy;
-                                        end
-                                        2'b10: begin
-                                            line_data.p0.x <= line_data.p0.x + line_data.sx;
-                                            line_data.err <= line_data.err + {{4{line_data.dy[11]}},line_data.dy};
-                                        end
-                                        2'b11: begin
-                                            line_data.err <= line_data.err + {{4{line_data.dy[11]}},line_data.dy} + {{4{line_data.dx[11]}},line_data.dx};
-                                            line_data.p0.y <= line_data.p0.y + line_data.sy;
-                                            line_data.p0.x <= line_data.p0.x + line_data.sx;
-                                        end
-                                    endcase
-                                end
                             end
                         end
                         EXEC_PIXEL_DRAW_COORD: begin
@@ -530,12 +406,11 @@ module st7735_controller #(
                                     if (sent_byte_counter == 1 || sent_byte_counter == 3) begin
                                         tx_data <= 0;
                                     end else begin
-                                        tx_data <= (is_caset) ? pixel_data.x[7:0] : pixel_data.y[7:0];
+                                        tx_data <= (is_caset) ? rasterizeri.pixel_data.x[7:0] : rasterizeri.pixel_data.y[7:0];
                                     end
                                 end
                             end
                         end
-
                         EXEC_PIXEL_DRAW_RAMRW: begin
                             tx_begin         <= 1;
                             exec_state       <= EXEC_WAIT;
@@ -547,16 +422,16 @@ module st7735_controller #(
                                     o_dc    <= 0;
                                 end
                                 'd1: begin
-                                    tx_data <= triangle_data.color[15:8];
+                                    tx_data <= rasterizeri.triangle_data.color[15:8];
                                 end
                                 'd2: begin
-                                    tx_data <= triangle_data.color[7:0];
+                                    tx_data <= rasterizeri.triangle_data.color[7:0];
                                 end
                                 'd3: begin
-                                    tx_begin            <= 0;
-                                    sent_byte_counter   <= 0;
-                                    exec_state          <= EXEC_DRAW_LINE;
-                                    pixel_draw_complete <= 1;
+                                    tx_begin <= 0;
+                                    sent_byte_counter <= 0;
+                                    exec_state <= EXEC_WAIT_RASTERIZER;
+                                    rasterizeri.pixel_draw_complete <= 1;
                                 end
                             endcase
                         end

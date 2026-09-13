@@ -15,9 +15,9 @@ module graphics_decode (
     graphics_decode_output_t next_decode_output;
     always_comb begin
         next_decode_output.valid    = i_instruction_valid;
-        next_decode_output.instr_id = instr_id_e'(i_instruction[27:24]);
-        next_decode_output.instr    = i_instruction[23:0];
-        next_decode_output.hollow   = i_instruction[28];
+        next_decode_output.instr_id = instr_id_e'(i_instruction[30:29]);
+        next_decode_output.instr    = i_instruction[27:0];
+        next_decode_output.hollow   = i_instruction[31];
     end
     always_ff @(posedge clk) begin
         if (i_output_bubble) begin
