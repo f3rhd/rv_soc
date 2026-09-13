@@ -50,8 +50,9 @@ module graphics_instruction_buffer #(
     end
     always_ff @(posedge clk) begin
         if (i_reset) begin
-            head <= 0;
-            tail <= 0;
+            head                   <= 0;
+            tail                   <= 0;
+            o_instruction_is_valid <= 0;
         end else begin
             o_instruction_is_valid <= (fill_count != 0);
             read_entry             <= instruction_buffer[head];

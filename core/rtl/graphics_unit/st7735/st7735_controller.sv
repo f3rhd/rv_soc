@@ -28,9 +28,6 @@ module st7735_controller #(
     localparam unsigned DATA_WIDTH = 8;
     localparam unsigned TICKS_PER_MS = SYSTEM_CLK_HZ / 1000;
     localparam unsigned TICK_BITS = $clog2(TICKS_PER_MS);
-    localparam signed [13:0] DISPLAY_WIDTH = 128;
-    localparam signed [13:0] DISPLAY_HEIGHT = 160;
-
 
     logic [DATA_WIDTH-1:0] tx_data;
     logic tx_busy;
@@ -96,7 +93,7 @@ module st7735_controller #(
         .DATA_WIDTH   (DATA_WIDTH)
     ) spi_tx_engine (
         .clk        (clk),
-        .i_reset    (i_reset),
+        .i_reset    (i_reset | i_soft_reset),
         .i_data     (tx_data),
         .i_send_data(tx_begin),
         .o_sck      (o_sck),
@@ -187,21 +184,27 @@ module st7735_controller #(
         o_execute_complete              <= 0;
 
         if (i_reset) begin
-            tx_data           <= 0;
-            o_cs              <= 1;
-            o_res             <= 0;
-            o_dc              <= 0;
-            o_init_done       <= 0;
-            is_caset          <= 0;
-            sent_byte_counter <= 0;
-            exec_state        <= EXEC_DO_NOTHING;
-            send_byte_return  <= EXEC_DO_NOTHING;
-            graphics_state    <= IDLE;
-            boot_state        <= UNDEFINED;
-            sent_command      <= 0;
+            tx_data                   <= 0;
+            is_caset                  <= 0;
+            sent_byte_counter         <= 0;
+            sent_command              <= 0;
+            exec_state                <= EXEC_DO_NOTHING;
+            send_byte_return          <= EXEC_DO_NOTHING;
+            rasterizeri.triangle_data <= '0;
+            o_cs                      <= 1;
+            o_res                     <= 0;
+            o_dc                      <= 0;
+            o_init_done               <= 0;
+            graphics_state            <= IDLE;
+            boot_state                <= UNDEFINED;
         end else if (i_soft_reset) begin
-            graphics_state <= EXECUTE;
-            exec_state     <= EXEC_DO_NOTHING;
+            tx_data                   <= 0;
+            is_caset                  <= 0;
+            sent_byte_counter         <= 0;
+            sent_command              <= 0;
+            exec_state                <= EXEC_DO_NOTHING;
+            send_byte_return          <= EXEC_DO_NOTHING;
+            rasterizeri.triangle_data <= '0;
         end else begin
             unique case (graphics_state)
                 IDLE: begin

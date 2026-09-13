@@ -65,6 +65,7 @@ module graphics_unit #(
         .reset      (i_soft_reset | i_reset),
         .rasterizeri(rasterizer_if)
     );
+
     st7735_controller #(
         .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ /* default 100_000_000 */),
         .SPI_CLK_HZ   (SPI_CLK_HZ /* default 25_000_000 */)
