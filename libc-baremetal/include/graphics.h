@@ -3,8 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#ifndef ST7735_H
-#define ST7735_H
+#ifndef GRAPIHCS_H
+#define GRAPIHCS_H
 /*
                                                                                                                  
   ▄▄▄▄▄     ▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄  ▄▄▄▄▄  ▄▄▄▄▄▄▄                                                             
@@ -72,15 +72,15 @@
                                                                                                 
                                                                                                 
 */
-void st7735_draw_pixel(unsigned color, int x, int y);
-void st7735_draw_rectangle(
+void rv_soc_draw_pixel(unsigned color, int x, int y);
+void rv_soc_draw_rectangle(
     unsigned color,
     int x_start,
     int y_start,
     int width,
     int height
 );
-void st7735_draw_triangle(
+void rv_soc_draw_triangle(
     unsigned color,
     int hollow,
     int p1_x,
@@ -90,14 +90,14 @@ void st7735_draw_triangle(
     int p3_x,
     int p3_y
 );
-void st7735_draw_line(
+void rv_soc_draw_line(
     unsigned color,
     int x_start,
     int y_start,
     int x_end,
     int y_end
 );
-void st7735_draw_circle(
+void rv_soc_draw_circle(
     unsigned color,
     int center_x,
     int center_y,
