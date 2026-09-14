@@ -186,15 +186,7 @@ module st7735_controller #(
         rasterizeri.rasterizer_begin    <= 0;
         o_execute_complete              <= 0;
 
-        if (i_soft_reset) begin
-            tx_data                   <= 0;
-            is_caset                  <= 0;
-            sent_byte_counter         <= 0;
-            sent_command              <= 0;
-            exec_state                <= EXEC_DO_NOTHING;
-            send_byte_return          <= EXEC_DO_NOTHING;
-            rasterizeri.triangle_data <= '0;
-        end else if (i_reset) begin
+        if (i_reset) begin
             tx_data                   <= 0;
             is_caset                  <= 0;
             sent_byte_counter         <= 0;
@@ -208,6 +200,14 @@ module st7735_controller #(
             o_init_done               <= 0;
             graphics_state            <= IDLE;
             boot_state                <= UNDEFINED;
+        end else if (i_soft_reset) begin
+            tx_data                   <= 0;
+            is_caset                  <= 0;
+            sent_byte_counter         <= 0;
+            sent_command              <= 0;
+            exec_state                <= EXEC_DO_NOTHING;
+            send_byte_return          <= EXEC_DO_NOTHING;
+            rasterizeri.triangle_data <= '0;
         end else begin
             unique case (graphics_state)
                 IDLE: begin
