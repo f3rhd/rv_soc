@@ -173,6 +173,7 @@ module rasterizer #(
     always_ff @(posedge clk) begin
         rasterizeri.rasterizer_done  <= 0;
         rasterizeri.pixel_data_ready <= 0;
+        rasterizeri.span_data_ready  <= 0;
         if (reset) begin
             rasterizer_state <= S_IDLE;
         end else begin
@@ -336,19 +337,14 @@ module rasterizer #(
                                 triangle_span_phase_counter <= triangle_span_phase_counter + 1;
                             end
                             'd2: begin
-                                rasterizeri.pixel_data.x     <= span_data.xa;
-                                rasterizeri.pixel_data.y     <= span_data.y;
-                                rasterizeri.pixel_data_ready <= 1;
-                                triangle_span_phase_counter  <= 3;
+                                rasterizeri.span_data       <= span_data;
+                                rasterizeri.span_data_ready <= 1;
+                                triangle_span_phase_counter <= 3;
                             end
                             'd3: begin
-                                if(span_data.xa == span_data.xb && rasterizeri.pixel_draw_complete) begin
-                                    triangle_span_phase_counter <= 0;
+                                if (rasterizeri.span_draw_complete) begin
                                     rasterizer_state <= S_TRIANGLE_MAIN;
-                                end
-                                else if (rasterizeri.pixel_draw_complete) begin
-                                    span_data.xa <= span_data.xa + 1;
-                                    triangle_span_phase_counter <= 2;
+                                    triangle_span_phase_counter <= 0;
                                 end
                             end
                         endcase

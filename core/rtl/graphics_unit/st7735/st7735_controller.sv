@@ -46,7 +46,9 @@ module st7735_controller #(
     localparam unsigned ROM_DEPTH = 38;
     logic [9:0] init_rom[0:ROM_DEPTH-1];
     logic [5:0] rom_ptr;
+    logic draw_span;
 
+    logic [1:0] ramrw_step;
     // we are going to fill screen with blue before handing it to execute
     localparam logic [15:0] FILL_COLOR = 16'hF800;  // Blue in BGR565
     localparam unsigned FILL_PIXELS = 20480;  // 128 * 160
@@ -180,6 +182,7 @@ module st7735_controller #(
         tx_begin                        <= 0;
         dly_start                       <= 0;
         rasterizeri.pixel_draw_complete <= 0;
+        rasterizeri.span_draw_complete  <= 0;
         rasterizeri.rasterizer_begin    <= 0;
         o_execute_complete              <= 0;
 
@@ -211,6 +214,7 @@ module st7735_controller #(
                     tx_data           <= 0;
                     o_cs              <= 1;
                     sent_byte_counter <= 0;
+                    ramrw_step        <= 0;
                     exec_state        <= EXEC_DO_NOTHING;
                     boot_state        <= UNDEFINED;
                     sent_command      <= 0;
@@ -372,8 +376,9 @@ module st7735_controller #(
 
                         end
                         EXEC_WAIT_RASTERIZER: begin
-                            if (rasterizeri.pixel_data_ready) begin
+                            if (rasterizeri.pixel_data_ready || rasterizeri.span_data_ready) begin
                                 exec_state <= EXEC_PIXEL_DRAW_COORD;
+                                draw_span  <= rasterizeri.span_data_ready;
                             end
                         end
                         EXEC_PIXEL_DRAW_COORD: begin
@@ -404,32 +409,63 @@ module st7735_controller #(
                                     if (sent_byte_counter == 1 || sent_byte_counter == 3) begin
                                         tx_data <= 0;
                                     end else begin
-                                        tx_data <= (is_caset) ? rasterizeri.pixel_data.x[7:0] : rasterizeri.pixel_data.y[7:0];
+                                        if (draw_span) begin
+                                            if (sent_byte_counter == 2) begin
+                                                tx_data <= (is_caset) ? rasterizeri.span_data.xa[7:0] : rasterizeri.span_data.y[7:0];
+                                            end else
+                                                tx_data <= (is_caset) ? rasterizeri.span_data.xb[7:0] : rasterizeri.span_data.y[7:0];
+                                        end else begin
+                                            tx_data <= (is_caset) ? rasterizeri.pixel_data.x[7:0] : rasterizeri.pixel_data.y[7:0];
+                                        end
                                     end
                                 end
                             end
                         end
                         EXEC_PIXEL_DRAW_RAMRW: begin
-                            tx_begin         <= 1;
-                            exec_state       <= EXEC_WAIT;
                             send_byte_return <= EXEC_PIXEL_DRAW_RAMRW;
-                            o_dc             <= 1;
-                            unique case (sent_byte_counter)
+                            unique case (ramrw_step)
                                 'd0: begin
+                                    tx_begin <= 1;
                                     tx_data <= 8'h2c;
-                                    o_dc    <= 0;
+                                    exec_state <= EXEC_WAIT;
+                                    o_dc <= 0;
+                                    ramrw_step <= 1;
+                                    fill_pix_cnt[14 +: 10] <= {10{rasterizeri.span_data.xa[13]}};
+                                    fill_pix_cnt[13:0] <= rasterizeri.span_data.xa;
                                 end
                                 'd1: begin
+                                    tx_begin <= 1;
                                     tx_data <= rasterizeri.triangle_data.color[15:8];
+                                    exec_state <= EXEC_WAIT;
+                                    o_dc <= 1;
+                                    ramrw_step <= 2;
                                 end
                                 'd2: begin
+                                    tx_begin <= 1;
                                     tx_data <= rasterizeri.triangle_data.color[7:0];
+                                    exec_state <= EXEC_WAIT;
+                                    o_dc <= 1;
+                                    ramrw_step <= 3;
                                 end
                                 'd3: begin
-                                    tx_begin <= 0;
-                                    sent_byte_counter <= 0;
-                                    exec_state <= EXEC_WAIT_RASTERIZER;
-                                    rasterizeri.pixel_draw_complete <= 1;
+                                    if (draw_span) begin
+                                        if(fill_pix_cnt[13:0] == rasterizeri.span_data.xb) begin
+                                            tx_begin <= 0;
+                                            sent_byte_counter <= 0;
+                                            exec_state <= EXEC_WAIT_RASTERIZER;
+                                            rasterizeri.span_draw_complete <= 1;
+                                            ramrw_step <= 0;
+                                        end else begin
+                                            ramrw_step <= 1;
+                                        end
+                                        fill_pix_cnt <= fill_pix_cnt + 1;
+                                    end else begin
+                                        tx_begin <= 0;
+                                        sent_byte_counter <= 0;
+                                        ramrw_step <= 0;
+                                        exec_state <= EXEC_WAIT_RASTERIZER;
+                                        rasterizeri.pixel_draw_complete <= 1;
+                                    end
                                 end
                             endcase
                         end

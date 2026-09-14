@@ -33,25 +33,34 @@ typedef struct packed {
 interface rasterizer_if;
     triangle_data_t triangle_data;
     point_data_t pixel_data;
+    fill_span_data_t span_data;
     logic rasterizer_begin;
+    logic span_draw_complete;
     logic rasterizer_done;
     logic pixel_data_ready;
+    logic span_data_ready;
     logic pixel_draw_complete;
     modport rasterizer (
         input triangle_data,
         input rasterizer_begin,
+        input span_draw_complete,
         input pixel_draw_complete,
         output pixel_data,
         output rasterizer_done,
-        output pixel_data_ready
+        output pixel_data_ready,
+        output span_data,
+        output span_data_ready
     );
     modport controller (
+        input span_data,
+        input span_data_ready,
         input pixel_data,
         input pixel_data_ready,
         input rasterizer_done,
         output triangle_data,
         output pixel_draw_complete,
-        output rasterizer_begin
+        output rasterizer_begin,
+        output span_draw_complete
     );
 endinterface
 `endif
