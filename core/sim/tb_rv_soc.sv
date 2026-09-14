@@ -218,6 +218,6 @@ module tb_rv_soc;
 
 
         //$fclose(soc_log_file);
-        $stop;
+            $stop;
     end
 endmodule

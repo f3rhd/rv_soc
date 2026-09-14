@@ -5,6 +5,87 @@
  */
 `include "rasterizer_interface.svh"
 
+module bresenham_step (
+    input line_data_t line_data,
+    output logic [17:0] next_err,
+    output logic [13:0] next_x0,
+    output logic [13:0] next_y0
+);
+
+    always_comb begin
+        next_err = line_data.err;
+        next_x0  = line_data.p0.x;
+        next_y0  = line_data.p0.y;
+        if ($signed(line_data.err << 1) >= $signed(line_data.dy)) begin
+            next_err += {{4{line_data.dy[13]}}, line_data.dy};
+            next_x0 += line_data.sx;
+        end
+        if ($signed(line_data.err << 1) <= $signed(line_data.dx)) begin
+            next_err += {{4{line_data.dx[13]}}, line_data.dx};
+            next_y0 += line_data.sy;
+        end
+    end
+endmodule
+module next_row_advancer (
+    input logic clk,
+    input logic reset,
+    input line_data_t i_line_data,
+    input logic i_begin,
+    output line_data_t o_line_result,
+    output logic o_done
+);
+    logic registered_y_start;
+    logic [13:0] y_start;
+    wire [17:0] next_err;
+    wire [13:0] next_x0;
+    wire [13:0] next_y0;
+
+    bresenham_step step (
+        o_line_result,
+        next_err,
+        next_x0,
+        next_y0
+    );
+    enum {
+        IDLE,
+        EXECUTE
+    } state;
+    always_ff @(posedge clk) begin
+        o_done <= 0;
+        if (reset) begin
+            state <= IDLE;
+        end else begin
+            unique case (state)
+                IDLE: begin
+                    o_line_result      <= 0;
+                    registered_y_start <= 0;
+                    y_start            <= 0;
+                    if (o_done) begin
+                    end else if (i_begin) begin
+                        o_line_result <= i_line_data;
+                        state         <= EXECUTE;
+                    end
+                end
+                EXECUTE: begin
+                    if (!registered_y_start) begin
+                        registered_y_start <= 1;
+                        y_start            <= o_line_result.p0.y;
+                    end else begin
+                        if (o_line_result.p0.y != y_start || (o_line_result.p0.x == o_line_result.p1.x && o_line_result.p0.y == o_line_result.p1.y)) begin
+                            state              <= IDLE;
+                            o_done             <= 1;
+                            registered_y_start <= 0;
+                        end else begin
+                            o_line_result.err  <= next_err;
+                            o_line_result.p0.x <= next_x0;
+                            o_line_result.p0.y <= next_y0;
+                        end
+                    end
+                end
+            endcase
+        end
+    end
+endmodule
 module rasterizer #(
     parameter signed DISPLAY_WIDTH  = 128,
     parameter signed DISPLAY_HEIGHT = 160
@@ -28,35 +109,68 @@ module rasterizer #(
     enum logic [2:0] {
         S_INIT_ESSENTIALS,
         S_FILL_SPAN_PREP,
-        S_ADVANCE_TO_NEXT_ROW_LONG_EDGE,
-        S_ADVANCE_TO_NEXT_ROW_SHORT_EDGE,
+        S_SET_SHORT_EDGE,
+        S_SET_LONG_EDGE,
         S_ITERATE,
         S_INIT_BOTTOM_HALF_EDGE
     } fill_state;
 
     triangle_data_t triangle_data;
-    line_data_t line_data;
+    line_data_t hollow_line_data;
     fill_span_data_t span_data;
     line_data_t active_line_data;
     point_data_t [0:2] sorted_triangle_points;
+    line_data_t long_edge;
+    line_data_t short_edge;
 
     logic [13:0] iterator;
     logic [13:0] iterator_finish;
     logic first_loop_done;
-    logic registered_y_start;
-    logic [13:0] y_start;
     logic [2:0] triangle_phase_counter;
     logic [1:0] triangle_span_phase_counter;
-    logic [17:0] next_err;
-    logic [13:0] next_x0;
-    logic [13:0] next_y0;
+    logic [17:0] hollow_line_next_err;
+    logic [13:0] hollow_line_next_x0;
+    logic [13:0] hollow_line_next_y0;
 
-    point_data_t [0:1] long_edge_points;
-    point_data_t [0:1] short_edge_points;
-    struct {
-        logic [17:0] long_edge;
-        logic [17:0] short_edge;
-    } edge_errors;
+
+    bresenham_step hollow_line_step (
+        .line_data(hollow_line_data),
+        .next_err (hollow_line_next_err),
+        .next_x0  (hollow_line_next_x0),
+        .next_y0  (hollow_line_next_y0)
+    );
+
+    logic short_edge_advance;
+    logic short_edge_advanced;
+    logic short_edge_advance_done;
+    line_data_t short_edge_advance_result;
+
+    next_row_advancer short_edge_advancer (
+        .clk          (clk),
+        .reset        (reset),
+        .i_line_data  (short_edge),
+        .i_begin      (short_edge_advance),
+        .o_line_result(short_edge_advance_result),
+        .o_done       (short_edge_advance_done)
+    );
+
+    logic long_edge_advance;
+    logic long_edge_advance_done;
+    logic long_edge_advanced;
+    line_data_t long_edge_advance_result;
+
+    next_row_advancer long_edge_advancer (
+        .clk          (clk),
+        .reset        (reset),
+        .i_line_data  (long_edge),
+        .i_begin      (long_edge_advance),
+        .o_line_result(long_edge_advance_result),
+        .o_done       (long_edge_advance_done)
+    );
+
+    logic hit_long_edge;
+    logic hit_short_edge;
+    logic init_err;
 
     always_comb begin : triangle_prep_comparator_chain
         sorted_triangle_points = triangle_data.points;
@@ -86,24 +200,6 @@ module rasterizer #(
         end
 
     end
-
-    wire [17:0] w_err2 = line_data.err << 1;
-    logic hit_long_edge;
-    logic hit_short_edge;
-    always_comb begin : bresenham_step
-        next_err = line_data.err;
-        next_x0  = line_data.p0.x;
-        next_y0  = line_data.p0.y;
-        if ($signed(w_err2) >= $signed(line_data.dy)) begin
-            next_err += {{4{line_data.dy[13]}}, line_data.dy};
-            next_x0 += line_data.sx;
-        end
-        if ($signed(w_err2) <= $signed(line_data.dx)) begin
-            next_err += {{4{line_data.dx[13]}}, line_data.dx};
-            next_y0 += line_data.sy;
-        end
-    end
-    logic init_err;
     always_comb begin
         active_line_data.p0  = 0;
         active_line_data.p1  = 0;
@@ -137,21 +233,22 @@ module rasterizer #(
                     endcase
                 end else begin
                     case (fill_state)
-                        S_ADVANCE_TO_NEXT_ROW_LONG_EDGE: begin
-                            active_line_data.p0  = long_edge_points[0];
-                            active_line_data.p1  = long_edge_points[1];
-                            active_line_data.err = edge_errors.long_edge;
+                        S_SET_SHORT_EDGE: begin
+                            {active_line_data.p0,active_line_data.p1,active_line_data.err} = {
+                                short_edge.p0, short_edge.p1, short_edge.err
+                            };
                             if (!hit_long_edge) init_err = 1;
                         end
                         S_INIT_BOTTOM_HALF_EDGE: begin
-                            active_line_data.p0 = short_edge_points[0];
-                            active_line_data.p1 = short_edge_points[1];
-                            init_err            = 1;
+                            {active_line_data.p0, active_line_data.p1} = {
+                                short_edge.p0, short_edge.p1
+                            };
+                            init_err = 1;
                         end
-                        S_ADVANCE_TO_NEXT_ROW_SHORT_EDGE: begin
-                            active_line_data.p0  = short_edge_points[0];
-                            active_line_data.p1  = short_edge_points[1];
-                            active_line_data.err = edge_errors.short_edge;
+                        S_SET_LONG_EDGE: begin
+                            {active_line_data.p0,active_line_data.p1,active_line_data.err} = {
+                                long_edge.p0, long_edge.p1, long_edge.err
+                            };
                             if (!hit_short_edge) init_err = 1;
                         end
                         default: begin
@@ -174,17 +271,18 @@ module rasterizer #(
         rasterizeri.rasterizer_done  <= 0;
         rasterizeri.pixel_data_ready <= 0;
         rasterizeri.span_data_ready  <= 0;
+        short_edge_advance           <= 0;
+        long_edge_advance            <= 0;
         if (reset) begin
             rasterizer_state <= S_IDLE;
         end else begin
             unique case (rasterizer_state)
                 S_IDLE: begin
                     triangle_data               <= 0;
-                    line_data                   <= 0;
+                    hollow_line_data            <= 0;
                     span_data                   <= 0;
                     triangle_span_phase_counter <= 0;
                     triangle_phase_counter      <= 0;
-                    registered_y_start          <= 0;
                     first_loop_done             <= 0;
                     hit_short_edge              <= 0;
                     hit_long_edge               <= 0;
@@ -200,8 +298,10 @@ module rasterizer #(
                 end
                 S_TRIANGLE_MAIN: begin
                     if (triangle_data.hollow) begin
+                        // TODO : this is where line draw normally
+                        //        instead of drawing 3 lines 2 of which will be for nothing, we can just draw 1 
                         triangle_phase_counter <= triangle_phase_counter + 1;
-                        line_data              <= active_line_data;
+                        hollow_line_data       <= active_line_data;
                         if (triangle_phase_counter == 3) begin
                             rasterizer_state            <= S_IDLE;
                             rasterizeri.rasterizer_done <= 1;
@@ -213,11 +313,11 @@ module rasterizer #(
                             S_INIT_ESSENTIALS: begin
                                 iterator <= triangle_data.points[0].y;
                                 iterator_finish <= triangle_data.points[1].y;
-                                long_edge_points <= {
+                                {long_edge.p0, long_edge.p1} <= {
                                     triangle_data.points[0],
                                     triangle_data.points[2]
                                 };
-                                short_edge_points <= {
+                                {short_edge.p0, short_edge.p1} <= {
                                     triangle_data.points[0],
                                     triangle_data.points[1]
                                 };
@@ -225,41 +325,32 @@ module rasterizer #(
                             end
                             S_FILL_SPAN_PREP: begin
                                 rasterizer_state <= S_TRIANGLE_FILL_SPAN;
-                                span_data.xa     <= long_edge_points[0].x;
+                                span_data.xa     <= long_edge.p0.x;
 
                                 if (!first_loop_done && triangle_data.points[0].y == triangle_data.points[1].y) begin
                                     span_data.xb <= triangle_data.points[1].x;
                                 end else if (first_loop_done && triangle_data.points[1].y == triangle_data.points[2].y) begin
                                     span_data.xb <= triangle_data.points[2].x;
                                 end else begin
-                                    span_data.xb <= short_edge_points[0].x;
+                                    span_data.xb <= short_edge.p0.x;
                                 end
                                 span_data.y <= iterator;
-                                fill_state  <= S_ADVANCE_TO_NEXT_ROW_LONG_EDGE;
+                                fill_state  <= S_SET_SHORT_EDGE;
                             end
-                            S_ADVANCE_TO_NEXT_ROW_LONG_EDGE: begin
+                            S_SET_SHORT_EDGE: begin
                                 hit_long_edge <= 1;
-                                line_data <= active_line_data;
-                                fill_state <= S_ADVANCE_TO_NEXT_ROW_SHORT_EDGE;
-                                rasterizer_state <= S_ADVANCE_TO_NEXT_ROW;
+                                short_edge    <= active_line_data;
+                                fill_state    <= S_SET_LONG_EDGE;
                             end
-                            // line_data now holds the state of the long_edge so register it 
-                            S_ADVANCE_TO_NEXT_ROW_SHORT_EDGE: begin
-                                hit_short_edge <= 1;
-                                long_edge_points <= {
-                                    line_data.p0, line_data.p1
-                                };
-                                edge_errors.long_edge <= line_data.err;
-                                line_data <= active_line_data;
-                                fill_state <= S_ITERATE;
-                                rasterizer_state <= S_ADVANCE_TO_NEXT_ROW;
+                            S_SET_LONG_EDGE: begin
+                                hit_short_edge     <= 1;
+                                long_edge          <= active_line_data;
+                                fill_state         <= S_ITERATE;
+                                rasterizer_state   <= S_ADVANCE_TO_NEXT_ROW;
+                                short_edge_advance <= 1;
+                                long_edge_advance  <= 1;
                             end
-                            // line_data now holds the state of the short_edge so register it
                             S_ITERATE: begin
-                                short_edge_points <= {
-                                    line_data.p0, line_data.p1
-                                };
-                                edge_errors.short_edge <= line_data.err;
                                 fill_state <= S_FILL_SPAN_PREP;
                                 if ($signed(
                                         iterator
@@ -273,7 +364,7 @@ module rasterizer #(
                                         iterator <= triangle_data.points[1].y;
                                         iterator_finish <= triangle_data.points[2].y;
                                         first_loop_done <= 1;
-                                        short_edge_points <= {
+                                        {short_edge.p0, short_edge.p1} <= {
                                             triangle_data.points[1],
                                             triangle_data.points[2]
                                         };
@@ -284,25 +375,32 @@ module rasterizer #(
                                 end
                             end
                             S_INIT_BOTTOM_HALF_EDGE: begin
-                                line_data  <= active_line_data;
+                                short_edge <= active_line_data;
                                 fill_state <= S_ITERATE;
                             end
                         endcase
                     end
                 end
                 S_ADVANCE_TO_NEXT_ROW: begin
-                    if (!registered_y_start) begin
-                        registered_y_start <= 1;
-                        y_start            <= line_data.p0.y;
-                    end else begin
-                        if(line_data.p0.y != y_start || (line_data.p0.x == line_data.p1.x && line_data.p0.y == line_data.p1.y)) begin
-                            rasterizer_state   <= S_TRIANGLE_MAIN;
-                            registered_y_start <= 0;
-                        end else begin
-                            line_data.err  <= next_err;
-                            line_data.p0.x <= next_x0;
-                            line_data.p0.y <= next_y0;
-                        end
+                    if (short_edge_advance_done) begin
+                        short_edge          <= short_edge_advance_result;
+                        short_edge_advanced <= 1'b1;
+                    end
+
+                    if (long_edge_advance_done) begin
+                        long_edge          <= long_edge_advance_result;
+                        long_edge_advanced <= 1'b1;
+                    end
+
+                    if ((short_edge_advanced || short_edge_advance_done) &&
+                        (long_edge_advanced  || long_edge_advance_done))
+                    begin
+                        rasterizer_state    <= S_TRIANGLE_MAIN;
+                        short_edge_advanced <= 1'b0;
+                        long_edge_advanced  <= 1'b0;
+                    end
+                    if (short_edge_advance_done && long_edge_advance_done) begin
+                        rasterizer_state <= S_TRIANGLE_MAIN;
                     end
                 end
                 S_TRIANGLE_FILL_SPAN: begin
@@ -352,8 +450,8 @@ module rasterizer #(
                 end
                 // Following states are for hollow drawal
                 S_PIXEL_DISPATCH: begin
-                    rasterizeri.pixel_data.x     <= line_data.p0.x;
-                    rasterizeri.pixel_data.y     <= line_data.p0.y;
+                    rasterizeri.pixel_data.x     <= hollow_line_data.p0.x;
+                    rasterizeri.pixel_data.y     <= hollow_line_data.p0.y;
                     rasterizeri.pixel_data_ready <= 1;
                     rasterizer_state             <= S_WAIT_CONTROLLER;
                 end
@@ -363,13 +461,13 @@ module rasterizer #(
                     end
                 end
                 S_LINE_UPDATE: begin
-                    if (line_data.p0.x == line_data.p1.x && line_data.p0.y == line_data.p1.y) begin
+                    if (hollow_line_data.p0.x == hollow_line_data.p1.x && hollow_line_data.p0.y == hollow_line_data.p1.y) begin
                         rasterizer_state <= S_TRIANGLE_MAIN;
                     end else begin
-                        line_data.err    <= next_err;
-                        line_data.p0.x   <= next_x0;
-                        line_data.p0.y   <= next_y0;
-                        rasterizer_state <= S_PIXEL_DISPATCH;
+                        hollow_line_data.err  <= hollow_line_next_err;
+                        hollow_line_data.p0.x <= hollow_line_next_x0;
+                        hollow_line_data.p0.y <= hollow_line_next_y0;
+                        rasterizer_state      <= S_PIXEL_DISPATCH;
                     end
                 end
             endcase
