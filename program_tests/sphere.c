@@ -1,5 +1,5 @@
 #include "../libc-baremetal/include/led.h"
-#include "../libc-baremetal/include/st7735.h"
+#include "../libc-baremetal/include/graphics.h"
 
 
 #define SCREEN_W 128
@@ -118,7 +118,7 @@ static void spinning_sphere_demo(void) {
 
     for (;;) {
 
-        st7735_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_W, SCREEN_H);
+        rv_soc_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_W, SCREEN_H);
 
         /* latitude rings, connected point-to-point around each ring */
         for (lat = LAT_MIN; lat <= LAT_MAX; lat += LAT_STEP) {
@@ -131,7 +131,7 @@ static void spinning_sphere_demo(void) {
                 transform_vertex(x, y, z, angle_x, angle_y, &sx, &sy);
 
                 if (!first)
-                    st7735_draw_line(ST7735_CYAN, px, py, sx, sy);
+                    rv_soc_draw_line(ST7735_CYAN, px, py, sx, sy);
 
                 px = sx;
                 py = sy;
@@ -150,7 +150,7 @@ static void spinning_sphere_demo(void) {
                 transform_vertex(x, y, z, angle_x, angle_y, &sx, &sy);
 
                 if (!first)
-                    st7735_draw_line(ST7735_YELLOW, px, py, sx, sy);
+                    rv_soc_draw_line(ST7735_YELLOW, px, py, sx, sy);
 
                 px = sx;
                 py = sy;

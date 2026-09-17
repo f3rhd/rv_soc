@@ -1,5 +1,5 @@
 #include "../libc-baremetal/include/led.h"
-#include "../libc-baremetal/include/st7735.h"
+#include "../libc-baremetal/include/graphics.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 160
@@ -22,7 +22,7 @@ unsigned rand_next(unsigned *state) {
 }
 
 void draw_cell(int gx, int gy, unsigned color) {
-    st7735_draw_rectangle(
+    rv_soc_draw_rectangle(
         color,
         gx * CELL_SIZE,
         gy * CELL_SIZE,
@@ -70,7 +70,7 @@ int main() {
     int x, y;
     unsigned generation = 0;
 
-    st7735_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    rv_soc_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     seed_grid(cur, &seed);
 
     for (;;) {

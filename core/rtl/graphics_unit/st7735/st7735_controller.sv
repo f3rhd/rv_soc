@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-`include "../common/graphics_decode_output.svh"
 `include "../common/rasterizer_interface.svh"
 module st7735_controller #(
     parameter unsigned SYSTEM_CLK_HZ = 100_000_000,
@@ -14,8 +13,8 @@ module st7735_controller #(
     input logic i_boot,
     input logic i_reset,
     input logic i_soft_reset,
-    input graphics_decode_output_t decode_result,
-    rasterizer_if.controller rasterizeri,
+    input fill_span_data_t i_span_data,
+    input logic i_span_data_valid,
     output logic o_execute_complete,
     output logic o_sck,
     output logic o_sda,
@@ -53,16 +52,17 @@ module st7735_controller #(
     localparam unsigned FILL_PIXELS = 20480;  // 128 * 160
     logic [23:0] fill_pix_cnt;
 
+    fill_span_data_t span_data;
+
     typedef enum logic [1:0] {
         IDLE,
         BOOT,
         EXECUTE
     } graphics_state_e;
 
-    typedef enum logic [2:0] {
+    typedef enum logic [1:0] {
         EXEC_PIXEL_DRAW_COORD,
         EXEC_PIXEL_DRAW_RAMRW,
-        EXEC_WAIT_RASTERIZER,
         EXEC_DO_NOTHING,
         EXEC_WAIT
     } execution_state_e;
@@ -178,35 +178,30 @@ module st7735_controller #(
     end
 
     always_ff @(posedge clk) begin
-        tx_begin                        <= 0;
-        dly_start                       <= 0;
-        rasterizeri.pixel_draw_complete <= 0;
-        rasterizeri.span_draw_complete  <= 0;
-        rasterizeri.rasterizer_begin    <= 0;
-        o_execute_complete              <= 0;
+        tx_begin           <= 0;
+        dly_start          <= 0;
+        o_execute_complete <= 0;
 
         if (i_reset) begin
-            tx_data                   <= 0;
-            is_caset                  <= 0;
-            sent_byte_counter         <= 0;
-            sent_command              <= 0;
-            exec_state                <= EXEC_DO_NOTHING;
-            send_byte_return          <= EXEC_DO_NOTHING;
-            rasterizeri.triangle_data <= '0;
-            o_cs                      <= 1;
-            o_res                     <= 0;
-            o_dc                      <= 0;
-            o_init_done               <= 0;
-            graphics_state            <= IDLE;
-            boot_state                <= UNDEFINED;
+            tx_data           <= 0;
+            is_caset          <= 0;
+            sent_byte_counter <= 0;
+            sent_command      <= 0;
+            exec_state        <= EXEC_DO_NOTHING;
+            send_byte_return  <= EXEC_DO_NOTHING;
+            o_cs              <= 1;
+            o_res             <= 0;
+            o_dc              <= 0;
+            o_init_done       <= 0;
+            graphics_state    <= IDLE;
+            boot_state        <= UNDEFINED;
         end else if (i_soft_reset) begin
-            tx_data                   <= 0;
-            is_caset                  <= 0;
-            sent_byte_counter         <= 0;
-            sent_command              <= 0;
-            exec_state                <= EXEC_DO_NOTHING;
-            send_byte_return          <= EXEC_DO_NOTHING;
-            rasterizeri.triangle_data <= '0;
+            tx_data           <= 0;
+            is_caset          <= 0;
+            sent_byte_counter <= 0;
+            sent_command      <= 0;
+            exec_state        <= EXEC_DO_NOTHING;
+            send_byte_return  <= EXEC_DO_NOTHING;
         end else begin
             unique case (graphics_state)
                 IDLE: begin
@@ -332,52 +327,21 @@ module st7735_controller #(
                     endcase
                 end
                 EXECUTE: begin
-                    if (rasterizeri.rasterizer_done) begin
-                        exec_state         <= EXEC_DO_NOTHING;
-                        o_execute_complete <= 1;
-                    end
                     unique case (exec_state)
                         EXEC_DO_NOTHING: begin
-                            o_cs                            <= 1;
-                            sent_byte_counter               <= 0;
-                            sent_command                    <= 0;
-                            sent_byte_counter               <= 0;
-                            rasterizeri.pixel_draw_complete <= 0;
-                            is_caset                        <= 0;
+                            o_cs              <= 1;
+                            sent_byte_counter <= 0;
+                            sent_command      <= 0;
+                            sent_byte_counter <= 0;
+                            is_caset          <= 0;
                             if (o_execute_complete) begin
                                 // do nothing for 1 cycle
-                            end else if (decode_result.valid) begin
-                                unique case (decode_result.instr_id)
-                                    P0: begin
-                                        rasterizeri.triangle_data.points[0].x <= decode_result.instr.point.x;
-                                        rasterizeri.triangle_data.points[0].y <= decode_result.instr.point.y;
-                                        o_execute_complete                    <= 1;
-                                    end
-                                    P1: begin
-                                        rasterizeri.triangle_data.points[1].x <= decode_result.instr.point.x;
-                                        rasterizeri.triangle_data.points[1].y <= decode_result.instr.point.y;
-                                        o_execute_complete                    <= 1;
-                                    end
-                                    P2: begin
-                                        rasterizeri.triangle_data.points[2].x <= decode_result.instr.point.x;
-                                        rasterizeri.triangle_data.points[2].y <= decode_result.instr.point.y;
-                                        o_execute_complete                    <= 1;
-                                    end
-                                    CLR: begin
-                                        rasterizeri.triangle_data.color  <= decode_result.instr.color[15:0];
-                                        rasterizeri.triangle_data.hollow <= decode_result.hollow;
-                                        rasterizeri.rasterizer_begin     <= 1;
-                                        exec_state                       <= EXEC_WAIT_RASTERIZER;
-                                        o_cs                             <= 0;
-                                    end
-                                endcase
+                            end else if (i_span_data_valid) begin
+                                span_data  <= i_span_data;
+                                exec_state <= EXEC_PIXEL_DRAW_COORD;
+                                o_cs       <= 0;
                             end
 
-                        end
-                        EXEC_WAIT_RASTERIZER: begin
-                            if (rasterizeri.span_data_ready) begin
-                                exec_state <= EXEC_PIXEL_DRAW_COORD;
-                            end
                         end
                         EXEC_PIXEL_DRAW_COORD: begin
 
@@ -408,8 +372,8 @@ module st7735_controller #(
                                         tx_data <= 0;
                                     end else begin
                                         if (sent_byte_counter == 2) begin
-                                            tx_data <= (is_caset) ? rasterizeri.span_data.xa[7:0] : rasterizeri.span_data.y[7:0];
-                                        end else tx_data <= (is_caset) ? rasterizeri.span_data.xb[7:0] : rasterizeri.span_data.y[7:0];
+                                            tx_data <= (is_caset) ? span_data.xa[7:0] : span_data.y[7:0];
+                                        end else tx_data <= (is_caset) ? span_data.xb[7:0] : span_data.y[7:0];
                                     end
                                 end
                             end
@@ -423,30 +387,31 @@ module st7735_controller #(
                                     exec_state           <= EXEC_WAIT;
                                     o_dc                 <= 0;
                                     ramrw_step           <= 1;
-                                    fill_pix_cnt[14+:10] <= {10{rasterizeri.span_data.xa[13]}};
-                                    fill_pix_cnt[13:0]   <= rasterizeri.span_data.xa;
+                                    fill_pix_cnt[14+:10] <= {10{span_data.xa[13]}};
+                                    fill_pix_cnt[13:0]   <= span_data.xa;
                                 end
                                 'd1: begin
                                     tx_begin   <= 1;
-                                    tx_data    <= rasterizeri.triangle_data.color[15:8];
+                                    tx_data    <= span_data.color[15:8];
                                     exec_state <= EXEC_WAIT;
                                     o_dc       <= 1;
                                     ramrw_step <= 2;
                                 end
                                 'd2: begin
                                     tx_begin   <= 1;
-                                    tx_data    <= rasterizeri.triangle_data.color[7:0];
+                                    tx_data    <= span_data.color[7:0];
                                     exec_state <= EXEC_WAIT;
                                     o_dc       <= 1;
                                     ramrw_step <= 3;
                                 end
                                 'd3: begin
-                                    if (fill_pix_cnt[13:0] == rasterizeri.span_data.xb) begin
-                                        tx_begin                       <= 0;
-                                        sent_byte_counter              <= 0;
-                                        exec_state                     <= EXEC_WAIT_RASTERIZER;
-                                        rasterizeri.span_draw_complete <= 1;
-                                        ramrw_step                     <= 0;
+                                    if (fill_pix_cnt[13:0] == span_data.xb) begin
+                                        // span is complete
+                                        tx_begin           <= 0;
+                                        sent_byte_counter  <= 0;
+                                        exec_state         <= EXEC_DO_NOTHING;
+                                        o_execute_complete <= 1;
+                                        ramrw_step         <= 0;
                                     end else begin
                                         ramrw_step <= 1;
                                     end

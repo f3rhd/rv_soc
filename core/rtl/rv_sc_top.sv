@@ -80,7 +80,7 @@ module rv_sc_top (
         .o_reg16_f8   (segment_value)
     );
     graphics_unit #(
-        .GRAPHICS_INSTRUCTION_BUFFER_SIZE(GRAPHICS_INSTRUCTION_BUFFER_SIZE /* default 256 * 4 */),
+        .GRAPHICS_INSTRUCTION_BUFFER_SIZE(GRAPHICS_INSTRUCTION_BUFFER_SIZE  /* default 256 * 4 */),
         .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
         .SPI_CLK_HZ(GRAPHICS_SPI_CLK_HZ  /* default 25_000_000 */)
     ) graphics_unit (

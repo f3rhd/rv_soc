@@ -100,7 +100,6 @@ module rasterizer #(
         S_TRIANGLE_MAIN,
         S_ADVANCE_TO_NEXT_ROW,
         S_TRIANGLE_FILL_SPAN,
-        S_WAIT_CONTROLLER,
         S_LINE_UPDATE,
         S_PIXEL_DISPATCH
     } rasterizer_state;
@@ -126,7 +125,6 @@ module rasterizer #(
     logic [13:0] iterator_finish;
     logic first_loop_done;
     logic [2:0] triangle_phase_counter;
-    logic [1:0] triangle_span_phase_counter;
     logic [17:0] hollow_line_next_err;
     logic [13:0] hollow_line_next_x0;
     logic [13:0] hollow_line_next_y0;
@@ -264,25 +262,23 @@ module rasterizer #(
     end
 
     always_ff @(posedge clk) begin
-        rasterizeri.rasterizer_done  <= 0;
-        rasterizeri.pixel_data_ready <= 0;
-        rasterizeri.span_data_ready  <= 0;
-        short_edge_advance           <= 0;
-        long_edge_advance            <= 0;
+        rasterizeri.rasterizer_done <= 0;
+        rasterizeri.span_data_ready <= 0;
+        short_edge_advance          <= 0;
+        long_edge_advance           <= 0;
         if (reset) begin
             rasterizer_state <= S_IDLE;
         end else begin
             unique case (rasterizer_state)
                 S_IDLE: begin
-                    triangle_data               <= 0;
-                    hollow_line_data            <= 0;
-                    span_data                   <= 0;
-                    triangle_span_phase_counter <= 0;
-                    triangle_phase_counter      <= 0;
-                    first_loop_done             <= 0;
-                    hit_short_edge              <= 0;
-                    hit_long_edge               <= 0;
-                    fill_state                  <= S_INIT_ESSENTIALS;
+                    triangle_data          <= 0;
+                    hollow_line_data       <= 0;
+                    span_data              <= 0;
+                    triangle_phase_counter <= 0;
+                    first_loop_done        <= 0;
+                    hit_short_edge         <= 0;
+                    hit_long_edge          <= 0;
+                    fill_state             <= S_INIT_ESSENTIALS;
                     if (rasterizeri.rasterizer_begin) begin
                         triangle_data <= '{
                             hollow: rasterizeri.triangle_data.hollow,
@@ -388,32 +384,22 @@ module rasterizer #(
                     if (span_data.y[13] || $signed(span_data.y) >= DISPLAY_HEIGHT) begin
                         rasterizer_state <= S_TRIANGLE_MAIN;
                     end else begin
-                        unique case (triangle_span_phase_counter)
-                            'd0: begin
-                                rasterizeri.span_data       <= '{y: span_data.y, xa: adjusted_xa, xb: adjusted_xb};
-                                rasterizeri.span_data_ready <= 1;
-                                triangle_span_phase_counter <= 1;
-                            end
-                            'd1: begin
-                                if (rasterizeri.span_draw_complete) begin
-                                    rasterizer_state            <= S_TRIANGLE_MAIN;
-                                    triangle_span_phase_counter <= 0;
-                                end
-                            end
-                        endcase
+                        if (!rasterizeri.span_fifo_full) begin
+                            rasterizeri.span_data       <= '{color : triangle_data.color, y: span_data.y, xa: adjusted_xa, xb: adjusted_xb};
+                            rasterizeri.span_data_ready <= 1;
+                            rasterizer_state            <= S_TRIANGLE_MAIN;
+                        end
                     end
                 end
                 // Following states are for hollow drawal
                 S_PIXEL_DISPATCH: begin
-                    rasterizeri.span_data.xa    <= hollow_line_data.p0.x;
-                    rasterizeri.span_data.xb    <= hollow_line_data.p0.x;
-                    rasterizeri.span_data.y     <= hollow_line_data.p0.y;
-                    rasterizeri.span_data_ready <= 1;
-                    rasterizer_state            <= S_WAIT_CONTROLLER;
-                end
-                S_WAIT_CONTROLLER: begin
-                    if (rasterizeri.span_draw_complete) begin
-                        rasterizer_state <= S_LINE_UPDATE;
+                    if (!rasterizeri.span_fifo_full) begin
+                        rasterizeri.span_data.color <= triangle_data.color;
+                        rasterizeri.span_data.xa    <= hollow_line_data.p0.x;
+                        rasterizeri.span_data.xb    <= hollow_line_data.p0.x;
+                        rasterizeri.span_data.y     <= hollow_line_data.p0.y;
+                        rasterizeri.span_data_ready <= 1;
+                        rasterizer_state            <= S_LINE_UPDATE;
                     end
                 end
                 S_LINE_UPDATE: begin
