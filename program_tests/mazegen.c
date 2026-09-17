@@ -4,7 +4,7 @@
 #define SCREEN_WIDTH  128
 #define SCREEN_HEIGHT 160
 
-#define CELL_PX 3
+#define CELL_PX 4
 #define MAZE_W (SCREEN_WIDTH / CELL_PX)   
 #define MAZE_H (SCREEN_HEIGHT / CELL_PX)  
 
