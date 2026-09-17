@@ -1,6 +1,6 @@
 #include "../libc-baremetal/include/led.h"
 #include "../libc-baremetal/include/pin.h"
-#include "../libc-baremetal/include/st7735.h"
+#include "../libc-baremetal/include/graphics.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 160
@@ -23,7 +23,7 @@ void delay(unsigned dly_amount) {
 }
 
 void draw_cell(int gx, int gy, unsigned color) {
-    st7735_draw_rectangle(color, gx * CELL_PX, gy * CELL_PX, CELL_PX, CELL_PX);
+    rv_soc_draw_rectangle(color, gx * CELL_PX, gy * CELL_PX, CELL_PX, CELL_PX);
 }
 
 static const unsigned PALETTE[8] = {

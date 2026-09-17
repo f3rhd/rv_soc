@@ -1,6 +1,6 @@
 #include "../libc-baremetal/include/led.h"
 #include "../libc-baremetal/include/pin.h"
-#include "../libc-baremetal/include/st7735.h"
+#include "../libc-baremetal/include/graphics.h"
 
 
 #define SCREEN_WIDTH 128
@@ -39,7 +39,7 @@ unsigned rand_next(unsigned* state) {
 }
 
 void draw_cell(int gx, int gy, unsigned color) {
-    st7735_draw_rectangle(color, gx * CELL_PX, gy * CELL_PX, CELL_PX, CELL_PX);
+    rv_soc_draw_rectangle(color, gx * CELL_PX, gy * CELL_PX, CELL_PX, CELL_PX);
 }
 
 int is_on_snake(vec2 body[MAX_LEN], int len, int x, int y) {
@@ -99,7 +99,7 @@ restart:;
     unsigned score = 0;
     unsigned alive = 1;
 
-    st7735_draw_rectangle(COLOR_BG, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    rv_soc_draw_rectangle(COLOR_BG, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     for (i = 0; i < length; i++)
         draw_cell(body[i].x, body[i].y, COLOR_SNAKE);
     draw_cell(body[0].x, body[0].y, COLOR_HEAD);
@@ -194,9 +194,9 @@ restart:;
     }
 
     for (i = 0; i < 6; i++) {
-        st7735_draw_rectangle(ST7735_RED, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        rv_soc_draw_rectangle(ST7735_RED, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         delay(150000);
-        st7735_draw_rectangle(COLOR_BG, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        rv_soc_draw_rectangle(COLOR_BG, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         delay(150000);
     }
 

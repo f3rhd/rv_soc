@@ -1,5 +1,5 @@
 #include "../libc-baremetal/include/led.h"
-#include "../libc-baremetal/include/st7735.h"
+#include "../libc-baremetal/include/graphics.h"
 
 #define SCREEN_WIDTH  128
 #define SCREEN_HEIGHT 160
@@ -24,11 +24,11 @@ void delay(unsigned dly_amount) {
 }
 
 void draw_paddle(unsigned color, signed px, signed py) {
-    st7735_draw_rectangle(color, px, py, PADDLE_WIDTH, PADDLE_HEIGHT);
+    rv_soc_draw_rectangle(color, px, py, PADDLE_WIDTH, PADDLE_HEIGHT);
 }
 
 void draw_ball(unsigned color, signed bx, signed by) {
-    st7735_draw_rectangle(color, bx, by, BALL_SIZE, BALL_SIZE);
+    rv_soc_draw_rectangle(color, bx, by, BALL_SIZE, BALL_SIZE);
 }
 
 
@@ -64,7 +64,7 @@ int main() {
     unsigned right_score = 0;
 
     
-    st7735_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    rv_soc_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     for (;;) {
         

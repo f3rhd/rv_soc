@@ -1,5 +1,5 @@
 #include "../libc-baremetal/include/led.h"
-#include "../libc-baremetal/include/st7735.h"
+#include "../libc-baremetal/include/graphics.h"
 
 
 #define SCREEN_WIDTH 128
@@ -18,11 +18,11 @@ int main() {
     vec2 pos = {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
     vec2 vel = {2, 2};
 
-    st7735_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    rv_soc_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     unsigned current_color = ST7735_RED;
     int i;
     for (;;) {
-        st7735_draw_rectangle(
+        rv_soc_draw_rectangle(
             ST7735_BLACK,
             pos.x - RADIUS,
             pos.y - RADIUS,
@@ -51,7 +51,7 @@ int main() {
                 pos.y = SCREEN_HEIGHT - RADIUS;
         }
 
-        st7735_draw_circle(current_color, pos.x, pos.y, RADIUS);
+        rv_soc_draw_circle(current_color, pos.x, pos.y, RADIUS);
         seg_write_hex(((pos.x & 0xFF) << 8) | (pos.y & 0xFF));
         delay(50'000);
     }

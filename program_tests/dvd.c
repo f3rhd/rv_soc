@@ -1,4 +1,4 @@
-#include "../libc-baremetal/include/st7735.h"
+#include "../libc-baremetal/include/graphics.h"
 #include "../libc-baremetal/include/led.h"
 
 #define SCREEN_WIDTH 128
@@ -14,7 +14,7 @@ void delay(unsigned dly_amount) {
 }
 void draw_dvd(vec2 pos, unsigned color) {
 
-    st7735_draw_rectangle(color, pos.x, pos.y, SQUARE_HEIGHT, SQUARE_HEIGHT);
+    rv_soc_draw_rectangle(color, pos.x, pos.y, SQUARE_HEIGHT, SQUARE_HEIGHT);
 }
 __attribute__((optimize("O0"))) void
 change_color_on_collision(unsigned* dvd_color, int current_index) {
@@ -54,7 +54,7 @@ int main() {
     vec2 pos = {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
     vec2 vel = {2, 2};
 
-    st7735_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    rv_soc_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     unsigned current_color = ST7735_MAROON;
     int color_index = 0;
@@ -62,7 +62,7 @@ int main() {
     int collision_counter = 0;
     while (1) {
         had_collision = 0;
-        st7735_draw_rectangle(
+        rv_soc_draw_rectangle(
             ST7735_BLACK,
             pos.x,
             pos.y,

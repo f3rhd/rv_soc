@@ -1,5 +1,5 @@
 #include "../libc-baremetal/include/led.h"
-#include "../libc-baremetal/include/st7735.h"
+#include "../libc-baremetal/include/graphics.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 160
@@ -55,15 +55,15 @@ int main() {
     vec2 pos_b = {(SCREEN_WIDTH * 3) / 4, SCREEN_HEIGHT / 2};
     vec2 vel_b = {-2, -2};
 
-    st7735_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    rv_soc_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     for (;;) {
-        st7735_draw_rectangle(
+        rv_soc_draw_rectangle(
             ST7735_BLACK,
             pos_r.x - RADIUS, pos_r.y - RADIUS,
             RADIUS * 2 + 1, RADIUS * 2 + 1
         );
-        st7735_draw_rectangle(
+        rv_soc_draw_rectangle(
             ST7735_BLACK,
             pos_b.x - RADIUS, pos_b.y - RADIUS,
             RADIUS * 2 + 1, RADIUS * 2 + 1
@@ -111,8 +111,8 @@ int main() {
             }
         }
 
-        st7735_draw_circle(ST7735_RED, pos_r.x, pos_r.y, RADIUS);
-        st7735_draw_circle(ST7735_BLUE, pos_b.x, pos_b.y, RADIUS);
+        rv_soc_draw_circle(ST7735_RED, pos_r.x, pos_r.y, RADIUS);
+        rv_soc_draw_circle(ST7735_BLUE, pos_b.x, pos_b.y, RADIUS);
 
         seg_write_hex(((pos_r.x & 0xFF) << 8) | (pos_r.y & 0xFF));
         led_write(((pos_b.x & 0xFF) << 8) | (pos_b.y & 0xFF));
