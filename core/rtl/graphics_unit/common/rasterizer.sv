@@ -95,9 +95,8 @@ module rasterizer #(
     rasterizer_if.rasterizer rasterizeri
 );
 
-    enum logic [3:0] {
+    enum logic [2:0] {
         S_IDLE,
-        S_TRIANGLE_PREP,
         S_TRIANGLE_MAIN,
         S_ADVANCE_TO_NEXT_ROW,
         S_TRIANGLE_FILL_SPAN,
@@ -172,33 +171,36 @@ module rasterizer #(
     logic hit_short_edge;
     logic init_err;
 
+    localparam HEIGHT_BITS = $clog2(DISPLAY_HEIGHT);
     always_comb begin : triangle_prep_comparator_chain
-        sorted_triangle_points = triangle_data.points;
-        if (sorted_triangle_points[0].y > sorted_triangle_points[1].y) begin
-            {sorted_triangle_points[0].x, sorted_triangle_points[1].x} = {
-                sorted_triangle_points[1].x, sorted_triangle_points[0].x
-            };
-            {sorted_triangle_points[0].y, sorted_triangle_points[1].y} = {
-                sorted_triangle_points[1].y, sorted_triangle_points[0].y
-            };
+        sorted_triangle_points = rasterizeri.triangle_data.points;
+        if (sorted_triangle_points[0].y[0+:HEIGHT_BITS] > sorted_triangle_points[1].y[0+:HEIGHT_BITS]) begin
+            {sorted_triangle_points[0].x, sorted_triangle_points[1].x} = {sorted_triangle_points[1].x, sorted_triangle_points[0].x};
+            {sorted_triangle_points[0].y, sorted_triangle_points[1].y} = {sorted_triangle_points[1].y, sorted_triangle_points[0].y};
         end
-        if (sorted_triangle_points[0].y > sorted_triangle_points[2].y) begin
-            {sorted_triangle_points[0].x, sorted_triangle_points[2].x} = {
-                sorted_triangle_points[2].x, sorted_triangle_points[0].x
-            };
-            {sorted_triangle_points[0].y, sorted_triangle_points[2].y} = {
-                sorted_triangle_points[2].y, sorted_triangle_points[0].y
-            };
+        if (sorted_triangle_points[0].y[0+:HEIGHT_BITS] > sorted_triangle_points[2].y[0+:HEIGHT_BITS]) begin
+            {sorted_triangle_points[0].x, sorted_triangle_points[2].x} = {sorted_triangle_points[2].x, sorted_triangle_points[0].x};
+            {sorted_triangle_points[0].y, sorted_triangle_points[2].y} = {sorted_triangle_points[2].y, sorted_triangle_points[0].y};
         end
-        if (sorted_triangle_points[1].y > sorted_triangle_points[2].y) begin
-            {sorted_triangle_points[1].x, sorted_triangle_points[2].x} = {
-                sorted_triangle_points[2].x, sorted_triangle_points[1].x
-            };
-            {sorted_triangle_points[1].y, sorted_triangle_points[2].y} = {
-                sorted_triangle_points[2].y, sorted_triangle_points[1].y
-            };
+        if (sorted_triangle_points[1].y[0+:HEIGHT_BITS] > sorted_triangle_points[2].y[0+:HEIGHT_BITS]) begin
+            {sorted_triangle_points[1].x, sorted_triangle_points[2].x} = {sorted_triangle_points[2].x, sorted_triangle_points[1].x};
+            {sorted_triangle_points[1].y, sorted_triangle_points[2].y} = {sorted_triangle_points[2].y, sorted_triangle_points[1].y};
         end
 
+    end
+    logic [13:0] adjusted_xa, adjusted_xb;
+    always_comb begin : span_data_xa_xb_adjustment
+        adjusted_xa = span_data.xa;
+        adjusted_xb = span_data.xb;
+        if ($signed(adjusted_xa) > $signed(adjusted_xb)) begin
+            {adjusted_xa, adjusted_xb} = {adjusted_xb, adjusted_xa};
+        end
+        if (adjusted_xa[13]) begin
+            adjusted_xa = 0;
+        end
+        if ($signed(adjusted_xb) > $signed(DISPLAY_WIDTH - 1)) begin
+            adjusted_xb = DISPLAY_WIDTH - 1;
+        end
     end
     always_comb begin
         active_line_data.p0  = 0;
@@ -234,21 +236,15 @@ module rasterizer #(
                 end else begin
                     case (fill_state)
                         S_SET_SHORT_EDGE: begin
-                            {active_line_data.p0,active_line_data.p1,active_line_data.err} = {
-                                short_edge.p0, short_edge.p1, short_edge.err
-                            };
+                            {active_line_data.p0, active_line_data.p1, active_line_data.err} = {short_edge.p0, short_edge.p1, short_edge.err};
                             if (!hit_long_edge) init_err = 1;
                         end
                         S_INIT_BOTTOM_HALF_EDGE: begin
-                            {active_line_data.p0, active_line_data.p1} = {
-                                short_edge.p0, short_edge.p1
-                            };
-                            init_err = 1;
+                            {active_line_data.p0, active_line_data.p1} = {short_edge.p0, short_edge.p1};
+                            init_err                                   = 1;
                         end
                         S_SET_LONG_EDGE: begin
-                            {active_line_data.p0,active_line_data.p1,active_line_data.err} = {
-                                long_edge.p0, long_edge.p1, long_edge.err
-                            };
+                            {active_line_data.p0, active_line_data.p1, active_line_data.err} = {long_edge.p0, long_edge.p1, long_edge.err};
                             if (!hit_short_edge) init_err = 1;
                         end
                         default: begin
@@ -263,7 +259,7 @@ module rasterizer #(
         active_line_data.sx = (active_line_data.p0.x < active_line_data.p1.x) ? 1 : {14{1'b1}};
         active_line_data.sy = (active_line_data.p0.y < active_line_data.p1.y) ? 1 : {14{1'b1}};
         if (init_err) begin
-            active_line_data.err = {{4{active_line_data.dx[13]}},active_line_data.dx} + {{4{active_line_data.dy[13]}},active_line_data.dy};
+            active_line_data.err = {{4{active_line_data.dx[13]}}, active_line_data.dx} + {{4{active_line_data.dy[13]}}, active_line_data.dy};
         end
     end
 
@@ -288,13 +284,13 @@ module rasterizer #(
                     hit_long_edge               <= 0;
                     fill_state                  <= S_INIT_ESSENTIALS;
                     if (rasterizeri.rasterizer_begin) begin
-                        triangle_data    <= rasterizeri.triangle_data;
-                        rasterizer_state <= S_TRIANGLE_PREP;
+                        triangle_data <= '{
+                            hollow: rasterizeri.triangle_data.hollow,
+                            color: rasterizeri.triangle_data.color,
+                            points: sorted_triangle_points
+                        };
+                        rasterizer_state <= S_TRIANGLE_MAIN;
                     end
-                end
-                S_TRIANGLE_PREP: begin
-                    triangle_data.points <= sorted_triangle_points;
-                    rasterizer_state     <= S_TRIANGLE_MAIN;
                 end
                 S_TRIANGLE_MAIN: begin
                     if (triangle_data.hollow) begin
@@ -311,17 +307,11 @@ module rasterizer #(
                     end else begin
                         unique case (fill_state)
                             S_INIT_ESSENTIALS: begin
-                                iterator <= triangle_data.points[0].y;
-                                iterator_finish <= triangle_data.points[1].y;
-                                {long_edge.p0, long_edge.p1} <= {
-                                    triangle_data.points[0],
-                                    triangle_data.points[2]
-                                };
-                                {short_edge.p0, short_edge.p1} <= {
-                                    triangle_data.points[0],
-                                    triangle_data.points[1]
-                                };
-                                fill_state <= S_FILL_SPAN_PREP;
+                                iterator                       <= triangle_data.points[0].y;
+                                iterator_finish                <= triangle_data.points[1].y;
+                                {long_edge.p0, long_edge.p1}   <= {triangle_data.points[0], triangle_data.points[2]};
+                                {short_edge.p0, short_edge.p1} <= {triangle_data.points[0], triangle_data.points[1]};
+                                fill_state                     <= S_FILL_SPAN_PREP;
                             end
                             S_FILL_SPAN_PREP: begin
                                 rasterizer_state <= S_TRIANGLE_FILL_SPAN;
@@ -352,23 +342,16 @@ module rasterizer #(
                             end
                             S_ITERATE: begin
                                 fill_state <= S_FILL_SPAN_PREP;
-                                if ($signed(
-                                        iterator
-                                    ) > $signed(
-                                        iterator_finish
-                                    )) begin
+                                if ($signed(iterator) > $signed(iterator_finish)) begin
                                     if (first_loop_done) begin
                                         rasterizer_state            <= S_IDLE;
                                         rasterizeri.rasterizer_done <= 1;
                                     end else begin
-                                        iterator <= triangle_data.points[1].y;
-                                        iterator_finish <= triangle_data.points[2].y;
-                                        first_loop_done <= 1;
-                                        {short_edge.p0, short_edge.p1} <= {
-                                            triangle_data.points[1],
-                                            triangle_data.points[2]
-                                        };
-                                        fill_state <= S_INIT_BOTTOM_HALF_EDGE;
+                                        iterator                       <= triangle_data.points[1].y;
+                                        iterator_finish                <= triangle_data.points[2].y;
+                                        first_loop_done                <= 1;
+                                        {short_edge.p0, short_edge.p1} <= {triangle_data.points[1], triangle_data.points[2]};
+                                        fill_state                     <= S_INIT_BOTTOM_HALF_EDGE;
                                     end
                                 end else begin
                                     iterator <= iterator + 1;
@@ -392,9 +375,7 @@ module rasterizer #(
                         long_edge_advanced <= 1'b1;
                     end
 
-                    if ((short_edge_advanced || short_edge_advance_done) &&
-                        (long_edge_advanced  || long_edge_advance_done))
-                    begin
+                    if ((short_edge_advanced || short_edge_advance_done) && (long_edge_advanced || long_edge_advance_done)) begin
                         rasterizer_state    <= S_TRIANGLE_MAIN;
                         short_edge_advanced <= 1'b0;
                         long_edge_advanced  <= 1'b0;
@@ -404,44 +385,18 @@ module rasterizer #(
                     end
                 end
                 S_TRIANGLE_FILL_SPAN: begin
-                    if (span_data.y[13] || $signed(
-                            span_data.y
-                        ) >= DISPLAY_HEIGHT) begin
+                    if (span_data.y[13] || $signed(span_data.y) >= DISPLAY_HEIGHT) begin
                         rasterizer_state <= S_TRIANGLE_MAIN;
                     end else begin
                         unique case (triangle_span_phase_counter)
-                            'd0: begin : swapping
-                                if ($signed(
-                                        span_data.xa
-                                    ) > $signed(
-                                        span_data.xb
-                                    )) begin
-                                    span_data.xa <= span_data.xb;
-                                    span_data.xb <= span_data.xa;
-                                end
-                                triangle_span_phase_counter <= triangle_span_phase_counter + 1;
-                            end
-                            'd1: begin : bound_checking
-                                if (span_data.xa[13]) begin
-                                    span_data.xa <= 0;
-                                end
-                                if ($signed(
-                                        span_data.xb
-                                    ) > $signed(
-                                        DISPLAY_WIDTH - 1
-                                    )) begin
-                                    span_data.xb <= DISPLAY_WIDTH - 1;
-                                end
-                                triangle_span_phase_counter <= triangle_span_phase_counter + 1;
-                            end
-                            'd2: begin
-                                rasterizeri.span_data       <= span_data;
+                            'd0: begin
+                                rasterizeri.span_data       <= '{y: span_data.y, xa: adjusted_xa, xb: adjusted_xb};
                                 rasterizeri.span_data_ready <= 1;
-                                triangle_span_phase_counter <= 3;
+                                triangle_span_phase_counter <= 1;
                             end
-                            'd3: begin
+                            'd1: begin
                                 if (rasterizeri.span_draw_complete) begin
-                                    rasterizer_state <= S_TRIANGLE_MAIN;
+                                    rasterizer_state            <= S_TRIANGLE_MAIN;
                                     triangle_span_phase_counter <= 0;
                                 end
                             end
