@@ -405,13 +405,14 @@ module rasterizer #(
                 end
                 // Following states are for hollow drawal
                 S_PIXEL_DISPATCH: begin
-                    rasterizeri.pixel_data.x     <= hollow_line_data.p0.x;
-                    rasterizeri.pixel_data.y     <= hollow_line_data.p0.y;
-                    rasterizeri.pixel_data_ready <= 1;
-                    rasterizer_state             <= S_WAIT_CONTROLLER;
+                    rasterizeri.span_data.xa    <= hollow_line_data.p0.x;
+                    rasterizeri.span_data.xb    <= hollow_line_data.p0.x;
+                    rasterizeri.span_data.y     <= hollow_line_data.p0.y;
+                    rasterizeri.span_data_ready <= 1;
+                    rasterizer_state            <= S_WAIT_CONTROLLER;
                 end
                 S_WAIT_CONTROLLER: begin
-                    if (rasterizeri.pixel_draw_complete) begin
+                    if (rasterizeri.span_draw_complete) begin
                         rasterizer_state <= S_LINE_UPDATE;
                     end
                 end
