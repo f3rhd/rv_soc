@@ -16,14 +16,14 @@ ARGS=("$@")
 N=${#ARGS[@]}
 
 if [ "$N" -eq 0 ]; then
-    echo "Usage: build.sh <src1.c> [src2.c ...] [O0|O1|O2|O3|Os]"
+    echo "Usage: build.sh <src1.c> [src2.c ...] [O0|O1|O2|O3|Os|Ofast]"
     exit 1
 fi
 
 # --- detect trailing optimization level (case-insensitive) ---
 LASTVAL="${ARGS[$((N-1))]}"
 OPTLEVEL=""
-for L in O0 O1 O2 O3 Os; do
+for L in O0 O1 O2 O3 Os Ofast; do
     if [ "$(printf '%s' "$LASTVAL" | tr '[:upper:]' '[:lower:]')" = "$(printf '%s' "$L" | tr '[:upper:]' '[:lower:]')" ]; then
         OPTLEVEL="$L"
     fi
