@@ -1,54 +1,67 @@
 #!/usr/bin/env bash
 # ============================================================
 #  build.sh - RV32IM freestanding C build (multi-TU, Harvard)
-#  Usage: build.sh <src1.c> [src2.c ...] [O0|O1|O2|O3|Os]
+#  Usage: build.sh [options] <src1.c> [src2.c ...] [O0|O1|O2|O3|Os|Ofast]
+#  Options:
+#    -o <name>    Specify custom base name for output files
 #
 #  Produces TWO separate hex images (instruction memory and
-#  data memory are physically separate on this core, so they
-#  cannot share one flat binary):
+#  data memory are physically separate on this core):
 #     <base>_imem.hex   -> .text                (code only)
 #     <base>_dmem.hex   -> .rodata/.data/.sdata/.bss (globals)
 # ============================================================
 
 set -u
 
-ARGS=("$@")
-N=${#ARGS[@]}
-
-if [ "$N" -eq 0 ]; then
-    echo "Usage: build.sh <src1.c> [src2.c ...] [O0|O1|O2|O3|Os|Ofast]"
-    exit 1
-fi
-
-# --- detect trailing optimization level (case-insensitive) ---
-LASTVAL="${ARGS[$((N-1))]}"
+SOURCES=()
+CUSTOM_BASENAME=""
 OPTLEVEL=""
-for L in O0 O1 O2 O3 Os Ofast; do
-    if [ "$(printf '%s' "$LASTVAL" | tr '[:upper:]' '[:lower:]')" = "$(printf '%s' "$L" | tr '[:upper:]' '[:lower:]')" ]; then
-        OPTLEVEL="$L"
-    fi
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -o)
+            if [ -n "${2:-}" ]; then
+                CUSTOM_BASENAME="$2"
+                shift 2
+            else
+                echo "ERROR: -o requires a filename argument."
+                exit 1
+            fi
+            ;;
+        *)
+            LOWER_ARG="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+            case "$LOWER_ARG" in
+                o0|o1|o2|o3|os|ofast)
+                    OPTLEVEL="$1"
+                    shift
+                    ;;
+                *)
+                    SOURCES+=("$1")
+                    shift
+                    ;;
+            esac
+            ;;
+    esac
 done
 
-if [ -n "$OPTLEVEL" ]; then
-    SRCCOUNT=$((N - 1))
-else
+# Set defaults if not provided
+if [ -z "$OPTLEVEL" ]; then
     OPTLEVEL="O0"
-    SRCCOUNT=$N
 fi
 
+SRCCOUNT=${#SOURCES[@]}
+
 if [ "$SRCCOUNT" -eq 0 ]; then
-    echo "ERROR: no source files provided."
+    echo "Usage: build.sh [-o custom_name] <src1.c> [src2.c ...] [O0|O1|O2|O3|Os|Ofast]"
     exit 1
 fi
 
-SOURCES=()
-for ((I=0; I<SRCCOUNT; I++)); do
-    SRC="${ARGS[$I]}"
+# Validate sources exist
+for SRC in "${SOURCES[@]}"; do
     if [ ! -e "$SRC" ]; then
         echo "ERROR: source file \"$SRC\" not found."
         exit 1
     fi
-    SOURCES+=("$SRC")
 done
 
 OPTFLAG="-$OPTLEVEL"
@@ -76,7 +89,7 @@ DMEM_BASE=0x00000000
 STATIC_RESERVE_KB=4
 
 IMEM_SIZE=$((IMEM_DEPTH * IMEM_UNIT))
-DMEM_SIZE=$((DMEM_DEPTH * DMEM_UNIT * DMEM_MULT))
+DMEM_SIZE=$((DMEM_DEPTH * IMEM_UNIT * DMEM_MULT))
 STATIC_RESERVE=$((STATIC_RESERVE_KB * 1024))
 
 if [ "$STATIC_RESERVE" -ge "$DMEM_SIZE" ]; then
@@ -94,9 +107,15 @@ command -v "$GCC" >/dev/null 2>&1 || { echo "ERROR: $GCC not found in PATH."; ex
 command -v "$OBJCOPY" >/dev/null 2>&1 || { echo "ERROR: $OBJCOPY not found in PATH."; exit 1; }
 command -v "$OBJDUMP" >/dev/null 2>&1 || { echo "ERROR: $OBJDUMP not found in PATH."; exit 1; }
 
-FIRST_SRC="${SOURCES[0]}"
-BASE_NOEXT="$(basename "$FIRST_SRC")"
-BASENAME="${BASE_NOEXT%.*}"
+# Determine output base name (custom or derived from first source)
+if [ -n "$CUSTOM_BASENAME" ]; then
+    BASENAME="$CUSTOM_BASENAME"
+else
+    FIRST_SRC="${SOURCES[0]}"
+    BASE_NOEXT="$(basename "$FIRST_SRC")"
+    BASENAME="${BASE_NOEXT%.*}"
+fi
+
 OUT_ASM="${BASENAME}.s"
 OUT_IMEM_HEX="${BASENAME}_imem.hex"
 OUT_DMEM_HEX="${BASENAME}_dmem.hex"
@@ -109,7 +128,6 @@ IMEM_BIN="__out_tmp_imem.bin"
 DMEM_BIN="__out_tmp_dmem.bin"
 BIN2HEX_PY_HIGH_ENDIAN="__bin2hex_tmp_high_endian.py"
 BIN2HEX_PY_LITTLE_ENDIAN="__bin2hex_tmp_little_endian.py"
-
 
 CFLAGS="-march=rv32imf -mabi=ilp32 -ffreestanding -nostdlib -fno-pic -fno-pie -ffunction-sections -fdata-sections -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables"
 
@@ -145,10 +163,6 @@ cat > "$STARTUP_S" <<'EOF'
     .section .text.start,"ax"
     .globl _start
 _start:
-    /* gp must be set with relaxation disabled for this one
-       instruction: relaxation is what turns other loads/stores
-       into gp-relative accesses, so gp itself can't rely on
-       that not-yet-initialized value while being set. */
     .option push
     .option norelax
     la gp, __global_pointer$
@@ -179,11 +193,6 @@ done
 
 # ------------------------------------------------------------
 # Linker script: two distinct memory regions (Harvard).
-# IMEM gets .text only. DMEM gets everything a load/store can
-# touch: .rodata, .data, .sdata (small data), .bss/.sbss.
-# The whole DMEM footprint must fit in STATIC_RESERVE bytes,
-# enforced by the ASSERT below - the build fails loudly if you
-# blow the budget instead of silently corrupting the stack.
 # ------------------------------------------------------------
 cat > "$LDSCRIPT" <<EOF
 ENTRY(_start)
@@ -230,9 +239,6 @@ EOF
 
 "$OBJDUMP" -d "$ELF" > "$OUT_ASM" || build_error
 
-# Two independent flat binaries - IMEM and DMEM never overlap
-# on the wire even though both regions are ORIGIN 0x0 in the
-# core's address space.
 "$OBJCOPY" -O binary -j .text "$ELF" "$IMEM_BIN" || build_error
 "$OBJCOPY" -O binary -j .rodata -j .data -j .sdata -j .bss "$ELF" "$DMEM_BIN" || build_error
 
