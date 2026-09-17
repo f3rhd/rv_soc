@@ -1,5 +1,5 @@
 #include "../libc-baremetal/include/led.h"
-#include "../libc-baremetal/include/st7735.h"
+#include "../libc-baremetal/include/graphics.h"
 
 
 #define SCREEN_W 128
@@ -157,22 +157,22 @@ static void spinning_cube_demo(void) {
             &py7
         );
 
-        st7735_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_W, SCREEN_H);
+        rv_soc_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_W, SCREEN_H);
 
-        st7735_draw_line(ST7735_CYAN, px0, py0, px1, py1);
-        st7735_draw_line(ST7735_CYAN, px1, py1, px2, py2);
-        st7735_draw_line(ST7735_CYAN, px2, py2, px3, py3);
-        st7735_draw_line(ST7735_CYAN, px3, py3, px0, py0);
+        rv_soc_draw_line(ST7735_CYAN, px0, py0, px1, py1);
+        rv_soc_draw_line(ST7735_CYAN, px1, py1, px2, py2);
+        rv_soc_draw_line(ST7735_CYAN, px2, py2, px3, py3);
+        rv_soc_draw_line(ST7735_CYAN, px3, py3, px0, py0);
     
-        st7735_draw_line(ST7735_YELLOW, px4, py4, px5, py5);
-        st7735_draw_line(ST7735_YELLOW, px5, py5, px6, py6);
-        st7735_draw_line(ST7735_YELLOW, px6, py6, px7, py7);
-        st7735_draw_line(ST7735_YELLOW, px7, py7, px4, py4);
+        rv_soc_draw_line(ST7735_YELLOW, px4, py4, px5, py5);
+        rv_soc_draw_line(ST7735_YELLOW, px5, py5, px6, py6);
+        rv_soc_draw_line(ST7735_YELLOW, px6, py6, px7, py7);
+        rv_soc_draw_line(ST7735_YELLOW, px7, py7, px4, py4);
     
-        st7735_draw_line(ST7735_WHITE, px0, py0, px4, py4);
-        st7735_draw_line(ST7735_WHITE, px1, py1, px5, py5);
-        st7735_draw_line(ST7735_WHITE, px2, py2, px6, py6);
-        st7735_draw_line(ST7735_WHITE, px3, py3, px7, py7);
+        rv_soc_draw_line(ST7735_WHITE, px0, py0, px4, py4);
+        rv_soc_draw_line(ST7735_WHITE, px1, py1, px5, py5);
+        rv_soc_draw_line(ST7735_WHITE, px2, py2, px6, py6);
+        rv_soc_draw_line(ST7735_WHITE, px3, py3, px7, py7);
 
         angle_x += 3;
         angle_y += 2;

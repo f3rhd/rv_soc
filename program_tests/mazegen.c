@@ -1,5 +1,5 @@
 #include "../libc-baremetal/include/led.h"
-#include "../libc-baremetal/include/st7735.h"
+#include "../libc-baremetal/include/graphics.h"
 
 #define SCREEN_WIDTH  128
 #define SCREEN_HEIGHT 160
@@ -49,16 +49,16 @@ void draw_cell(unsigned char wall_mask, int cx, int cy, unsigned floor_color) {
     int px = cx * CELL_PX;
     int py = cy * CELL_PX;
 
-    st7735_draw_rectangle(floor_color, px, py, CELL_PX, CELL_PX);
+    rv_soc_draw_rectangle(floor_color, px, py, CELL_PX, CELL_PX);
 
     if (wall_mask & WALL_N)
-        st7735_draw_rectangle(COLOR_WALL, px, py, CELL_PX, 1);
+        rv_soc_draw_rectangle(COLOR_WALL, px, py, CELL_PX, 1);
     if (wall_mask & WALL_S)
-        st7735_draw_rectangle(COLOR_WALL, px, py + CELL_PX - 1, CELL_PX, 1);
+        rv_soc_draw_rectangle(COLOR_WALL, px, py + CELL_PX - 1, CELL_PX, 1);
     if (wall_mask & WALL_W)
-        st7735_draw_rectangle(COLOR_WALL, px, py, 1, CELL_PX);
+        rv_soc_draw_rectangle(COLOR_WALL, px, py, 1, CELL_PX);
     if (wall_mask & WALL_E)
-        st7735_draw_rectangle(COLOR_WALL, px + CELL_PX - 1, py, 1, CELL_PX);
+        rv_soc_draw_rectangle(COLOR_WALL, px + CELL_PX - 1, py, 1, CELL_PX);
 }
 
 
@@ -204,15 +204,12 @@ int main() {
     unsigned seed = 0xBEEFu; 
     unsigned char maze[MAZE_H][MAZE_W]; 
 
-    st7735_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    rv_soc_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    for (;;) {
         generate_maze(maze, &seed);
         delay(200000); 
         solve_maze(maze);
         delay(600000); 
 
         seed = seed * 2654435761u + 12345u;
-        st7735_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-    }
 }

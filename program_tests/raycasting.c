@@ -1,6 +1,5 @@
-#include "../libc-baremetal/include/led.h"
-#include "../libc-baremetal/include/st7735.h"
-#include "../libc-baremetal/include/system.h"
+#include "libc-baremetal/include/led.h"
+#include "libc-baremetal/include/graphics.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 160
@@ -78,6 +77,12 @@ static float g_plane_y;
 static float g_angle;
 static unsigned g_turn_bias;
 
+/* Per-column results from the DDA pass, cached so the row pass can
+ * look up "what does column x show at height y" without re-raycasting. */
+static int g_draw_start[SCREEN_WIDTH];
+static int g_draw_end[SCREEN_WIDTH];
+static unsigned g_col_color[SCREEN_WIDTH];
+
 int map_is_wall(int mx, int my) {
     if (mx < 0 || mx >= MAP_W || my < 0 || my >= MAP_H)
         return 1;
@@ -117,7 +122,9 @@ void auto_move(void) {
     }
 }
 
-void render_column(int x) {
+/* Casts the ray for column x and stores the hit info instead of drawing.
+ * This is the same DDA as before; only the "draw now" step moved out. */
+void compute_column(int x) {
     float camera_x = 2.0f * x / (float)SCREEN_WIDTH - 1.0f;
     float ray_dir_x = g_dir_x + g_plane_x * camera_x;
     float ray_dir_y = g_dir_y + g_plane_y * camera_x;
@@ -187,28 +194,43 @@ void render_column(int x) {
     if (draw_end >= SCREEN_HEIGHT)
         draw_end = SCREEN_HEIGHT - 1;
 
-    unsigned color =
-        (side == 1) ? WALL_COLOR_DARK[wall_type] : WALL_COLOR[wall_type];
+    g_draw_start[x] = draw_start;
+    g_draw_end[x] = draw_end;
+    g_col_color[x] = (side == 1) ? WALL_COLOR_DARK[wall_type] : WALL_COLOR[wall_type];
+}
 
-    if (draw_start > 0)
-        st7735_draw_rectangle(COLOR_CEIL, x, 0, 1, draw_start);
+static unsigned pixel_color(int x, int y) {
+    if (y < g_draw_start[x])
+        return COLOR_CEIL;
+    if (y > g_draw_end[x])
+        return COLOR_FLOOR;
+    return g_col_color[x];
+}
 
-    st7735_draw_rectangle(color, x, draw_start, 1, draw_end - draw_start + 1);
+void render_row(int y) {
+    int run_start = 0;
+    unsigned run_color = pixel_color(0, y);
 
-    if (draw_end < SCREEN_HEIGHT - 1)
-        st7735_draw_rectangle(
-            COLOR_FLOOR,
-            x,
-            draw_end + 1,
-            1,
-            SCREEN_HEIGHT - 1 - draw_end
-        );
+    for (int x = 1; x < SCREEN_WIDTH; x++) {
+        unsigned c = pixel_color(x, y);
+        if (c != run_color) {
+            rv_soc_draw_rectangle(run_color, run_start, y, x - run_start, 1);
+            run_start = x;
+            run_color = c;
+        }
+    }
+    rv_soc_draw_rectangle(run_color, run_start, y, SCREEN_WIDTH - run_start, 1);
 }
 
 void render_frame(void) {
-    int x;
+    int x, y;
+
     for (x = 0; x < SCREEN_WIDTH; x++) {
-        render_column(x);
+        compute_column(x);
+    }
+
+    for (y = 0; y < SCREEN_HEIGHT; y++) {
+        render_row(y);
     }
 }
 
@@ -231,7 +253,5 @@ int main() {
         led_write(
             ((unsigned)(g_pos_x * 10.0f) << 8) | (unsigned)(g_pos_y * 10.0f)
         );
-
-        delay(30, 100'000'000);
     }
 }
