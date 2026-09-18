@@ -71,7 +71,7 @@ module graphics_unit #(
 
 
     fifo #(
-        .BUFFER_SIZE(GRAPHICS_INSTRUCTION_BUFFER_SIZE  /* default 256 * 4 */),
+        .BUFFER_SIZE(GRAPHICS_INSTRUCTION_BUFFER_SIZE * 4  /* default 256 * 4 */),
         .DATA_WIDTH (SPAN_DATA_BITS  /* default 32 */)
     ) span_fifo (
         .clk                (clk),
