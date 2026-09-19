@@ -51,7 +51,7 @@ int main() {
                 pos.y = SCREEN_HEIGHT - RADIUS;
         }
 
-        rv_soc_draw_circle(current_color, pos.x, pos.y, RADIUS);
+        rv_soc_draw_circle(current_color,1, pos.x, pos.y, RADIUS);
         seg_write_hex(((pos.x & 0xFF) << 8) | (pos.y & 0xFF));
         delay(50'000);
     }

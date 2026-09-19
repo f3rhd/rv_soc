@@ -111,8 +111,8 @@ int main() {
             }
         }
 
-        rv_soc_draw_circle(ST7735_RED, pos_r.x, pos_r.y, RADIUS);
-        rv_soc_draw_circle(ST7735_BLUE, pos_b.x, pos_b.y, RADIUS);
+        rv_soc_draw_circle(ST7735_RED, 1,pos_r.x, pos_r.y, RADIUS);
+        rv_soc_draw_circle(ST7735_BLUE,1, pos_b.x, pos_b.y, RADIUS);
 
         seg_write_hex(((pos_r.x & 0xFF) << 8) | (pos_r.y & 0xFF));
         led_write(((pos_b.x & 0xFF) << 8) | (pos_b.y & 0xFF));
