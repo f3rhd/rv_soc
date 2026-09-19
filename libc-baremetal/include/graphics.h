@@ -99,6 +99,7 @@ void rv_soc_draw_line(
 );
 void rv_soc_draw_circle(
     unsigned color,
+    int fill,
     int center_x,
     int center_y,
     int radius

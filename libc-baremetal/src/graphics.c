@@ -98,6 +98,7 @@ static float my_cosf(float x) {
 
 void rv_soc_draw_circle(
     unsigned int color,
+    int fill,
     int center_x,
     int center_y,
     int radius
@@ -114,12 +115,16 @@ void rv_soc_draw_circle(
         uint32_t x2 = (uint32_t)(center_x + (int)(radius * my_cosf(angle2)));
         uint32_t y2 = (uint32_t)(center_y + (int)(radius * my_sinf(angle2)));
 
-        rv_soc_draw_triangle(
-            color, 
-            0, 
-            (uint32_t)center_x, (uint32_t)center_y, 
-            x1, y1, 
-            x2, y2
-        );
+        if(fill) {
+            rv_soc_draw_triangle(
+                color, 
+                0, 
+                (uint32_t)center_x, (uint32_t)center_y, 
+                x1, y1, 
+                x2, y2
+            );
+        } else {
+            rv_soc_draw_line(color, x1,y1, x2,y2);
+        }
     }
 }
