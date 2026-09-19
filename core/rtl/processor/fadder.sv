@@ -94,6 +94,9 @@ module fadder (
             shift_amount                               <= 0;
             result_sign                                <= 0;
             preliminary_sig                            <= 0;
+            g                                          <= 0;
+            r                                          <= 0;
+            s                                          <= 0;
             exp_result                                 <= 0;
             exp_diff                                   <= 0;
             logical_shift                              <= 0;
@@ -115,6 +118,9 @@ module fadder (
                     f2_exp                                     <= 0;
                     shift_amount                               <= 0;
                     result_sign                                <= 0;
+                    g                                          <= 0;
+                    r                                          <= 0;
+                    s                                          <= 0;
                     preliminary_sig                            <= 0;
                     exp_result                                 <= 0;
                     exp_diff                                   <= 0;
@@ -152,9 +158,7 @@ module fadder (
                         exp_result      <= f1_exp;
                         preliminary_sig <= f1_sig;
                         state           <= S_DONE;
-                    end
-                    else if ((f1_exp == 8'hFF && f1_sig[22:0] != 0) || 
-                             (f2_exp == 8'hFF && f2_sig[22:0] != 0)) begin
+                    end else if ((f1_exp == 8'hFF && f1_sig[22:0] != 0) || (f2_exp == 8'hFF && f2_sig[22:0] != 0)) begin
                         result_sign     <= 1'b0;
                         exp_result      <= 8'hFF;
                         preliminary_sig <= {1'b1, 23'h400000};
@@ -231,11 +235,11 @@ module fadder (
                 end
                 S_NORMALIZE_PRELIMINARY: begin
                     if (f1_sign == f2_sign && carry_out) begin
-                        preliminary_sig <= {carry_out, preliminary_sig[23:1]};
+                        preliminary_sig                  <= {carry_out, preliminary_sig[23:1]};
                         preliminary_before_normalization <= preliminary_sig;
-                        normalization_right_shift <= 1;
-                        exp_result <= exp_result + 1;
-                        state <= S_ADJUST_R_S;
+                        normalization_right_shift        <= 1;
+                        exp_result                       <= exp_result + 1;
+                        state                            <= S_ADJUST_R_S;
                     end else if (preliminary_sig == 0 && g == 0) begin
                         exp_result <= 8'd0;
                         state      <= S_COMPUTE_SIGN;
@@ -245,13 +249,11 @@ module fadder (
                             state <= S_ADJUST_R_S;
                         end else begin
                             if (!normalization_left_shift) begin
-                                preliminary_sig <= {preliminary_sig[22:0], g};
+                                preliminary_sig          <= {preliminary_sig[22:0], g};
                                 normalization_left_shift <= 1;
                             end else begin
                                 normalizaiton_had_more_than_one_left_shift <= 1'b1;
-                                preliminary_sig <= {
-                                    preliminary_sig[22:0], 1'b0
-                                };
+                                preliminary_sig                            <= {preliminary_sig[22:0], 1'b0};
                             end
                             exp_result <= exp_result - 1;
                         end
@@ -259,7 +261,7 @@ module fadder (
                 end
                 S_ADJUST_R_S: begin
                     state <= S_ROUND;
-                    if(!normalization_left_shift && !normalization_right_shift) begin
+                    if (!normalization_left_shift && !normalization_right_shift) begin
                         r <= g;
                         s <= r | s;
                     end else if (normalization_right_shift) begin
