@@ -236,7 +236,7 @@ SECTIONS
 ASSERT(__static_used <= __static_reserve, "ERROR: global/static data footprint exceeds STATIC_RESERVE_KB budget - shrink your globals or raise the reserve in build.sh")
 EOF
 
-"$GCC" $CFLAGS $OPTFLAG -nostartfiles -T "$LDSCRIPT" -Wl,-e,_start -Wl,--gc-sections -Wl,--no-check-sections -o "$ELF" "${OBJLIST[@]}" || build_error
+"$GCC" $CFLAGS $OPTFLAG -nostartfiles -T "$LDSCRIPT" -Wl,-e,_start -Wl,--gc-sections -Wl,--no-check-sections -o "$ELF" "${OBJLIST[@]}" -lgcc || build_error
 
 "$OBJDUMP" -d "$ELF" > "$OUT_ASM" || build_error
 
