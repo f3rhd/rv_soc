@@ -106,12 +106,12 @@ void render_clock(unsigned h, unsigned m, unsigned s) {
 }
 
 int main() {
-    static unsigned hours = START_HOUR;
-    static unsigned minutes = START_MINUTE;
-    static unsigned seconds = START_SECOND;
+    unsigned hours = START_HOUR;
+    unsigned minutes = START_MINUTE;
+    unsigned seconds = START_SECOND;
 
-    static unsigned long last_ms;
-    static unsigned long accumulated_ms;
+    unsigned long last_ms = 0;
+    unsigned long accumulated_ms = 0;
 
     rv_soc_draw_rectangle(COLOR_BG, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -149,6 +149,6 @@ int main() {
             led_write(seconds);
         }
 
-        delay(50, SYSTEM_HZ);
+        delay(10, SYSTEM_HZ);
     }
 }
