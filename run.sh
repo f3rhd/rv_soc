@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================
-#  build.sh - RV32IM freestanding C build (multi-TU, Harvard)
-#  Usage: build.sh [options] <src1.c> [src2.c ...] [O0|O1|O2|O3|Os|Ofast]
+#  run.sh - RV32IMF freestanding C build (multi-TU, Harvard)
+#  Usage: run.sh [options] <src1.c> [src2.c ...] [O0|O1|O2|O3|Os|Ofast]
 #  Options:
 #    -o <name>    Specify custom base name for output files
 #
