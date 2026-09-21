@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-module seven_seg_display (
+module seven_seg_display_controller (
     input logic clk,
     input logic reset,
     input logic [15:0] i_display_val,

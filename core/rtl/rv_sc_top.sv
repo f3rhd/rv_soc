@@ -94,7 +94,7 @@ module rv_sc_top (
         .st7735_dc   (dc),
         .st7735_cs   (cs)
     );
-    seven_seg_display seven_seg_display (
+    seven_seg_display_controller seven_seg_display_controller (
         .clk(clk),
         .reset(bootloaderi.core_reset || sys_reset),
         .i_display_val(segment_value),
