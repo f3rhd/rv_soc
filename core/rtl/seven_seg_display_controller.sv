@@ -31,36 +31,46 @@ module seven_seg_display_controller (
         endcase
     end
 
+    logic [3:0] raw_anode;
+    logic [6:0] raw_seg;
+
     always_comb begin
         case (active_digit)
-            2'b00:   o_an = 4'b1110;
-            2'b01:   o_an = 4'b1101;
-            2'b10:   o_an = 4'b1011;
-            2'b11:   o_an = 4'b0111;
-            default: o_an = 4'b1111;
+            2'b00:   raw_anode = 4'b0001;
+            2'b01:   raw_anode = 4'b0010;
+            2'b10:   raw_anode = 4'b0100;
+            2'b11:   raw_anode = 4'b1000;
+            default: raw_anode = 4'b0000;
         endcase
     end
 
     always_comb begin
         case (current_nibble)
-            4'h0: o_seg = 7'b1000000;  // 0
-            4'h1: o_seg = 7'b1111001;  // 1
-            4'h2: o_seg = 7'b0100100;  // 2
-            4'h3: o_seg = 7'b0110000;  // 3
-            4'h4: o_seg = 7'b0011001;  // 4
-            4'h7: o_seg = 7'b1111000;  // 7
-            4'h8: o_seg = 7'b0000000;  // 8
-            4'hA: o_seg = 7'b0001000;  // A
-            4'hB: o_seg = 7'b0000011;  // b
-            4'hC: o_seg = 7'b1000110;  // C
-            4'hD: o_seg = 7'b0100001;  // d
-            4'hE: o_seg = 7'b0000110;  // E
-            4'hF: o_seg = 7'b0001110;  // F
-            4'h5: o_seg = 7'b0010010;  // 5
-            4'h6: o_seg = 7'b0000010;  // 6
-            4'h9: o_seg = 7'b0010000;  // 9
-            default: o_seg = 7'b1111111;  // Blank
+            4'h0: raw_seg = 7'b0111111;  // 0
+            4'h1: raw_seg = 7'b0000110;  // 1
+            4'h2: raw_seg = 7'b1011011;  // 2
+            4'h3: raw_seg = 7'b1001111;  // 3
+            4'h4: raw_seg = 7'b1100110;  // 4
+            4'h5: raw_seg = 7'b1101101;  // 5
+            4'h6: raw_seg = 7'b1111101;  // 6
+            4'h7: raw_seg = 7'b0000111;  // 7
+            4'h8: raw_seg = 7'b1111111;  // 8
+            4'h9: raw_seg = 7'b1101111;  // 9
+            4'hA: raw_seg = 7'b1110111;  // A
+            4'hB: raw_seg = 7'b1111100;  // b
+            4'hC: raw_seg = 7'b0111001;  // C
+            4'hD: raw_seg = 7'b1011110;  // d
+            4'hE: raw_seg = 7'b1111001;  // E
+            4'hF: raw_seg = 7'b1110001;  // F
+            default: raw_seg = 7'b0000000;  // Blank
         endcase
     end
 
+`ifdef ACTIVE_LOW
+    assign o_an  = ~raw_anode;
+    assign o_seg = ~raw_seg;
+`else
+    assign o_an  = raw_anode;
+    assign o_seg = raw_seg;
+`endif
 endmodule
