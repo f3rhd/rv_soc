@@ -24,89 +24,89 @@ module rv_sc_top (
     // gpio pins [0:GPIO_PIN_AMOUNT-1]
     inout wire [0:26] pins_io
 );
-    localparam unsigned SYSTEM_CLK_HZ = 100_000_000;
-    localparam unsigned GRAPHICS_SPI_CLK_HZ = 25_000_000;
-    localparam unsigned BAUD_RATE = 115200;
-    localparam unsigned HISTORY_SIZE = 8;
-    localparam unsigned I_CACHE_SIZE = 1024 * 32;
-    localparam unsigned D_CACHE_SIZE = 1024 * 32 * 4;
-    localparam unsigned BTB_SIZE = 32;
-    localparam unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 4096 / 4 * 4;
-    localparam unsigned GPIO_PIN_AMOUNT = 27;
+  localparam unsigned SYSTEM_CLK_HZ = 100_000_000;
+  localparam unsigned GRAPHICS_SPI_CLK_HZ = 25_000_000;
+  localparam unsigned BAUD_RATE = 115200;
+  localparam unsigned HISTORY_SIZE = 8;
+  localparam unsigned I_CACHE_SIZE = 1024 * 32;
+  localparam unsigned D_CACHE_SIZE = 1024 * 32 * 4;
+  localparam unsigned BTB_SIZE = 32;
+  localparam unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 4096 / 4 * 4;
+  localparam unsigned GPIO_PIN_AMOUNT = 27;
 
-    assign bootloaderi.rx = rx;
-    assign tx             = bootloaderi.tx;
+  assign bootloaderi.rx = rx;
+  assign tx             = bootloaderi.tx;
 
-    bootloader_if bootloaderi ();
-    graphics_if graphicsi ();
-    gpio_if gpioi ();
-    logic [15:0] segment_value;
-    logic sys_reset;
-    logic sys_reset_done = 0;
+  bootloader_if bootloaderi ();
+  graphics_if graphicsi ();
+  gpio_if gpioi ();
+  logic [15:0] segment_value;
+  logic sys_reset;
+  logic sys_reset_done = 0;
 
-    always_ff @(posedge clk) begin
-        sys_reset <= 0;
-        if (!sys_reset_done) begin
-            sys_reset      <= 1;
-            sys_reset_done <= 1;
-        end
-        graphicsi.graphics_init <= 0;
-        if (sys_reset_done && !graphicsi.graphics_init_done) begin
-            graphicsi.graphics_init <= 1;
-        end
+  always_ff @(posedge clk) begin
+    sys_reset <= 0;
+    if (!sys_reset_done) begin
+      sys_reset      <= 1;
+      sys_reset_done <= 1;
     end
+    graphicsi.graphics_init <= 0;
+    if (sys_reset_done && !graphicsi.graphics_init_done) begin
+      graphicsi.graphics_init <= 1;
+    end
+  end
 
 
-    bootloader #(
-        .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
-        .BAUD_RATE    (BAUD_RATE  /* default 115200 */)
-    ) bootloader (
-        .clk          (clk),
-        .i_reset      (sys_reset),
-        .bootloader_if(bootloaderi)
-    );
-    rv_processor #(
-        .HISTORY_SIZE(HISTORY_SIZE  /* default 10 */),
-        .I_CACHE_SIZE(I_CACHE_SIZE  /* default 1024 */),
-        .D_CACHE_SIZE(D_CACHE_SIZE  /* default 1 << 10 */),
-        .BTB_SIZE    (BTB_SIZE  /* default 128 */)
-    ) rv_processor (
-        .clk          (clk),
-        .reset        (bootloaderi.core_reset || sys_reset),
-        .bootloader_if(bootloaderi),
-        .graphics_if  (graphicsi),
-        .gpio_if      (gpioi),
-        .o_reg16_f4   (led),
-        .o_reg16_f8   (segment_value)
-    );
-    graphics_unit #(
-        .GRAPHICS_INSTRUCTION_BUFFER_SIZE(GRAPHICS_INSTRUCTION_BUFFER_SIZE  /* default 256 * 4 */),
-        .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
-        .SPI_CLK_HZ(GRAPHICS_SPI_CLK_HZ  /* default 25_000_000 */)
-    ) graphics_unit (
-        .clk         (clk),
-        .i_reset     (sys_reset),
-        .i_soft_reset(bootloaderi.core_reset),
-        .graphics_if (graphicsi),
-        .st7735_sck  (sck),
-        .st7735_sda  (sda),
-        .st7735_res  (res),
-        .st7735_dc   (dc),
-        .st7735_cs   (cs)
-    );
-    seven_seg_display_controller seven_seg_display_controller (
-        .clk(clk),
-        .reset(bootloaderi.core_reset || sys_reset),
-        .i_display_val(segment_value),
-        .o_seg(seg),
-        .o_an(an)
-    );
-    gpio_controller #(
-        .PIN_AMOUNT(GPIO_PIN_AMOUNT  /* default 27 */)
-    ) gpio_controller (
-        .clk    (clk),
-        .i_reset(bootloaderi.core_reset || sys_reset),
-        .gpioi  (gpioi),
-        .pins_io(pins_io)
-    );
+  bootloader #(
+    .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
+    .BAUD_RATE    (BAUD_RATE  /* default 115200 */)
+  ) bootloader (
+    .clk          (clk),
+    .i_reset      (sys_reset),
+    .bootloader_if(bootloaderi)
+  );
+  rv_processor #(
+    .HISTORY_SIZE(HISTORY_SIZE  /* default 10 */),
+    .I_CACHE_SIZE(I_CACHE_SIZE  /* default 1024 */),
+    .D_CACHE_SIZE(D_CACHE_SIZE  /* default 1 << 10 */),
+    .BTB_SIZE    (BTB_SIZE  /* default 128 */)
+  ) rv_processor (
+    .clk          (clk),
+    .reset        (bootloaderi.core_reset || sys_reset),
+    .bootloader_if(bootloaderi),
+    .graphics_if  (graphicsi),
+    .gpio_if      (gpioi),
+    .o_reg16_f4   (led),
+    .o_reg16_f8   (segment_value)
+  );
+  graphics_unit #(
+    .GRAPHICS_INSTRUCTION_BUFFER_SIZE(GRAPHICS_INSTRUCTION_BUFFER_SIZE  /* default 256 * 4 */),
+    .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
+    .SPI_CLK_HZ(GRAPHICS_SPI_CLK_HZ  /* default 25_000_000 */)
+  ) graphics_unit (
+    .clk         (clk),
+    .i_reset     (sys_reset),
+    .i_soft_reset(bootloaderi.core_reset),
+    .graphics_if (graphicsi),
+    .st7735_sck  (sck),
+    .st7735_sda  (sda),
+    .st7735_res  (res),
+    .st7735_dc   (dc),
+    .st7735_cs   (cs)
+  );
+  seven_seg_display_controller seven_seg_display_controller (
+    .clk(clk),
+    .reset(bootloaderi.core_reset || sys_reset),
+    .i_display_val(segment_value),
+    .o_seg(seg),
+    .o_an(an)
+  );
+  gpio_controller #(
+    .PIN_AMOUNT(GPIO_PIN_AMOUNT  /* default 27 */)
+  ) gpio_controller (
+    .clk    (clk),
+    .i_reset(bootloaderi.core_reset || sys_reset),
+    .gpioi  (gpioi),
+    .pins_io(pins_io)
+  );
 endmodule
