@@ -19,9 +19,7 @@ module bootloader #(
     SEND_BOOT_SIGNAL,
     GET_PROGRAM_SIZE,
     INSTRUCTION_BUILD,
-    STATIC_DATA_SIGNAL_SEND,
-    GET_STATIC_DATA_SIZE,
-    STATIC_DATA_BUILD
+    STATIC_DATA_SIGNAL_SEND
   } bootloader_state;
   bootloader_state state = IDLE;
 
@@ -39,6 +37,7 @@ module bootloader #(
   logic [31:0] sent_instruction_bytes_counter;
 
   logic [ 7:0] tx_data;
+  logic        static_data_phase;
   uart_rx_engine #(
     .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
     .BAUD_RATE    (BAUD_RATE  /* default 115200 */)
@@ -69,6 +68,7 @@ module bootloader #(
       program_size_byte_counter       <= 0;
       sent_instruction_bytes_counter  <= 0;
       bootloader_if.core_reset        <= 0;
+      static_data_phase               <= 0;
       state                           <= IDLE;
     end
     else begin
@@ -83,6 +83,7 @@ module bootloader #(
           program_size_byte_counter      <= 0;
           sent_instruction_bytes_counter <= 0;
           bootloader_if.instruction      <= 0;
+          static_data_phase              <= 0;
           if (rx_byte_ready && rx_byte_out == BEGIN_SIGNAL) begin
             // Each time we load a new program we should set this flag to 0
             // So fetch unit in the processor can write the program to its instruction memory
@@ -113,16 +114,30 @@ module bootloader #(
         end
         INSTRUCTION_BUILD: begin
           if (sent_instruction_bytes_counter >= program_size) begin
-            state                          <= STATIC_DATA_SIGNAL_SEND;
+            state <= static_data_phase ? IDLE : STATIC_DATA_SIGNAL_SEND;
+            if (static_data_phase) begin
+              bootloader_if.load_done <= 1;
+            end
             sent_instruction_bytes_counter <= 0;
             instruction_byte_counter       <= 0;
           end
           else if (rx_byte_ready) begin
-            bootloader_if.instruction[(3-instruction_byte_counter)*8+:8] <= rx_byte_out;
+            if (!static_data_phase) begin
+              bootloader_if.instruction[(3-instruction_byte_counter)*8+:8] <= rx_byte_out;
+            end
+            else begin
+              bootloader_if.static_data[(3-instruction_byte_counter)*8+:8] <= rx_byte_out;
+            end
             if (instruction_byte_counter == 3) begin
-              instruction_byte_counter        <= 0;
-              bootloader_if.instruction_ready <= 1;
-              sent_instruction_bytes_counter  <= sent_instruction_bytes_counter + 4;
+              instruction_byte_counter <= 0;
+              if (!static_data_phase) begin
+                bootloader_if.instruction_ready <= 1;
+              end
+              else begin
+                bootloader_if.static_data_ready <= 1;
+              end
+
+              sent_instruction_bytes_counter <= sent_instruction_bytes_counter + 4;
             end
             else begin
               instruction_byte_counter <= instruction_byte_counter + 1;
@@ -130,39 +145,10 @@ module bootloader #(
           end
         end
         STATIC_DATA_SIGNAL_SEND: begin
-          tx_begin <= 1;
-          tx_data  <= MEMORY_SIGNAL;
-          state    <= GET_STATIC_DATA_SIZE;
-        end
-        GET_STATIC_DATA_SIZE: begin // we are going to use the same registers that were in the GET_PROGRAM_SIZE
-          if (rx_byte_ready) begin
-            program_size[(3-program_size_byte_counter)*8+:8] <= rx_byte_out;
-            if (program_size_byte_counter == 3) begin
-              program_size_byte_counter <= 0;
-              state                     <= STATIC_DATA_BUILD;
-            end
-            else begin
-              program_size_byte_counter <= program_size_byte_counter + 1;
-            end
-          end
-        end
-        STATIC_DATA_BUILD: begin // we are going to use the same registers that were in the INSTRUCTION_BUILD
-          if (sent_instruction_bytes_counter >= program_size) begin
-            bootloader_if.load_done        <= 1;
-            state                          <= IDLE;
-            sent_instruction_bytes_counter <= 0;
-          end
-          else if (rx_byte_ready) begin
-            bootloader_if.static_data[(3-instruction_byte_counter)*8+:8] <= rx_byte_out;
-            if (instruction_byte_counter == 3) begin
-              instruction_byte_counter        <= 0;
-              bootloader_if.static_data_ready <= 1;
-              sent_instruction_bytes_counter  <= sent_instruction_bytes_counter + 4;
-            end
-            else begin
-              instruction_byte_counter <= instruction_byte_counter + 1;
-            end
-          end
+          tx_begin          <= 1;
+          tx_data           <= MEMORY_SIGNAL;
+          state             <= GET_PROGRAM_SIZE;
+          static_data_phase <= 1;
         end
         default: state <= IDLE;
       endcase
