@@ -13,15 +13,15 @@
 
 module tb_rv_soc;
 
-  logic clk = 0;
-  logic reset = 0;
-  logic print = 1;
+  logic        clk = 0;
+  logic        reset = 0;
+  logic        print = 1;
 
 
-  int soc_log_file;
-  int graphics_dispatch_log_file;
-  int graphics_instr_complete_file;
-  wire [0:26] pins_io;
+  int          soc_log_file;
+  int          graphics_dispatch_log_file;
+  int          graphics_instr_complete_file;
+  wire  [0:26] pins_io;
 
   bootloader_if bootloader_if ();
   graphics_if graphics_if ();
@@ -42,8 +42,8 @@ module tb_rv_soc;
 
   graphics_unit #(
     .GRAPHICS_INSTRUCTION_BUFFER_SIZE(8192 / 8 * 4  /* default 256 * 4 */),
-    .SYSTEM_CLK_HZ(100_000_000  /* default 100_000_000 */),
-    .SPI_CLK_HZ(50_000_000  /* default 25_000_000 */)
+    .SYSTEM_CLK_HZ                   (100_000_000  /* default 100_000_000 */),
+    .SPI_CLK_HZ                      (50_000_000  /* default 25_000_000 */)
   ) graphics_unit (
     .clk        (clk),
     .i_reset    (reset),
@@ -130,13 +130,13 @@ module tb_rv_soc;
 
       if (rv_processor.execution_if.btb_write) begin
         $fdisplay(
-            soc_log_file,
-            "[Time: %0t] BranchTableBank[0x%h][0x%h] <- instruction_addr : 0x%h | target_addr : 0x%h | is_jump : 0x%h",
-            $time, rv_processor.fetch.btb.write_set_id,
-            rv_processor.fetch.btb.set_allocation_counter[rv_processor.fetch.btb.write_set_id],
-            rv_processor.execution_if.execution_instruction_addr * 4,
-            rv_processor.execution_if.btb_branch_target_addr * 4,
-            rv_processor.execution_if.btb_write_jump);
+          soc_log_file,
+          "[Time: %0t] BranchTableBank[0x%h][0x%h] <- instruction_addr : 0x%h | target_addr : 0x%h | is_jump : 0x%h",
+          $time, rv_processor.fetch.btb.write_set_id,
+          rv_processor.fetch.btb.set_allocation_counter[rv_processor.fetch.btb.write_set_id],
+          rv_processor.execution_if.execution_instruction_addr * 4,
+          rv_processor.execution_if.btb_branch_target_addr * 4,
+          rv_processor.execution_if.btb_write_jump);
       end
 
 

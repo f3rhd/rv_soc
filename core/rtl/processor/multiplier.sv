@@ -5,17 +5,17 @@
  */
 
 module multiplier #(
-    parameter unsigned IN_WIDTH = 32
+  parameter unsigned IN_WIDTH = 32
 ) (
-    input logic clk,
-    input logic [IN_WIDTH-1:0] i_multiplicand,
-    input logic [IN_WIDTH-1:0] i_multiplier,
-    input logic [1:0] i_mul_type,
-    input logic i_begin,
-    input logic i_reset,
-    output logic [IN_WIDTH*2-1:0] o_full_product,
-    output logic [IN_WIDTH-1:0] o_result,
-    output logic o_done
+  input  logic                  clk,
+  input  logic [  IN_WIDTH-1:0] i_multiplicand,
+  input  logic [  IN_WIDTH-1:0] i_multiplier,
+  input  logic [           1:0] i_mul_type,
+  input  logic                  i_begin,
+  input  logic                  i_reset,
+  output logic [IN_WIDTH*2-1:0] o_full_product,
+  output logic [  IN_WIDTH-1:0] o_result,
+  output logic                  o_done
 );
   typedef enum logic [2:0] {
     MULH      = 3'b000,

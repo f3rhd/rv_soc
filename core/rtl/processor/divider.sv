@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 module divider #(
-    parameter unsigned WIDTH = 32
+  parameter unsigned WIDTH = 32
 ) (
-    input logic clk,
-    input logic [WIDTH-1:0] i_dividend,
-    input logic [WIDTH-1:0] i_divisor,
-    input logic [1:0] i_div_type,
-    input logic i_begin,
-    input logic i_reset,
-    output logic [WIDTH-1:0] o_result,
-    output logic o_done
+  input  logic             clk,
+  input  logic [WIDTH-1:0] i_dividend,
+  input  logic [WIDTH-1:0] i_divisor,
+  input  logic [      1:0] i_div_type,
+  input  logic             i_begin,
+  input  logic             i_reset,
+  output logic [WIDTH-1:0] o_result,
+  output logic             o_done
 );
   typedef enum logic [2:0] {
     DIV       = 3'b000,

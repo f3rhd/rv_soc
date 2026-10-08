@@ -6,17 +6,17 @@
 
 `include "execution_interface.svh"
 module btb #(
-    parameter SIZE = 32,
-    parameter ADDRESS_WIDTH = 12
+  parameter SIZE          = 32,
+  parameter ADDRESS_WIDTH = 12
 ) (
-    input logic clk,
-    input logic i_reset,
-    input logic i_enable,
-    input logic [ADDRESS_WIDTH-1:0] i_branch_addr_read,
-    execution_if.fetch_consumer exi,
-    output logic [ADDRESS_WIDTH-1:0] o_target_addr,
-    output logic o_hit,
-    output logic o_hit_was_jump
+  input  logic                                           clk,
+  input  logic                                           i_reset,
+  input  logic                                           i_enable,
+  input  logic                       [ADDRESS_WIDTH-1:0] i_branch_addr_read,
+         execution_if.fetch_consumer                     exi,
+  output logic                       [ADDRESS_WIDTH-1:0] o_target_addr,
+  output logic                                           o_hit,
+  output logic                                           o_hit_was_jump
 );
   localparam NUM_WAYS = 4;
   localparam NUM_SETS = SIZE / NUM_WAYS;
@@ -30,18 +30,18 @@ module btb #(
     logic                     is_jump;
   } btb_entry_t;
 
-  logic [NUM_BITS_FOR_WAY_ID-1:0] set_allocation_counter[0:NUM_SETS-1];
-  btb_entry_t branch_table[0:NUM_SETS-1][0:NUM_WAYS-1];
+  logic       [NUM_BITS_FOR_WAY_ID-1:0] set_allocation_counter[0:NUM_SETS-1];
+  btb_entry_t                           branch_table          [0:NUM_SETS-1] [0:NUM_WAYS-1];
 
-  btb_entry_t accessed_line[0:NUM_WAYS-1];
+  btb_entry_t                           accessed_line         [0:NUM_WAYS-1];
 
-  logic [NUM_BITS_FOR_SET_ID-1:0] read_set_id;
-  logic [NUM_BITS_FOR_SET_ID-1:0] write_set_id;
+  logic       [NUM_BITS_FOR_SET_ID-1:0] read_set_id;
+  logic       [NUM_BITS_FOR_SET_ID-1:0] write_set_id;
 
-  logic [TAG_WIDTH - 1 : 0] read_tag;
-  logic [TAG_WIDTH - 1 : 0] r_read_tag;
+  logic       [      TAG_WIDTH - 1 : 0] read_tag;
+  logic       [      TAG_WIDTH - 1 : 0] r_read_tag;
 
-  logic [TAG_WIDTH - 1 : 0] write_tag;
+  logic       [      TAG_WIDTH - 1 : 0] write_tag;
 
   assign write_tag    = exi.execution_instruction_addr[(ADDRESS_WIDTH-1)-:TAG_WIDTH];
   assign read_tag     = i_branch_addr_read[(ADDRESS_WIDTH-1)-:TAG_WIDTH];
@@ -61,10 +61,10 @@ module btb #(
     else if (i_enable) begin
       if (exi.btb_write) begin
         branch_table[write_set_id][set_allocation_counter[write_set_id]] <= '{
-            is_jump : exi.btb_write_jump,
-            valid : 1'b1,
-            tag : write_tag,
-            target_addr : exi.btb_branch_target_addr[ADDRESS_WIDTH-1:0]
+          is_jump : exi.btb_write_jump,
+          valid : 1'b1,
+          tag : write_tag,
+          target_addr : exi.btb_branch_target_addr[ADDRESS_WIDTH-1:0]
         };
         set_allocation_counter[write_set_id] <= set_allocation_counter[write_set_id] + 1;
       end

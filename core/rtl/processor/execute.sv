@@ -8,42 +8,42 @@
 `include "register.svh"
 `include "decode_output.svh"
 module execute #(
-    parameter HISTORY_SIZE = 10
+  parameter HISTORY_SIZE = 10
 ) (
-    input logic clk,
-    input logic i_en,
-    input logic i_reset,
-    input logic i_output_bubble,
-    input decode_output_t i_decode_out,  // has the signals needed for triggering type1 stall
-    input register_read_output_t i_register_read_out,
-    execution_if.producer exi
+  input logic clk,
+  input logic i_en,
+  input logic i_reset,
+  input logic i_output_bubble,
+  input decode_output_t i_decode_out,  // has the signals needed for triggering type1 stall
+  input register_read_output_t i_register_read_out,
+  execution_if.producer exi
 );
 
   logic src1_match, src2_match, src3_match;
   logic [31:0] src1_data, src2_data, src3_data;
-  logic alu_stall;
+  logic                                        alu_stall;
 
 
-  logic [HISTORY_SIZE - 1 : 0] pht_index;
-  logic btb_write;
-  logic [31:0] instruction_addr;
-  logic [31:0] btb_branch_target_addr;
-  logic [31:0] memory_write_data;
-  logic [2:0] memory_operation;
-  logic [31:0] alu_out;
-  logic predictor_update;
-  logic [31:0] redirection_address;
-  logic btb_write_jump;
-  logic redirect;
-  logic branch_result;
-  logic [31:0] fpu_result;
-  logic fpu_inv_op;
-  logic fpu_done;
-  logic fpu_begin;
+  logic                 [HISTORY_SIZE - 1 : 0] pht_index;
+  logic                                        btb_write;
+  logic                 [                31:0] instruction_addr;
+  logic                 [                31:0] btb_branch_target_addr;
+  logic                 [                31:0] memory_write_data;
+  logic                 [                 2:0] memory_operation;
+  logic                 [                31:0] alu_out;
+  logic                                        predictor_update;
+  logic                 [                31:0] redirection_address;
+  logic                                        btb_write_jump;
+  logic                                        redirect;
+  logic                                        branch_result;
+  logic                 [                31:0] fpu_result;
+  logic                                        fpu_inv_op;
+  logic                                        fpu_done;
+  logic                                        fpu_begin;
 
-  decoded_instruction_t instruction_data;
-  register_read_data_t read_data;
-  prediction_data_t prediction_data;
+  decoded_instruction_t                        instruction_data;
+  register_read_data_t                         read_data;
+  prediction_data_t                            prediction_data;
 
   assign prediction_data = i_register_read_out.decode_data.prediction_data;
   assign instruction_data = i_register_read_out.decode_data.instruction_data;

@@ -6,10 +6,10 @@
 `include "rasterizer_interface.svh"
 
 module bresenham_step (
-    input line_data_t line_data,
-    output logic [17:0] next_err,
-    output logic [13:0] next_x0,
-    output logic [13:0] next_y0
+  input  line_data_t        line_data,
+  output logic       [17:0] next_err,
+  output logic       [13:0] next_x0,
+  output logic       [13:0] next_y0
 );
 
   always_comb begin
@@ -27,18 +27,18 @@ module bresenham_step (
   end
 endmodule
 module next_row_advancer (
-    input logic clk,
-    input logic reset,
-    input line_data_t i_line_data,
-    input logic i_begin,
-    output line_data_t o_line_result,
-    output logic o_done
+  input  logic       clk,
+  input  logic       reset,
+  input  line_data_t i_line_data,
+  input  logic       i_begin,
+  output line_data_t o_line_result,
+  output logic       o_done
 );
-  logic registered_y_start;
+  logic        registered_y_start;
   logic [13:0] y_start;
-  wire [17:0] next_err;
-  wire [13:0] next_x0;
-  wire [13:0] next_y0;
+  wire  [17:0] next_err;
+  wire  [13:0] next_x0;
+  wire  [13:0] next_y0;
 
   bresenham_step step (
     o_line_result,
@@ -91,12 +91,12 @@ module next_row_advancer (
   end
 endmodule
 module rasterizer #(
-    parameter signed DISPLAY_WIDTH  = 128,
-    parameter signed DISPLAY_HEIGHT = 160
+  parameter signed DISPLAY_WIDTH  = 128,
+  parameter signed DISPLAY_HEIGHT = 160
 ) (
-    input logic clk,
-    input logic reset,
-    rasterizer_if.rasterizer rasterizeri
+  input logic                    clk,
+  input logic                    reset,
+        rasterizer_if.rasterizer rasterizeri
 );
 
   enum logic [2:0] {
@@ -107,6 +107,7 @@ module rasterizer #(
     S_LINE_UPDATE,
     S_PIXEL_DISPATCH
   } rasterizer_state;
+
 
   enum logic [2:0] {
     S_INIT_ESSENTIALS,
@@ -141,9 +142,9 @@ module rasterizer #(
     .next_y0  (hollow_line_next_y0)
   );
 
-  logic short_edge_advance;
-  logic short_edge_advanced;
-  logic short_edge_advance_done;
+  logic       short_edge_advance;
+  logic       short_edge_advanced;
+  logic       short_edge_advance_done;
   line_data_t short_edge_advance_result;
 
   next_row_advancer short_edge_advancer (
@@ -155,9 +156,9 @@ module rasterizer #(
     .o_done       (short_edge_advance_done)
   );
 
-  logic long_edge_advance;
-  logic long_edge_advance_done;
-  logic long_edge_advanced;
+  logic       long_edge_advance;
+  logic       long_edge_advance_done;
+  logic       long_edge_advanced;
   line_data_t long_edge_advance_result;
 
   next_row_advancer long_edge_advancer (
@@ -303,9 +304,9 @@ module rasterizer #(
           fill_state             <= S_INIT_ESSENTIALS;
           if (rasterizeri.rasterizer_begin) begin
             triangle_data <= '{
-                hollow: rasterizeri.triangle_data.hollow,
-                color: rasterizeri.triangle_data.color,
-                points: sorted_triangle_points
+              hollow: rasterizeri.triangle_data.hollow,
+              color: rasterizeri.triangle_data.color,
+              points: sorted_triangle_points
             };
             rasterizer_state <= S_TRIANGLE_MAIN;
           end
@@ -419,10 +420,10 @@ module rasterizer #(
           else begin
             if (!rasterizeri.span_fifo_full) begin
               rasterizeri.span_data <= '{
-                  color : triangle_data.color,
-                  y: span_data.y,
-                  xa: adjusted_xa,
-                  xb: adjusted_xb
+                color : triangle_data.color,
+                y: span_data.y,
+                xa: adjusted_xa,
+                xb: adjusted_xb
               };
               rasterizeri.span_data_ready <= 1;
               rasterizer_state <= S_TRIANGLE_MAIN;

@@ -6,23 +6,23 @@
 
 `include "../bootloader/bootloader_interface.svh"
 module fetch #(
-    parameter unsigned I_CACHE_SIZE = 1024,  // Total size in bytes
-    parameter unsigned BTB_SIZE = 128
+  parameter unsigned I_CACHE_SIZE = 1024,  // Total size in bytes
+  parameter unsigned BTB_SIZE     = 128
 ) (
-    input logic clk,
-    input logic i_en,
-    input logic i_reset,
-    input logic i_output_bubble,
-    input logic [$clog2(I_CACHE_SIZE/4)-1:0] i_predictor_redirect_target,
-    input logic i_predictor_redirect,
-    input logic i_graphics_init_done,
-    execution_if.fetch_consumer exi,
-    bootloader_if.processor bootloaderi,
-    output logic o_instruction_valid,
-    output logic [$clog2(I_CACHE_SIZE/4)-1:0] o_instruction_addr,
-    output logic [31:0] o_instruction_raw,
-    output logic o_btb_hit,
-    output logic o_btb_hit_was_jump
+  input  logic                                                    clk,
+  input  logic                                                    i_en,
+  input  logic                                                    i_reset,
+  input  logic                                                    i_output_bubble,
+  input  logic                       [$clog2(I_CACHE_SIZE/4)-1:0] i_predictor_redirect_target,
+  input  logic                                                    i_predictor_redirect,
+  input  logic                                                    i_graphics_init_done,
+         execution_if.fetch_consumer                              exi,
+         bootloader_if.processor                                  bootloaderi,
+  output logic                                                    o_instruction_valid,
+  output logic                       [$clog2(I_CACHE_SIZE/4)-1:0] o_instruction_addr,
+  output logic                       [                      31:0] o_instruction_raw,
+  output logic                                                    o_btb_hit,
+  output logic                                                    o_btb_hit_was_jump
 );
 
 
@@ -32,7 +32,7 @@ module fetch #(
 `elsif QUARTUS
   (* ramstyle = "block" *)
 `endif
-  logic [31:0] instructions[0:(I_CACHE_SIZE/4)-1];
+  logic [             31:0] instructions    [0:(I_CACHE_SIZE/4)-1];
 
   logic [ADDRESS_WIDTH-1:0] program_pointer;
   logic [ADDRESS_WIDTH-1:0] program_counter;
@@ -44,17 +44,17 @@ module fetch #(
   fetch_state state = LOAD;
 
   btb #(
-    .SIZE(BTB_SIZE),
+    .SIZE         (BTB_SIZE),
     .ADDRESS_WIDTH(ADDRESS_WIDTH)
   ) btb (
-    .clk(clk),
+    .clk               (clk),
     .i_branch_addr_read(program_pointer),
-    .i_enable(i_en),
-    .i_reset(i_reset),
-    .exi(exi),
-    .o_target_addr(btb_target_addr),
-    .o_hit(o_btb_hit),
-    .o_hit_was_jump(o_btb_hit_was_jump)
+    .i_enable          (i_en),
+    .i_reset           (i_reset),
+    .exi               (exi),
+    .o_target_addr     (btb_target_addr),
+    .o_hit             (o_btb_hit),
+    .o_hit_was_jump    (o_btb_hit_was_jump)
   );
   always_comb begin
     if (exi.redirect) begin

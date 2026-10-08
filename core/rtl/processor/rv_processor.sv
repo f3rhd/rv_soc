@@ -12,71 +12,71 @@
 `include "../graphics_unit/common/graphics_interface.svh"
 
 module rv_processor #(
-    parameter HISTORY_SIZE = 10,
-    I_CACHE_SIZE = 1024,
-    D_CACHE_SIZE = 1 << 10,
-    BTB_SIZE = 128
+  parameter HISTORY_SIZE = 10,
+            I_CACHE_SIZE = 1024,
+            D_CACHE_SIZE = 1 << 10,
+            BTB_SIZE     = 128
 ) (
-    input logic clk,
-    input logic reset,
-    bootloader_if.processor bootloader_if,
-    graphics_if.processor graphics_if,
-    gpio_if.processor gpio_if,
-    output logic [15:0] o_reg16_f4,
-    output logic [15:0] o_reg16_f8
+  input  logic                          clk,
+  input  logic                          reset,
+         bootloader_if.processor        bootloader_if,
+         graphics_if.processor          graphics_if,
+         gpio_if.processor              gpio_if,
+  output logic                   [15:0] o_reg16_f4,
+  output logic                   [15:0] o_reg16_f8
 );
 
   localparam ADDRESS_WIDTH = $clog2(I_CACHE_SIZE / 4);
   // Fetch signals
-  logic fetch_en;
-  logic fetch_reset;
-  logic fetch_output_bubble;
-  logic fetch_instruction_valid;
-  logic [ADDRESS_WIDTH-1:0] fetch_instruction_addr;
-  logic [31:0] fetch_instruction_raw;
-  logic fetch_btb_hit;
-  logic fetch_btb_hit_was_jump;
+  logic                                      fetch_en;
+  logic                                      fetch_reset;
+  logic                                      fetch_output_bubble;
+  logic                                      fetch_instruction_valid;
+  logic                  [ADDRESS_WIDTH-1:0] fetch_instruction_addr;
+  logic                  [             31:0] fetch_instruction_raw;
+  logic                                      fetch_btb_hit;
+  logic                                      fetch_btb_hit_was_jump;
 
   // Prediction signals
-  logic prediction_reset;
-  logic prediction_enable;
-  logic prediction_output_bubble;
-  logic prediction_prediction;
-  logic prediction_predict;
-  logic prediction_btb_hit;
-  logic prediction_redirect;
-  logic prediction_instruction_valid;
-  logic [HISTORY_SIZE -1:0] prediction_pht_index;
-  logic [ADDRESS_WIDTH-1:0] prediction_redirect_target;
-  logic [31:0] prediction_instruction_raw;
-  logic [ADDRESS_WIDTH-1:0] prediction_instruction_addr;
+  logic                                      prediction_reset;
+  logic                                      prediction_enable;
+  logic                                      prediction_output_bubble;
+  logic                                      prediction_prediction;
+  logic                                      prediction_predict;
+  logic                                      prediction_btb_hit;
+  logic                                      prediction_redirect;
+  logic                                      prediction_instruction_valid;
+  logic                  [HISTORY_SIZE -1:0] prediction_pht_index;
+  logic                  [ADDRESS_WIDTH-1:0] prediction_redirect_target;
+  logic                  [             31:0] prediction_instruction_raw;
+  logic                  [ADDRESS_WIDTH-1:0] prediction_instruction_addr;
 
   // Decode signals
-  logic decode_enable;
-  logic decode_output_bubble;
-  decode_output_t decode_out_;
+  logic                                      decode_enable;
+  logic                                      decode_output_bubble;
+  decode_output_t                            decode_out_;
 
   // Register file signals
-  register_write_data_t register_write_;
-  register_read_output_t register_read_;
-  logic register_read_enable;
-  logic register_read_output_bubble;
-  logic register_file_reset;
+  register_write_data_t                      register_write_;
+  register_read_output_t                     register_read_;
+  logic                                      register_read_enable;
+  logic                                      register_read_output_bubble;
+  logic                                      register_file_reset;
 
   // Execution signals
   execution_if #(.HISTORY_SIZE(HISTORY_SIZE)) execution_if ();
-  logic execution_output_bubble;
-  logic execution_enable;
-  logic execution_reset;  // resets the internal state of multiplier, divider and fpu units
+  logic        execution_output_bubble;
+  logic        execution_enable;
+  logic        execution_reset;  // resets the internal state of multiplier, divider and fpu units
 
 
   // Stage control signals
-  logic [0:4] stage_controller_flush_vector;
-  logic [0:5] stage_controller_stall_vector;
+  logic [ 0:4] stage_controller_flush_vector;
+  logic [ 0:5] stage_controller_stall_vector;
 
-  logic memory_graphics_write;
-  logic memory_en;
-  logic memory_gpio_stall;
+  logic        memory_graphics_write;
+  logic        memory_en;
+  logic        memory_gpio_stall;
 
   logic [63:0] system_counter;
 
@@ -101,7 +101,7 @@ module rv_processor #(
 
   fetch #(
     .I_CACHE_SIZE(I_CACHE_SIZE),
-    .BTB_SIZE(BTB_SIZE)
+    .BTB_SIZE    (BTB_SIZE)
   ) fetch (
     .clk                        (clk),
     .i_en                       (fetch_en),

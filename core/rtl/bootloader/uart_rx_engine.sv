@@ -5,14 +5,14 @@
  */
 
 module uart_rx_engine #(
-    parameter SYSTEM_CLK_HZ = 100_000_000,
-    parameter BAUD_RATE = 115200
+  parameter SYSTEM_CLK_HZ = 100_000_000,
+  parameter BAUD_RATE     = 115200
 ) (
-    input logic clk,
-    input logic i_reset,
-    input logic i_rx,
-    output logic [7:0] o_byte_out,
-    output logic o_byte_ready
+  input  logic       clk,
+  input  logic       i_reset,
+  input  logic       i_rx,
+  output logic [7:0] o_byte_out,
+  output logic       o_byte_ready
 );
   localparam unsigned CLKS_PER_BIT = SYSTEM_CLK_HZ / (BAUD_RATE);
   localparam unsigned PHASE1_WAIT = CLKS_PER_BIT * 2 - CLKS_PER_BIT / 2;
@@ -21,13 +21,13 @@ module uart_rx_engine #(
     READING_PHASE_1,
     READING_PHASE_2
   } rtx_state;
-  logic [4:0] received_bit_counter = 0;
-  logic [$clog2(PHASE1_WAIT)-1:0] phase1_counter = 0;
-  logic [$clog2(CLKS_PER_BIT)-1:0] baud_counter = 0;
-  rtx_state state = IDLE;
+  logic     [                     4:0] received_bit_counter = 0;
+  logic     [ $clog2(PHASE1_WAIT)-1:0] phase1_counter = 0;
+  logic     [$clog2(CLKS_PER_BIT)-1:0] baud_counter = 0;
+  rtx_state                            state = IDLE;
 
-  logic [1:0] rx_sync;
-  logic rx_s;
+  logic     [                     1:0] rx_sync;
+  logic                                rx_s;
 
   always_ff @(posedge clk) begin
     rx_sync <= {rx_sync[0], i_rx};

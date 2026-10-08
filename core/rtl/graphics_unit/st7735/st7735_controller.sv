@@ -6,22 +6,22 @@
 
 `include "../common/rasterizer_interface.svh"
 module st7735_controller #(
-    parameter unsigned SYSTEM_CLK_HZ = 100_000_000,
-    parameter unsigned SPI_CLK_HZ = 25_000_000
+  parameter unsigned SYSTEM_CLK_HZ = 100_000_000,
+  parameter unsigned SPI_CLK_HZ    = 25_000_000
 ) (
-    input logic clk,
-    input logic i_boot,
-    input logic i_reset,
-    input logic i_soft_reset,
-    input fill_span_data_t i_span_data,
-    input logic i_span_data_valid,
-    output logic o_execute_complete,
-    output logic o_sck,
-    output logic o_sda,
-    output logic o_dc,
-    output logic o_cs,
-    output logic o_res,
-    output logic o_init_done
+  input  logic            clk,
+  input  logic            i_boot,
+  input  logic            i_reset,
+  input  logic            i_soft_reset,
+  input  fill_span_data_t i_span_data,
+  input  logic            i_span_data_valid,
+  output logic            o_execute_complete,
+  output logic            o_sck,
+  output logic            o_sda,
+  output logic            o_dc,
+  output logic            o_cs,
+  output logic            o_res,
+  output logic            o_init_done
 );
 
   localparam unsigned DATA_WIDTH = 8;
@@ -29,11 +29,11 @@ module st7735_controller #(
   localparam unsigned TICK_BITS = $clog2(TICKS_PER_MS);
 
   logic [DATA_WIDTH-1:0] tx_data;
-  logic tx_busy;
-  logic tx_begin;
-  logic [2:0] sent_byte_counter;
-  logic sent_command;
-  logic is_caset;
+  logic                  tx_busy;
+  logic                  tx_begin;
+  logic [           2:0] sent_byte_counter;
+  logic                  sent_command;
+  logic                  is_caset;
 
   logic dly_start, dly_done;
   logic [          7:0] dly_ms;
@@ -43,16 +43,16 @@ module st7735_controller #(
   logic tx_busy_prev, tx_done;
 
   localparam unsigned ROM_DEPTH = 38;
-  logic [9:0] init_rom[0:ROM_DEPTH-1];
+  logic [9:0] init_rom   [0:ROM_DEPTH-1];
   logic [5:0] rom_ptr;
 
   logic [1:0] ramrw_step;
   // we are going to fill screen with blue before handing it to execute
   localparam logic [15:0] FILL_COLOR = 16'hF800;  // Blue in BGR565
   localparam unsigned FILL_PIXELS = 20480;  // 128 * 160
-  logic [23:0] fill_pix_cnt;
+  logic            [23:0] fill_pix_cnt;
 
-  fill_span_data_t span_data;
+  fill_span_data_t        span_data;
 
   typedef enum logic [1:0] {
     IDLE,
@@ -83,8 +83,8 @@ module st7735_controller #(
     BOOT_BOOT_DONE
   } boot_state_e;
 
-  graphics_state_e graphics_state;
-  boot_state_e boot_state;
+  graphics_state_e  graphics_state;
+  boot_state_e      boot_state;
   execution_state_e exec_state = EXEC_DO_NOTHING;
   execution_state_e send_byte_return = EXEC_DO_NOTHING;
 

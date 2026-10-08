@@ -19,25 +19,22 @@ typedef enum logic [1:0] {
 } instr_id_e;
 typedef struct packed {
   graphics_union_t instr;
-  instr_id_e instr_id;
-  logic valid;
-  logic hollow;
+  instr_id_e       instr_id;
+  logic            valid;
+  logic            hollow;
 } graphics_decode_output_t;
 
 
 module graphics_decode (
-    input logic clk,
-    input logic i_reset,
-    input logic [31:0] i_instruction,
-    input logic i_instruction_valid,
-    rasterizer_if.graphics_decoder rasterizeri,
-    output logic o_done
+  input  logic                                 clk,
+  input  logic                                 i_reset,
+  input  logic                          [31:0] i_instruction,
+  input  logic                                 i_instruction_valid,
+         rasterizer_if.graphics_decoder        rasterizeri,
+  output logic                                 o_done
 );
-  enum logic {
-    S_DECODE,
-    S_WAIT_RASTERIZER
-  } decode_state = S_DECODE;
-  graphics_decode_output_t decoded_instr;
+  enum logic {S_DECODE, S_WAIT_RASTERIZER} decode_state = S_DECODE;
+  graphics_decode_output_t                 decoded_instr;
   always_comb begin
     decoded_instr.valid    = i_instruction_valid;
     decoded_instr.instr_id = instr_id_e'(i_instruction[30:29]);

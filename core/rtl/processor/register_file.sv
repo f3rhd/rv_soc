@@ -8,20 +8,20 @@
 `include "decode_output.svh"
 `include "execution_interface.svh"
 module register_file (
-    input logic clk,
-    input logic i_en,
-    input logic i_output_bubble,
-    input logic i_reset,
-    input register_write_data_t i_register_write,
-    input decode_output_t i_decode_out,
-    execution_if.register_read exi,
-    output register_read_output_t o_register_read
+  input  logic                      clk,
+  input  logic                      i_en,
+  input  logic                      i_output_bubble,
+  input  logic                      i_reset,
+  input  register_write_data_t      i_register_write,
+  input  decode_output_t            i_decode_out,
+         execution_if.register_read exi,
+  output register_read_output_t     o_register_read
 );
-  logic [31:0] integer_register_file[0:31];
-  logic [31:0] float_register_file[0:31];
+  logic                 [31:0] integer_register_file[0:31];
+  logic                 [31:0] float_register_file  [0:31];
 
-  decoded_instruction_t instruction_data_in;
-  decoded_instruction_t instruction_data_out;
+  decoded_instruction_t        instruction_data_in;
+  decoded_instruction_t        instruction_data_out;
   assign instruction_data_in  = i_decode_out.instruction_data;
   assign instruction_data_out = o_register_read.decode_data.instruction_data;
 

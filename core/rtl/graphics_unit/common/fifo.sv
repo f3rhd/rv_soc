@@ -5,17 +5,17 @@
  */
 
 module fifo #(
-    parameter unsigned BUFFER_SIZE = 256 * 4,
-    parameter unsigned DATA_WIDTH  = 32
+  parameter unsigned BUFFER_SIZE = 256 * 4,
+  parameter unsigned DATA_WIDTH  = 32
 ) (
-    input logic clk,
-    input logic i_reset,
-    input logic [DATA_WIDTH-1:0] i_data,
-    input logic i_instruction_write,
-    input logic i_advance_head,
-    output logic [DATA_WIDTH-1:0] o_data,
-    output logic o_data_is_valid,
-    output logic o_buffer_is_full
+  input  logic                  clk,
+  input  logic                  i_reset,
+  input  logic [DATA_WIDTH-1:0] i_data,
+  input  logic                  i_instruction_write,
+  input  logic                  i_advance_head,
+  output logic [DATA_WIDTH-1:0] o_data,
+  output logic                  o_data_is_valid,
+  output logic                  o_buffer_is_full
 );
   localparam unsigned INSTRUCTION_BUFFER_BOTTOM_INDEX = BUFFER_SIZE / 4 - 1;
 

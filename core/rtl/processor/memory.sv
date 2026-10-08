@@ -10,21 +10,21 @@
 `include "../gpio_interface.svh"
 `include "../bootloader/bootloader_interface.svh"
 module memory #(
-    parameter SIZE = 2048
+  parameter SIZE = 2048
 ) (
-    input logic clk,
-    input logic i_reset,
-    input logic i_en,
-    input logic [63:0] i_system_counter,
-    execution_if.mem_consumer ei,
-    graphics_if.processor graphicsi,
-    gpio_if.processor gpioi,
-    bootloader_if.processor bootloaderi,
-    output register_write_data_t o_register_write,
-    output logic o_graphics_write,
-    output logic o_gpio_stall,
-    output logic [15:0] o_reg16_f4,
-    output logic [15:0] o_reg16_f8
+  input  logic                            clk,
+  input  logic                            i_reset,
+  input  logic                            i_en,
+  input  logic                     [63:0] i_system_counter,
+         execution_if.mem_consumer        ei,
+         graphics_if.processor            graphicsi,
+         gpio_if.processor                gpioi,
+         bootloader_if.processor          bootloaderi,
+  output register_write_data_t            o_register_write,
+  output logic                            o_graphics_write,
+  output logic                            o_gpio_stall,
+  output logic                     [15:0] o_reg16_f4,
+  output logic                     [15:0] o_reg16_f8
 );
   localparam logic [31:0] GRAPHICS_ADDR = 32'hF0000001;
   localparam logic [31:0] REG16_1_ADDR = 32'hF0000004;
@@ -78,15 +78,14 @@ module memory #(
     byte_en = 4'b0000;
     if (ei.mem_write && !ei.invalid) begin
       case (ei.memory_operation)
-        3'b000: byte_en[ei.exec_result[1:0]] = 1'b1;  // SB
+        3'b000:                          byte_en[ei.exec_result[1:0]] = 1'b1;  // SB
         3'b001: begin  // SH
           if (ei.exec_result[1]) byte_en = 4'b1100;
           else byte_en = 4'b0011;
         end
         3'b100,  // store float
-        3'b010:
-        byte_en = 4'b1111;  // SW
-        default: byte_en = 4'b0000;
+ 3'b010: byte_en = 4'b1111;  // SW
+        default:                         byte_en = 4'b0000;
       endcase
     end
   end

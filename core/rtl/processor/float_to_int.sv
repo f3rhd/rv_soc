@@ -5,15 +5,15 @@
  */
 
 module float_to_int (
-    input  logic        clk,
-    input  logic        i_reset,
-    input  logic        i_begin,
-    input  logic        i_signed,
-    input  logic [ 2:0] i_rnd_mode,
-    input  logic [31:0] i_fs,
-    input  logic [31:0] i_fcsr,
-    output logic [31:0] o_result,
-    output logic        o_done
+  input  logic        clk,
+  input  logic        i_reset,
+  input  logic        i_begin,
+  input  logic        i_signed,
+  input  logic [ 2:0] i_rnd_mode,
+  input  logic [31:0] i_fs,
+  input  logic [31:0] i_fcsr,
+  output logic [31:0] o_result,
+  output logic        o_done
 );
 
 
@@ -45,11 +45,11 @@ module float_to_int (
   always_comb begin
     next_state = state;
     unique case (state)
-      IDLE: next_state = i_begin ? CALC_PREP : IDLE;
+      IDLE:      next_state = i_begin ? CALC_PREP : IDLE;
       CALC_PREP: next_state = CALC;
-      CALC: next_state = DONE;
-      DONE: next_state = IDLE;
-      default: next_state = IDLE;
+      CALC:      next_state = DONE;
+      DONE:      next_state = IDLE;
+      default:   next_state = IDLE;
     endcase
   end
 
@@ -216,7 +216,7 @@ module float_to_int (
           o_result <= result_comb;
           o_done   <= 1'b1;
         end
-        DONE: o_done <= 1'b0;
+        DONE:    o_done <= 1'b0;
         default: ;
       endcase
     end

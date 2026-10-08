@@ -6,26 +6,26 @@
 
 `include "decode_output.svh"
 module decode #(
-    parameter HISTORY_SIZE  = 10,
-    parameter ADDRESS_WIDTH = 20
+  parameter HISTORY_SIZE  = 10,
+  parameter ADDRESS_WIDTH = 20
 ) (
-    input logic clk,
-    input logic i_enable,
-    input logic i_output_bubble,
-    input logic i_instruction_valid,
-    input logic i_btb_hit,
-    input logic i_predictor_prediction,
-    input logic [HISTORY_SIZE-1:0] i_predictor_pht_index,
-    input logic [31:0] i_instruction_raw,
-    input logic [ADDRESS_WIDTH-1:0] i_instruction_addr,
-    output decode_output_t o_decode
+  input  logic                               clk,
+  input  logic                               i_enable,
+  input  logic                               i_output_bubble,
+  input  logic                               i_instruction_valid,
+  input  logic                               i_btb_hit,
+  input  logic                               i_predictor_prediction,
+  input  logic           [ HISTORY_SIZE-1:0] i_predictor_pht_index,
+  input  logic           [             31:0] i_instruction_raw,
+  input  logic           [ADDRESS_WIDTH-1:0] i_instruction_addr,
+  output decode_output_t                     o_decode
 );
-  decode_output_t decoded_mop_next;
-  logic [6:0] funct7;
-  logic [2:0] funct3;
-  logic [6:0] op;
-  opcode_e alu_base_op;
-  logic is_alu_instruction;
+  decode_output_t       decoded_mop_next;
+  logic           [6:0] funct7;
+  logic           [2:0] funct3;
+  logic           [6:0] op;
+  opcode_e              alu_base_op;
+  logic                 is_alu_instruction;
   assign is_alu_instruction = (op == 7'b0010011) || (op == 7'b0110011);
   always_comb begin
     op = i_instruction_raw[6:0];

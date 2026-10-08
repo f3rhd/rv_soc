@@ -8,21 +8,21 @@
 `include "graphics_unit/common/graphics_interface.svh"
 `include "gpio_interface.svh"
 module rv_sc_top (
-    input logic clk,
-    input logic rx,
-    output logic tx,
-    // graphics display ports
-    output logic sck,
-    output logic sda,
-    output logic res,
-    output logic dc,
-    output logic cs,
-    // 7 segment display ports 
-    output logic [6:0] seg,
-    output logic [3:0] an,
-    output logic [15:0] led,
-    // gpio pins [0:GPIO_PIN_AMOUNT-1]
-    inout wire [0:26] pins_io
+  input  logic        clk,
+  input  logic        rx,
+  output logic        tx,
+  // graphics display ports
+  output logic        sck,
+  output logic        sda,
+  output logic        res,
+  output logic        dc,
+  output logic        cs,
+  // 7 segment display ports 
+  output logic [ 6:0] seg,
+  output logic [ 3:0] an,
+  output logic [15:0] led,
+  // gpio pins [0:GPIO_PIN_AMOUNT-1]
+  inout  wire  [0:26] pins_io
 );
   localparam unsigned SYSTEM_CLK_HZ = 100_000_000;
   localparam unsigned GRAPHICS_SPI_CLK_HZ = 25_000_000;
@@ -41,8 +41,8 @@ module rv_sc_top (
   graphics_if graphicsi ();
   gpio_if gpioi ();
   logic [15:0] segment_value;
-  logic sys_reset;
-  logic sys_reset_done = 0;
+  logic        sys_reset;
+  logic        sys_reset_done = 0;
 
   always_ff @(posedge clk) begin
     sys_reset <= 0;
@@ -81,8 +81,8 @@ module rv_sc_top (
   );
   graphics_unit #(
     .GRAPHICS_INSTRUCTION_BUFFER_SIZE(GRAPHICS_INSTRUCTION_BUFFER_SIZE  /* default 256 * 4 */),
-    .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
-    .SPI_CLK_HZ(GRAPHICS_SPI_CLK_HZ  /* default 25_000_000 */)
+    .SYSTEM_CLK_HZ                   (SYSTEM_CLK_HZ  /* default 100_000_000 */),
+    .SPI_CLK_HZ                      (GRAPHICS_SPI_CLK_HZ  /* default 25_000_000 */)
   ) graphics_unit (
     .clk         (clk),
     .i_reset     (sys_reset),
@@ -95,11 +95,11 @@ module rv_sc_top (
     .st7735_cs   (cs)
   );
   seven_seg_display_controller seven_seg_display_controller (
-    .clk(clk),
-    .reset(bootloaderi.core_reset || sys_reset),
+    .clk          (clk),
+    .reset        (bootloaderi.core_reset || sys_reset),
     .i_display_val(segment_value),
-    .o_seg(seg),
-    .o_an(an)
+    .o_seg        (seg),
+    .o_an         (an)
   );
   gpio_controller #(
     .PIN_AMOUNT(GPIO_PIN_AMOUNT  /* default 27 */)

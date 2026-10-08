@@ -5,14 +5,14 @@
  */
 
 module stage_controller (
-    input logic clk,
-    input logic i_misprediction,
-    input logic i_load_stall_type0,
-    input logic i_load_stall_type1,
-    input logic i_load_stall_type2,
-    input logic i_graphics_instruction_write_fail,
-    output logic [0:4] flush_vector,
-    output logic [0:5] stall_vector
+  input  logic       clk,
+  input  logic       i_misprediction,
+  input  logic       i_load_stall_type0,
+  input  logic       i_load_stall_type1,
+  input  logic       i_load_stall_type2,
+  input  logic       i_graphics_instruction_write_fail,
+  output logic [0:4] flush_vector,
+  output logic [0:5] stall_vector
 );
   /*
         [0]       [1]        [2]      [4]     [3]         [5]

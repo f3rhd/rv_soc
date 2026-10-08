@@ -6,16 +6,16 @@
 // Overflow is not checked
 // Doesn't handle the denormals
 module fmultiplier (
-    input logic clk,
-    input logic i_reset,
-    input logic [31:0] i_f1,
-    input logic [31:0] i_f2,
-    input logic [31:0] i_fcsr,
-    input logic [2:0] i_round_mode,
-    input logic i_begin,
-    output logic [31:0] o_result,
-    output logic o_done,
-    output logic o_inv_op
+  input  logic        clk,
+  input  logic        i_reset,
+  input  logic [31:0] i_f1,
+  input  logic [31:0] i_f2,
+  input  logic [31:0] i_fcsr,
+  input  logic [ 2:0] i_round_mode,
+  input  logic        i_begin,
+  output logic [31:0] o_result,
+  output logic        o_done,
+  output logic        o_inv_op
 );
   typedef enum logic [2:0] {
     S_IDLE,
@@ -25,55 +25,55 @@ module fmultiplier (
     S_ROUND
   } fmul_state_e;
 
-  fmul_state_e state;
+  fmul_state_e        state;
 
-  logic [7:0] exp_result_r;
+  logic        [ 7:0] exp_result_r;
 
 
-  logic [47:0] mul_full_product;
-  logic [47:0] normalized;
+  logic        [47:0] mul_full_product;
+  logic        [47:0] normalized;
   logic r, s;
-  logic mul_begin_r;
-  logic mul_done;
+  logic        mul_begin_r;
+  logic        mul_done;
   logic [23:0] final_p;
-  logic rnd;
+  logic        rnd;
 
-  wire [31:0] f1 = i_f1;
-  wire [31:0] f2 = i_f2;
-  wire [31:0] fcsr = i_fcsr;
-  wire [2:0] round_mode = i_round_mode;
+  wire  [31:0] f1 = i_f1;
+  wire  [31:0] f2 = i_f2;
+  wire  [31:0] fcsr = i_fcsr;
+  wire  [ 2:0] round_mode = i_round_mode;
 
-  wire [23:0] f1_significand = {1'b1, f1[22:0]};
-  wire [7:0] f1_exp = f1[30:23];
-  wire f1_sign = f1[31];
+  wire  [23:0] f1_significand = {1'b1, f1[22:0]};
+  wire  [ 7:0] f1_exp = f1[30:23];
+  wire         f1_sign = f1[31];
 
-  wire [23:0] f2_significand = {1'b1, f2[22:0]};
-  wire [7:0] f2_exp = f2[30:23];
-  wire f2_sign = f2[31];
+  wire  [23:0] f2_significand = {1'b1, f2[22:0]};
+  wire  [ 7:0] f2_exp = f2[30:23];
+  wire         f2_sign = f2[31];
 
-  wire final_sign = f1_sign ^ f2_sign;
+  wire         final_sign = f1_sign ^ f2_sign;
 
-  wire [2:0] effective_rnd = round_mode == 3'd7 ? fcsr[7:5] : round_mode;
-  wire [23:0] P = normalized[47:24];
+  wire  [ 2:0] effective_rnd = round_mode == 3'd7 ? fcsr[7:5] : round_mode;
+  wire  [23:0] P = normalized[47:24];
 
-  wire is_nan1 = (f1_exp == 8'hFF) && (f1_significand[22:0] != 0);
-  wire is_nan2 = (f2_exp == 8'hFF) && (f2_significand[22:0] != 0);
-  wire is_inf1 = (f1_exp == 8'hFF) && (f1_significand[22:0] == 0);
-  wire is_inf2 = (f2_exp == 8'hFF) && (f2_significand[22:0] == 0);
-  wire is_zero1 = (f1_exp == 8'h00) && (f1_significand[22:0] == 0);
-  wire is_zero2 = (f2_exp == 8'h00) && (f2_significand[22:0] == 0);
+  wire         is_nan1 = (f1_exp == 8'hFF) && (f1_significand[22:0] != 0);
+  wire         is_nan2 = (f2_exp == 8'hFF) && (f2_significand[22:0] != 0);
+  wire         is_inf1 = (f1_exp == 8'hFF) && (f1_significand[22:0] == 0);
+  wire         is_inf2 = (f2_exp == 8'hFF) && (f2_significand[22:0] == 0);
+  wire         is_zero1 = (f1_exp == 8'h00) && (f1_significand[22:0] == 0);
+  wire         is_zero2 = (f2_exp == 8'h00) && (f2_significand[22:0] == 0);
 
   multiplier #(
     .IN_WIDTH(24)
   ) multiplier (
-    .clk(clk),
+    .clk           (clk),
     .i_multiplicand(f1_significand),
-    .i_multiplier(f2_significand),
-    .i_mul_type(2'b00),
-    .i_begin(mul_begin_r),
-    .i_reset(i_reset | o_done),
-    .o_result(),  // Left open intentionally; we dont need it here
-    .o_done(mul_done),
+    .i_multiplier  (f2_significand),
+    .i_mul_type    (2'b00),
+    .i_begin       (mul_begin_r),
+    .i_reset       (i_reset | o_done),
+    .o_result      (),                  // Left open intentionally; we dont need it here
+    .o_done        (mul_done),
     .o_full_product(mul_full_product)
   );
   always_comb begin

@@ -6,12 +6,12 @@
 
 `include "gpio_interface.svh"
 module gpio_controller #(
-    parameter unsigned PIN_AMOUNT = 27
+  parameter unsigned PIN_AMOUNT = 27
 ) (
-    input logic clk,
-    input logic i_reset,
-    gpio_if.controller gpioi,
-    inout wire [0 : PIN_AMOUNT-1] pins_io
+  input logic                                 clk,
+  input logic                                 i_reset,
+        gpio_if.controller                    gpioi,
+  inout wire               [0 : PIN_AMOUNT-1] pins_io
 );
 
   localparam logic PIN_INPUT = 1'b0;

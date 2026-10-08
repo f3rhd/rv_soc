@@ -6,44 +6,44 @@
 
 `include "decode_output.svh"
 module alu #(
-    parameter unsigned HISTORY_SIZE = 10
+  parameter unsigned HISTORY_SIZE = 10
 ) (
-    input logic clk,
-    input logic i_reset,
-    input logic i_en,
-    input decoded_instruction_t i_instruction_data,
-    input logic i_btb_was_hit,
-    input logic i_prediction,
-    input logic i_redirect,
-    input logic [31:0] i_src1_data,
-    input logic [31:0] i_src2_data,
-    output logic [31:0] o_memory_write_data,
-    output logic [2:0] o_memory_operation,
-    output logic [31:0] o_alu_out,
-    output logic o_predictor_update,
-    output logic [31:0] o_redirection_address,
-    output logic o_redirect,
-    output logic o_btb_write_jump,
-    output logic o_branch_result,
-    output logic o_stall
+  input  logic                        clk,
+  input  logic                        i_reset,
+  input  logic                        i_en,
+  input  decoded_instruction_t        i_instruction_data,
+  input  logic                        i_btb_was_hit,
+  input  logic                        i_prediction,
+  input  logic                        i_redirect,
+  input  logic                 [31:0] i_src1_data,
+  input  logic                 [31:0] i_src2_data,
+  output logic                 [31:0] o_memory_write_data,
+  output logic                 [ 2:0] o_memory_operation,
+  output logic                 [31:0] o_alu_out,
+  output logic                        o_predictor_update,
+  output logic                 [31:0] o_redirection_address,
+  output logic                        o_redirect,
+  output logic                        o_btb_write_jump,
+  output logic                        o_branch_result,
+  output logic                        o_stall
 );
-  logic btb_write_jump;
+  logic        btb_write_jump;
   logic [31:0] mul_result;
-  logic mul_begin;
-  logic mul_done;
-  logic [1:0] mul_type;
-  logic [1:0] div_type;
-  logic div_begin;
+  logic        mul_begin;
+  logic        mul_done;
+  logic [ 1:0] mul_type;
+  logic [ 1:0] div_type;
+  logic        div_begin;
   logic [31:0] div_result;
-  logic div_done;
+  logic        div_done;
   logic [31:0] alu_src2;
   logic [31:0] alu_out;
-  logic branch_result;
-  logic [2:0] memory_operation;
+  logic        branch_result;
+  logic [ 2:0] memory_operation;
   logic [31:0] memory_write_data;
-  logic predictor_update;
+  logic        predictor_update;
   logic [31:0] redirection_address;
-  logic redirect;
+  logic        redirect;
 
   assign o_memory_write_data   = memory_write_data;
   assign o_memory_operation    = memory_operation;

@@ -5,16 +5,16 @@
  */
 // Denormals are not handled
 module fadder (
-    input logic clk,
-    input logic i_reset,
-    input logic [31:0] i_f1,
-    input logic [31:0] i_f2,
-    input logic [31:0] i_fcsr,
-    input logic [2:0] i_round_mode,
-    input logic i_begin,
-    output logic [31:0] o_result,
-    output logic o_done,
-    output logic o_inv_op
+  input  logic        clk,
+  input  logic        i_reset,
+  input  logic [31:0] i_f1,
+  input  logic [31:0] i_f2,
+  input  logic [31:0] i_fcsr,
+  input  logic [ 2:0] i_round_mode,
+  input  logic        i_begin,
+  output logic [31:0] o_result,
+  output logic        o_done,
+  output logic        o_inv_op
 );
 
   enum logic [3:0] {
@@ -44,21 +44,21 @@ module fadder (
   logic g, r, s;
 
   logic [23:0] preliminary_sig;
-  logic [7:0] exp_result;
-  logic result_sign;
-  logic carry_out;
-  logic normalization_left_shift;
-  logic normalization_right_shift;
+  logic [ 7:0] exp_result;
+  logic        result_sign;
+  logic        carry_out;
+  logic        normalization_left_shift;
+  logic        normalization_right_shift;
   logic [23:0] preliminary_before_normalization;
-  logic normalizaiton_had_more_than_one_left_shift;
-  logic swapped;
-  logic twos_complement;
+  logic        normalizaiton_had_more_than_one_left_shift;
+  logic        swapped;
+  logic        twos_complement;
 
 
-  wire [24:0] sum_raw = f1_sig + f2_sig;
+  wire  [24:0] sum_raw = f1_sig + f2_sig;
 
-  wire [2:0] effective_rnd = i_round_mode == 3'd7 ? i_fcsr[7:5] : i_round_mode;
-  logic rnd;
+  wire  [ 2:0] effective_rnd = i_round_mode == 3'd7 ? i_fcsr[7:5] : i_round_mode;
+  logic        rnd;
 
   always_comb begin
     rnd = 0;

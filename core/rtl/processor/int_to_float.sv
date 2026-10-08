@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 module int_to_float (
-    input logic clk,
-    input logic i_reset,
-    input logic i_begin,
-    input logic i_signed,
-    input logic [2:0] i_rnd_mode,
-    input logic [31:0] i_fs,
-    input logic [31:0] i_fcsr,
-    output logic [31:0] o_result,
-    output logic o_done
+  input  logic        clk,
+  input  logic        i_reset,
+  input  logic        i_begin,
+  input  logic        i_signed,
+  input  logic [ 2:0] i_rnd_mode,
+  input  logic [31:0] i_fs,
+  input  logic [31:0] i_fcsr,
+  output logic [31:0] o_result,
+  output logic        o_done
 );
 
   localparam logic [2:0] RNE = 3'b000;
@@ -87,11 +87,11 @@ module int_to_float (
 
   always_comb begin
     unique case (rnd_reg)
-      RNE: round_up = guard & (rnd_bit | sticky | mant[0]);
-      RTZ: round_up = 1'b0;
-      RDN: round_up = sign_reg & (guard | rnd_bit | sticky);
-      RUP: round_up = ~sign_reg & (guard | rnd_bit | sticky);
-      RMM: round_up = guard;
+      RNE:     round_up = guard & (rnd_bit | sticky | mant[0]);
+      RTZ:     round_up = 1'b0;
+      RDN:     round_up = sign_reg & (guard | rnd_bit | sticky);
+      RUP:     round_up = ~sign_reg & (guard | rnd_bit | sticky);
+      RMM:     round_up = guard;
       default: round_up = guard & (rnd_bit | sticky | mant[0]);
     endcase
 

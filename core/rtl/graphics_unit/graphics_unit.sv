@@ -7,27 +7,27 @@
 `include "common/graphics_interface.svh"
 `include "common/rasterizer_interface.svh"
 module graphics_unit #(
-    parameter unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 256 * 4,
-    parameter unsigned SYSTEM_CLK_HZ = 100_000_000,
-    parameter unsigned SPI_CLK_HZ = 25_000_000,
-    parameter signed DISPLAY_WIDTH = 128,
-    parameter signed DISPLAY_HEIGHT = 160
+  parameter unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 256 * 4,
+  parameter unsigned SYSTEM_CLK_HZ                    = 100_000_000,
+  parameter unsigned SPI_CLK_HZ                       = 25_000_000,
+  parameter signed   DISPLAY_WIDTH                    = 128,
+  parameter signed   DISPLAY_HEIGHT                   = 160
 ) (
-    input  logic                     clk,
-    input  logic                     i_reset,
-    input  logic                     i_soft_reset,
-           graphics_if.graphics_unit graphics_if,
-    output logic                     st7735_sck,
-    output logic                     st7735_sda,
-    output logic                     st7735_res,
-    output logic                     st7735_dc,
-    output logic                     st7735_cs
+  input  logic                     clk,
+  input  logic                     i_reset,
+  input  logic                     i_soft_reset,
+         graphics_if.graphics_unit graphics_if,
+  output logic                     st7735_sck,
+  output logic                     st7735_sda,
+  output logic                     st7735_res,
+  output logic                     st7735_dc,
+  output logic                     st7735_cs
 );
 
-  logic instruction_buffer_advance_head;
+  logic        instruction_buffer_advance_head;
   logic [31:0] instruction_buffer_instruction;
-  logic instruction_buffer_instruction_is_valid;
-  logic st7735_execute_complete;
+  logic        instruction_buffer_instruction_is_valid;
+  logic        st7735_execute_complete;
 
   rasterizer_if rasterizer_if ();
 
@@ -47,12 +47,12 @@ module graphics_unit #(
   );
 
   graphics_decode graphics_decode (
-    .clk(clk),
-    .i_reset(i_reset | i_soft_reset),
-    .i_instruction(instruction_buffer_instruction),
+    .clk                (clk),
+    .i_reset            (i_reset | i_soft_reset),
+    .i_instruction      (instruction_buffer_instruction),
     .i_instruction_valid(instruction_buffer_instruction_is_valid),
-    .rasterizeri(rasterizer_if),
-    .o_done(instruction_buffer_advance_head)
+    .rasterizeri        (rasterizer_if),
+    .o_done             (instruction_buffer_advance_head)
   );
 
 
@@ -85,8 +85,8 @@ module graphics_unit #(
   );
 
   st7735_controller #(
-    .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ /* default 100_000_000 */),
-    .SPI_CLK_HZ   (SPI_CLK_HZ /* default 25_000_000 */)
+    .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
+    .SPI_CLK_HZ   (SPI_CLK_HZ  /* default 25_000_000 */)
   ) st7735_controller (
     .clk               (clk),
     .i_boot            (graphics_if.graphics_init),

@@ -6,12 +6,12 @@
 
 `include "bootloader_interface.svh"
 module bootloader #(
-    parameter SYSTEM_CLK_HZ = 100_000_000,
-    parameter BAUD_RATE = 115200
+  parameter SYSTEM_CLK_HZ = 100_000_000,
+  parameter BAUD_RATE     = 115200
 ) (
-    input logic clk,
-    input logic i_reset,
-    bootloader_if.bootloader bootloader_if
+  input logic                    clk,
+  input logic                    i_reset,
+        bootloader_if.bootloader bootloader_if
 );
   typedef enum logic [2:0] {
     IDLE,
@@ -28,17 +28,17 @@ module bootloader #(
   localparam unsigned BEGIN_SIGNAL = 'h72;
   localparam unsigned BOOT_SIGNAL = 'h69;
   localparam unsigned MEMORY_SIGNAL = 'h31;
-  logic [7:0] rx_byte_out;
-  logic rx_byte_ready;
-  logic tx_begin;
-  logic [2:0] instruction_byte_counter;
+  logic [ 7:0] rx_byte_out;
+  logic        rx_byte_ready;
+  logic        tx_begin;
+  logic [ 2:0] instruction_byte_counter;
 
   logic [31:0] program_size;
-  logic [2:0] program_size_byte_counter;
+  logic [ 2:0] program_size_byte_counter;
 
   logic [31:0] sent_instruction_bytes_counter;
 
-  logic [7:0] tx_data;
+  logic [ 7:0] tx_data;
   uart_rx_engine #(
     .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
     .BAUD_RATE    (BAUD_RATE  /* default 115200 */)

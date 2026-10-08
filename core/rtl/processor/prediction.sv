@@ -6,32 +6,32 @@
 
 `include "execution_interface.svh"
 module prediction #(
-    parameter HISTORY_SIZE  = 10,
-    parameter ADDRESS_WIDTH = 31
+  parameter HISTORY_SIZE  = 10,
+  parameter ADDRESS_WIDTH = 31
 ) (
-    input logic clk,
-    input logic i_reset,
-    input logic i_en,
-    input logic i_output_bubble,
-    input logic i_predict,
-    input logic i_btb_hit,
-    input logic i_btb_hit_was_jump,
-    input logic [31:0] i_instruction_raw,
-    input logic [ADDRESS_WIDTH-1:0] i_instruction_addr,
-    input logic i_instruction_valid,
-    execution_if.predictor_consumer exi,
-    output logic o_prediction,
-    output logic [HISTORY_SIZE-1:0] o_pht_index,
-    output logic o_btb_hit,
-    output logic o_predictor_redirect,
-    output logic [ADDRESS_WIDTH-1:0] o_predictor_redirect_addr,
-    output logic [31:0] o_instruction_raw,
-    output logic [ADDRESS_WIDTH-1:0] o_instruction_addr,
-    output logic o_instruction_valid
+  input  logic                                               clk,
+  input  logic                                               i_reset,
+  input  logic                                               i_en,
+  input  logic                                               i_output_bubble,
+  input  logic                                               i_predict,
+  input  logic                                               i_btb_hit,
+  input  logic                                               i_btb_hit_was_jump,
+  input  logic                           [             31:0] i_instruction_raw,
+  input  logic                           [ADDRESS_WIDTH-1:0] i_instruction_addr,
+  input  logic                                               i_instruction_valid,
+         execution_if.predictor_consumer                     exi,
+  output logic                                               o_prediction,
+  output logic                           [ HISTORY_SIZE-1:0] o_pht_index,
+  output logic                                               o_btb_hit,
+  output logic                                               o_predictor_redirect,
+  output logic                           [ADDRESS_WIDTH-1:0] o_predictor_redirect_addr,
+  output logic                           [             31:0] o_instruction_raw,
+  output logic                           [ADDRESS_WIDTH-1:0] o_instruction_addr,
+  output logic                                               o_instruction_valid
 );
 
 
-  logic [1:0] pht_table[0:2**HISTORY_SIZE-1];
+  logic [             1:0] pht_table          [0:2**HISTORY_SIZE-1];
   logic [HISTORY_SIZE-1:0] global_history = 0;
   logic [HISTORY_SIZE-1:0] pht_index;
   assign pht_index = i_instruction_addr[HISTORY_SIZE-1:0] ^ global_history;

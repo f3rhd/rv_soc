@@ -5,18 +5,18 @@
  */
 `include "decode_output.svh"
 module fpu (
-    input logic clk,
-    input logic i_reset,
-    input logic i_begin,
-    input opcode_e i_op,
-    input logic [2:0] i_rnd_mode,
-    input logic [31:0] i_src1_data,
-    input logic [31:0] i_src2_data,
-    input logic [31:0] i_src3_data,
-    input logic [31:0] i_fcsr,
-    output logic [31:0] o_fpu_result,
-    output logic o_done,
-    output logic o_inv_op
+  input  logic           clk,
+  input  logic           i_reset,
+  input  logic           i_begin,
+  input  opcode_e        i_op,
+  input  logic    [ 2:0] i_rnd_mode,
+  input  logic    [31:0] i_src1_data,
+  input  logic    [31:0] i_src2_data,
+  input  logic    [31:0] i_src3_data,
+  input  logic    [31:0] i_fcsr,
+  output logic    [31:0] o_fpu_result,
+  output logic           o_done,
+  output logic           o_inv_op
 );
   logic [31:0] src1_data, src2_data, src3_data;
   logic [31:0] fcsr;
@@ -119,10 +119,10 @@ module fpu (
   // FLT: Less Than Logic
   assign flt_core = !either_nan && !both_zero && (
         (sign1 && !sign2) ? 1'b1 :                               // negative < positive
-      (!sign1 && sign2) ? 1'b0 :  // positive > negative
-      (!sign1 && !sign2) ? (mag1 < mag2) :  // both positive: compare magnitudes
-      (mag1 > mag2)  // both negative: larger magnitude means smaller value
-      );
+    (!sign1 && sign2) ? 1'b0 :  // positive > negative
+    (!sign1 && !sign2) ? (mag1 < mag2) :  // both positive: compare magnitudes
+    (mag1 > mag2)  // both negative: larger magnitude means smaller value
+    );
 
   wire fle_core = flt_core || feq_core;
   fadder fadder (

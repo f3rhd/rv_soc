@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 module fsqrt (
-    input  logic        clk,
-    input  logic        i_reset,
-    input  logic [31:0] i_f,
-    input  logic [31:0] i_fcsr,
-    input  logic [ 2:0] i_round_mode,
-    input  logic        i_begin,
-    output logic [31:0] o_result,
-    output logic        o_done,
-    output logic        o_inv_op
+  input  logic        clk,
+  input  logic        i_reset,
+  input  logic [31:0] i_f,
+  input  logic [31:0] i_fcsr,
+  input  logic [ 2:0] i_round_mode,
+  input  logic        i_begin,
+  output logic [31:0] o_result,
+  output logic        o_done,
+  output logic        o_inv_op
 );
 
   enum logic [3:0] {
@@ -59,8 +59,8 @@ module fsqrt (
   logic        carry_out;
   logic g, r, s;
 
-  wire [2:0] effective_rnd = i_round_mode == 3'd7 ? i_fcsr[7:5] : i_round_mode;
-  logic rnd;
+  wire  [2:0] effective_rnd = i_round_mode == 3'd7 ? i_fcsr[7:5] : i_round_mode;
+  logic       rnd;
 
   always_comb begin
     rnd = 0;
