@@ -85,7 +85,7 @@ module fetch #(
       case (state)
         LOAD: begin
           if (bootloaderi.instruction_ready) begin
-            instructions[program_counter] <= bootloaderi.instruction;
+            instructions[program_counter] <= bootloaderi.data;
             program_counter               <= program_counter + 1;
           end
           else if (bootloaderi.load_done & i_graphics_init_done) begin

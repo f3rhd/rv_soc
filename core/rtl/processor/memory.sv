@@ -129,7 +129,7 @@ module memory #(
         sent_gpio_read <= 0;
       end
       if (bootloaderi.static_data_ready) begin
-        ram[address]        <= bootloaderi.static_data;
+        ram[address]        <= bootloaderi.data;
         static_data_counter <= static_data_counter + 1;
       end
       else begin
