@@ -181,11 +181,11 @@ module float_to_int (
     else if (signed_reg) begin
       if (eff_sign) begin
 
-        if (mag_final > 33'h0000_0000_8000_0000) result_comb = S32_MIN;
+        if (mag_final > 33'h0_8000_0000) result_comb = S32_MIN;
         else result_comb = (~mag_final[31:0] + 32'd1);
       end
       else begin
-        if (mag_final > 33'h0000_0000_7FFF_FFFF) result_comb = S32_MAX;
+        if (mag_final > 33'h0_7FFF_FFFF) result_comb = S32_MAX;
         else result_comb = mag_final[31:0];
       end
     end
