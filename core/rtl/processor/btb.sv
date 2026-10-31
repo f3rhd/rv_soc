@@ -33,7 +33,7 @@ module btb #(
   logic       [NUM_BITS_FOR_WAY_ID-1:0] set_allocation_counter[0:NUM_SETS-1];
   btb_entry_t                           branch_table          [0:NUM_SETS-1] [0:NUM_WAYS-1];
 
-  btb_entry_t                           accessed_line         [0:NUM_WAYS-1];
+  btb_entry_t                           accessed_set          [0:NUM_WAYS-1];
 
   logic       [NUM_BITS_FOR_SET_ID-1:0] read_set_id;
   logic       [NUM_BITS_FOR_SET_ID-1:0] write_set_id;
@@ -68,8 +68,8 @@ module btb #(
         };
         set_allocation_counter[write_set_id] <= set_allocation_counter[write_set_id] + 1;
       end
-      accessed_line <= branch_table[read_set_id];
-      r_read_tag    <= read_tag;
+      accessed_set <= branch_table[read_set_id];
+      r_read_tag   <= read_tag;
     end
   end
 
@@ -79,10 +79,10 @@ module btb #(
     o_target_addr  = '0;
     o_hit_was_jump = 1'b0;
     for (int w = 0; w < NUM_WAYS; w++) begin
-      if (accessed_line[w].valid && (accessed_line[w].tag == r_read_tag)) begin
+      if (accessed_set[w].valid && (accessed_set[w].tag == r_read_tag)) begin
         o_hit          = 1'b1;
-        o_target_addr  = accessed_line[w].target_addr;
-        o_hit_was_jump = accessed_line[w].is_jump;
+        o_target_addr  = accessed_set[w].target_addr;
+        o_hit_was_jump = accessed_set[w].is_jump;
         break;
       end
     end
