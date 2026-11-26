@@ -67,7 +67,7 @@ The standout feature is its **modular display interface**: the accelerator's out
 
 ### Peripherals
 
-UART Interface
+**UART Interface**
 
 The SoC includes a UART controller that serves two purposes: loading programs and general-purpose serial communication at runtime.
 
