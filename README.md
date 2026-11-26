@@ -75,7 +75,7 @@ Program loading. Programs are loaded over UART rather than requiring FPGA re-syn
 
 Runtime serial I/O. Once loading finishes, the same UART becomes available to the running program as a general-purpose serial port. Software can read and write bytes through memory-mapped registers (see libc-baremetal/include/serial.h: rv_soc_serial_read() and rv_soc_serial_send()), which makes it usable for console output, debugging, and talking to a host PC or other UART devices.
 
-Loading a new program. Reset the FPGA before flashing each program. The bootloader only accepts the begin byte in its idle state after reset, and it does not restart on a begin byte received at runtime.
+Loading a new program. Press the reset button (the rst input of rv_soc_top) to return the SoC to its boot-ready state, then run the deployment script. There is no need to reprogram the bitstream between programs. The bootloader only accepts the begin byte right after reset and ignores it at runtime, so programs can receive any byte value, including 0x72, as ordinary data.
 
 Default configuration: 115200 baud, 100 MHz system clock (both parameterizable in uart_controller).
 

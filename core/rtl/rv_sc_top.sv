@@ -10,6 +10,7 @@
 module rv_sc_top (
   input  logic        clk,
   input  logic        rx,
+  input  logic        rst,
   output logic        tx,
   // graphics display ports
   output logic        sck,
@@ -44,6 +45,7 @@ module rv_sc_top (
   logic [15:0] segment_value;
   logic        sys_reset;
   logic        sys_reset_done = 0;
+  logic        usr_reset;
 
   always_ff @(posedge clk) begin
     sys_reset <= 0;
@@ -57,12 +59,17 @@ module rv_sc_top (
     end
   end
 
+  button_edge_detector button_edge_detector (
+    .clk   (clk),
+    .i_btn (rst),
+    .o_edge(usr_reset)
+  );
   uart_controller #(
     .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
     .BAUD_RATE    (BAUD_RATE  /* default 115200 */)
   ) uart_controller (
     .clk          (clk),
-    .i_reset      (sys_reset),
+    .i_reset      (sys_reset | usr_reset),
     .bootloader_if(bootloaderi),
     .uart_if      (uarti)
   );
@@ -73,7 +80,7 @@ module rv_sc_top (
     .BTB_SIZE    (BTB_SIZE  /* default 128 */)
   ) rv_processor (
     .clk          (clk),
-    .reset        (bootloaderi.core_reset || sys_reset),
+    .reset        (bootloaderi.core_reset || sys_reset | usr_reset),
     .bootloader_if(bootloaderi),
     .graphics_if  (graphicsi),
     .gpio_if      (gpioi),
