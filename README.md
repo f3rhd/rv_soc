@@ -67,9 +67,17 @@ The standout feature is its **modular display interface**: the accelerator's out
 
 ### Peripherals
 
-**UART Bootloader**
+UART Interface
 
-Programs are loaded onto the SoC over a UART link rather than requiring FPGA re-synthesis for every iteration. A host-side Python deployment script communicates with the on-chip bootloader to stream compiled program images directly into SoC memory, enabling a fast edit-compile-flash-run development loop.
+The SoC includes a UART controller that serves two purposes: loading programs and general-purpose serial communication at runtime.
+
+Program loading. Programs are loaded over UART rather than requiring FPGA re-synthesis for every iteration. After reset, the bootloader waits for the begin byte (0x72) from the host. A host-side Python deployment script then streams the compiled program image (instructions, then static data) directly into SoC memory, enabling a fast edit-compile-flash-run development loop.
+
+Runtime serial I/O. Once loading finishes, the same UART becomes available to the running program as a general-purpose serial port. Software can read and write bytes through memory-mapped registers (see libc-baremetal/include/serial.h: rv_soc_serial_read() and rv_soc_serial_send()), which makes it usable for console output, debugging, and talking to a host PC or other UART devices.
+
+Loading a new program. Reset the FPGA before flashing each program. The bootloader only accepts the begin byte in its idle state after reset, and it does not restart on a begin byte received at runtime.
+
+Default configuration: 115200 baud, 100 MHz system clock (both parameterizable in uart_controller).
 
 **Seven-Segment Display Controller**
 
