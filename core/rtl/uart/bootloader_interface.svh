@@ -12,17 +12,12 @@ interface bootloader_if;
   logic        core_reset;
   logic        instruction_ready;
   logic        load_done;
-  logic        rx;
-  logic        tx;
-
   modport bootloader(
     output data,
     output instruction_ready,
     output load_done,
     output core_reset,
-    output static_data_ready,
-    input rx,
-    output tx
+    output static_data_ready
   );
   modport processor(input data, input instruction_ready, input load_done, input static_data_ready);
 endinterface

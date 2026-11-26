@@ -15,9 +15,10 @@ module fifo #(
   input  logic                  i_advance_head,
   output logic [DATA_WIDTH-1:0] o_data,
   output logic                  o_data_is_valid,
-  output logic                  o_buffer_is_full
+  output logic                  o_buffer_is_full,
+  output logic                  o_empty
 );
-  localparam unsigned INSTRUCTION_BUFFER_BOTTOM_INDEX = BUFFER_SIZE / 4 - 1;
+  localparam unsigned INSTRUCTION_BUFFER_BOTTOM_INDEX = BUFFER_SIZE / (DATA_WIDTH / 8) - 1;
 
 
 `ifdef VIVADO
@@ -35,6 +36,7 @@ module fifo #(
 
   assign o_data           = read_entry;
   assign o_buffer_is_full = (fill_count == INSTRUCTION_BUFFER_BOTTOM_INDEX + 1);
+  assign o_empty          = fill_count == 0;
   always_ff @(posedge clk) begin
     if (i_reset) begin
       fill_count <= 0;

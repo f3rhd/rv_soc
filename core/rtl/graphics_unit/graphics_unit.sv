@@ -43,7 +43,8 @@ module graphics_unit #(
     .i_advance_head     (instruction_buffer_advance_head),
     .o_data             (instruction_buffer_instruction),
     .o_data_is_valid    (instruction_buffer_instruction_is_valid),
-    .o_buffer_is_full   (graphics_if.graphics_buffer_full)
+    .o_buffer_is_full   (graphics_if.graphics_buffer_full),
+    .o_empty            ()
   );
 
   graphics_decode graphics_decode (
@@ -81,7 +82,8 @@ module graphics_unit #(
     .i_advance_head     (st7735_execute_complete),
     .o_data             (fifo_span_data[SPAN_DATA_BITS-1:0]),
     .o_data_is_valid    (fifo_span_data_valid),
-    .o_buffer_is_full   (rasterizer_if.span_fifo_full)
+    .o_buffer_is_full   (rasterizer_if.span_fifo_full),
+    .o_empty            ()
   );
 
   st7735_controller #(

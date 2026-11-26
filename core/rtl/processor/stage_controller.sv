@@ -10,7 +10,7 @@ module stage_controller (
   input  logic       i_load_stall_type0,
   input  logic       i_load_stall_type1,
   input  logic       i_load_stall_type2,
-  input  logic       i_graphics_instruction_write_fail,
+  input  logic       i_load_stall_type3,
   output logic [0:4] flush_vector,
   output logic [0:5] stall_vector
 );
@@ -34,7 +34,7 @@ module stage_controller (
   always_comb begin
     flush_vector = 5'b00000;
     stall_vector = 6'b000000;
-    if (i_graphics_instruction_write_fail) begin
+    if (i_load_stall_type3) begin
       flush_vector = 5'b00000;
       stall_vector = 6'b111111;
     end

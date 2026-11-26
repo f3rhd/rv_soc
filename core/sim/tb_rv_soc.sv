@@ -5,7 +5,7 @@
  */
 
 `include "../rtl/graphics_unit/common/graphics_interface.svh"
-`include "../rtl/bootloader/bootloader_interface.svh"
+`include "../rtl/uart/bootloader_interface.svh"
 `include "../rtl/gpio_interface.svh"
 
 
@@ -26,6 +26,7 @@ module tb_rv_soc;
   bootloader_if bootloader_if ();
   graphics_if graphics_if ();
   gpio_if gpio_if ();
+  uart_if uart_if ();
 
   rv_processor #(
     .HISTORY_SIZE(8  /* default 10 */),
@@ -36,8 +37,19 @@ module tb_rv_soc;
     .clk          (clk),
     .reset        (reset),
     .gpio_if      (gpio_if),
+    .uart_if      (uart_if),
     .bootloader_if(bootloader_if),
     .graphics_if  (graphics_if)
+  );
+
+  uart_controller #(
+    .SYSTEM_CLK_HZ(100_000_000  /* default 100_000_000 */),
+    .BAUD_RATE    (115200  /* default 115200 */)
+  ) uart_controller (
+    .clk          (clk),
+    .i_reset      (reset),
+    .bootloader_if(bootloader_if),
+    .uart_if      (uart_if)
   );
 
   graphics_unit #(
@@ -180,9 +192,9 @@ module tb_rv_soc;
       $finish;
     end
 
-    $readmemh("C:/Users/me/Xarabaxana/rv_soc/triangle_imem.hex", rv_processor.fetch.instructions);
+    $readmemh("C:/Users/me/Xarabaxana/rv_soc/serial_imem.hex", rv_processor.fetch.instructions);
 
-    $readmemh("C:/Users/me/Xarabaxana/rv_soc/triangle_dmem.hex", rv_processor.memory.ram);
+    $readmemh("C:/Users/me/Xarabaxana/rv_soc/serial_dmem.hex", rv_processor.memory.ram);
 
     reset = 1;
 
@@ -193,10 +205,15 @@ module tb_rv_soc;
     #2;
     graphics_unit.st7735_controller.graphics_state = graphics_unit.st7735_controller.EXECUTE;
     graphics_unit.st7735_controller.exec_state = graphics_unit.st7735_controller.EXEC_DO_NOTHING;
+    uart_controller.state = uart_controller.FREE;
     rv_processor.fetch.state = rv_processor.fetch.FETCH;
     bootloader_if.static_data_ready = 0;
     bootloader_if.load_done = 1;
     graphics_if.graphics_init_done = 1;
+    for (int i = 0; i < 32; i++) begin
+      uart_controller.uart_read_buffer.instruction_buffer[i] = i;
+    end
+    uart_controller.uart_read_buffer.fill_count = 32;
     #1;
 
 

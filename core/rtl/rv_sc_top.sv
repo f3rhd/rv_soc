@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-`include "bootloader/bootloader_interface.svh"
+`include "uart/bootloader_interface.svh"
 `include "graphics_unit/common/graphics_interface.svh"
 `include "gpio_interface.svh"
 module rv_sc_top (
@@ -34,12 +34,13 @@ module rv_sc_top (
   localparam unsigned GRAPHICS_INSTRUCTION_BUFFER_SIZE = 4096 / 4 * 4;
   localparam unsigned GPIO_PIN_AMOUNT = 27;
 
-  assign bootloaderi.rx = rx;
-  assign tx             = bootloaderi.tx;
+  assign uarti.rx = rx;
+  assign tx       = uarti.tx;
 
   bootloader_if bootloaderi ();
   graphics_if graphicsi ();
   gpio_if gpioi ();
+  uart_if uarti ();
   logic [15:0] segment_value;
   logic        sys_reset;
   logic        sys_reset_done = 0;
@@ -56,14 +57,14 @@ module rv_sc_top (
     end
   end
 
-
-  bootloader #(
+  uart_controller #(
     .SYSTEM_CLK_HZ(SYSTEM_CLK_HZ  /* default 100_000_000 */),
     .BAUD_RATE    (BAUD_RATE  /* default 115200 */)
-  ) bootloader (
+  ) uart_controller (
     .clk          (clk),
     .i_reset      (sys_reset),
-    .bootloader_if(bootloaderi)
+    .bootloader_if(bootloaderi),
+    .uart_if      (uarti)
   );
   rv_processor #(
     .HISTORY_SIZE(HISTORY_SIZE  /* default 10 */),
@@ -76,6 +77,7 @@ module rv_sc_top (
     .bootloader_if(bootloaderi),
     .graphics_if  (graphicsi),
     .gpio_if      (gpioi),
+    .uart_if      (uarti),
     .o_reg16_f4   (led),
     .o_reg16_f8   (segment_value)
   );

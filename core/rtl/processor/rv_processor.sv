@@ -8,7 +8,8 @@
 `include "decode_output.svh"
 `include "register.svh"
 `include "../gpio_interface.svh"
-`include "../bootloader/bootloader_interface.svh"
+`include "../uart/bootloader_interface.svh"
+`include "../uart/uart_interface.svh"
 `include "../graphics_unit/common/graphics_interface.svh"
 
 module rv_processor #(
@@ -22,6 +23,7 @@ module rv_processor #(
          bootloader_if.processor        bootloader_if,
          graphics_if.processor          graphics_if,
          gpio_if.processor              gpio_if,
+         uart_if.processor              uart_if,
   output logic                   [15:0] o_reg16_f4,
   output logic                   [15:0] o_reg16_f8
 );
@@ -77,6 +79,7 @@ module rv_processor #(
   logic        memory_graphics_write;
   logic        memory_en;
   logic        memory_gpio_stall;
+  logic        memory_uart_stall;
 
   logic [63:0] system_counter;
 
@@ -94,7 +97,7 @@ module rv_processor #(
     .i_load_stall_type0(execution_if.stall_pipeline_type0),
     .i_load_stall_type1(execution_if.stall_pipeline_type1),
     .i_load_stall_type2(execution_if.stall_pipeline_type2),
-    .i_graphics_instruction_write_fail((graphics_if.graphics_buffer_full && memory_graphics_write) || memory_gpio_stall),
+    .i_load_stall_type3((graphics_if.graphics_buffer_full && memory_graphics_write) || memory_gpio_stall || (uart_if.uart_write_buffer_full && uart_if.write_byte_enable) || memory_uart_stall),
     .flush_vector(stage_controller_flush_vector),
     .stall_vector(stage_controller_stall_vector)
   );
@@ -193,9 +196,11 @@ module rv_processor #(
     .graphicsi       (graphics_if),
     .gpioi           (gpio_if),
     .bootloaderi     (bootloader_if),
+    .uarti           (uart_if),
     .o_register_write(register_write_),
     .o_graphics_write(memory_graphics_write),
     .o_gpio_stall    (memory_gpio_stall),
+    .o_uart_stall    (memory_uart_stall),
     .o_reg16_f4      (o_reg16_f4),
     .o_reg16_f8      (o_reg16_f8)
   );

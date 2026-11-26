@@ -13,7 +13,8 @@ module uart_tx_engine #(
   input  logic                  i_reset,
   input  logic                  i_begin,
   input  logic [DATA_WIDTH-1:0] i_data,
-  output logic                  tx
+  output logic                  tx,
+  output logic                  o_ready
 );
   localparam unsigned CLKS_PER_BIT = SYSTEM_CLK_HZ / BAUD_RATE;
   typedef enum logic {
@@ -32,6 +33,7 @@ module uart_tx_engine #(
       baud_counter     <= '0;
       sent_bit_counter <= '0;
       data             <= '0;
+      o_ready          <= 1;
     end
     else begin
       case (state)
@@ -40,10 +42,12 @@ module uart_tx_engine #(
           tx               <= 1;
           baud_counter     <= 0;
           sent_bit_counter <= 0;
+          o_ready          <= 1;
           if (i_begin) begin
-            state <= SEND;
-            data  <= i_data;
-            tx    <= 0;
+            state   <= SEND;
+            data    <= i_data;
+            tx      <= 0;
+            o_ready <= 0;
           end
         end
         SEND: begin
@@ -62,7 +66,8 @@ module uart_tx_engine #(
               sent_bit_counter <= sent_bit_counter + 1;
             end
             else begin
-              state <= IDLE;
+              o_ready <= 1;
+              state   <= IDLE;
             end
           end
         end
