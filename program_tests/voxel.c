@@ -1,5 +1,6 @@
 #include "../libc-baremetal/include/led.h"
 #include "../libc-baremetal/include/serial.h"
+#include "../libc-baremetal/include/pin.h"
 #include "../libc-baremetal/include/graphics.h"
 
 // Pseudo-Minecraft: a small block world rendered with a voxel raycaster.
@@ -12,6 +13,8 @@
 //     1..6         select block: grass dirt stone sand wood leaves
 //     R            generate a brand new world
 //     I J K L      alternate look keys, for terminals without arrow keys
+//   GPIO (optional hardware buttons, held = keep turning):
+//     pin 8 look up, 9 look down, 10 look left, 11 look right
 
 #define SCREEN_WIDTH  128
 #define SCREEN_HEIGHT 160
@@ -22,6 +25,10 @@
 #define GW (SCREEN_WIDTH  / CELL_PX)
 #define GH (SCREEN_HEIGHT / CELL_PX)
 
+#define PIN_LOOK_UP    8
+#define PIN_LOOK_DOWN  9
+#define PIN_LOOK_LEFT  10
+#define PIN_LOOK_RIGHT 11
 
 // world size in blocks: x east, y up, z north
 #define WX 32
@@ -47,6 +54,8 @@
 #define TAN_HALF_FOV_X 0.78f
 #define TAN_HALF_FOV_Y (TAN_HALF_FOV_X * GH / GW)
 
+#define LOOK_STEP_KEY  0.12f   // radians per arrow-key event
+#define LOOK_STEP_GPIO 0.08f   // radians per frame while a pin is held
 #define MOVE_STEP      0.35f   // blocks per W/A/S/D event
 
 #define PI     3.14159265f
@@ -115,24 +124,15 @@ float wrap_angle(float a) {
 // the camera basis vectors.)
 float my_sinf(float x) {
     x = wrap_angle(x);
-
     if (x > HALF_PI)       x = PI - x;
     else if (x < -HALF_PI) x = -PI - x;
-
-    float x2  = x * x;
-    float x3  = x2 * x;
-    float x5  = x3 * x2;
-    float x7  = x5 * x2;
-    float x9  = x7 * x2;
-    float x11 = x9 * x2;
-
-    return x
-         - (x3  / 6.0f)
-         + (x5  / 120.0f)
-         - (x7  / 5040.0f)
-         + (x9  / 362880.0f)
-         - (x11 / 39916800.0f);
+    float x2 = x * x;
+    float x3 = x2 * x;
+    float x5 = x3 * x2;
+    float x7 = x5 * x2;
+    return x - (x3 / 6.0f) + (x5 / 120.0f) - (x7 / 5040.0f);
 }
+
 float my_cosf(float x) { return my_sinf(x + HALF_PI); }
 
 float clampf(float v, float lo, float hi) {
@@ -504,8 +504,8 @@ int handle_arrow(Game *g, unsigned char c) {
 
 void new_world(Game *g) {
     generate_world(g);
-    g->cx = 32.0 / 2 + 0.5f;
-    g->cz = 32.0 / 2 + 0.5f;
+    g->cx = WX / 2 + 0.5f;
+    g->cz = WZ / 2 + 0.5f;
     g->yaw = 0.0f;
     g->pitch = -0.15f;
 }
@@ -564,13 +564,18 @@ int main() {
     Game g; // ~21KB on the stack, on purpose (see the struct comment)
     int sx, sy;
 
+    set_pin_mode(PIN_LOOK_UP, PIN_INPUT);
+    set_pin_mode(PIN_LOOK_DOWN, PIN_INPUT);
+    set_pin_mode(PIN_LOOK_LEFT, PIN_INPUT);
+    set_pin_mode(PIN_LOOK_RIGHT, PIN_INPUT);
+
     g.seed = 0x1234ABCDu;
     g.selected = 0;
     g.esc_state = ESC_NONE;
     new_world(&g);
 
     // screen starts black, so a black shadow means "nothing to fix yet"
-    rv_soc_draw_rectangle(ST7735_BLACK, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    rv_soc_draw_rectangle(0x00000000, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     for (sy = 0; sy < GH; sy++)
         for (sx = 0; sx < GW; sx++)
             g.shadow[sy][sx] = 0;
@@ -578,6 +583,11 @@ int main() {
     int dirty = 1; // draw the first frame
 
     for (;;) {
+        // GPIO look buttons: level-triggered, so holding a pin keeps turning
+        if (read_pin(PIN_LOOK_UP))    { look(&g, 0.0f,  LOOK_STEP_GPIO); dirty = 1; }
+        if (read_pin(PIN_LOOK_DOWN))  { look(&g, 0.0f, -LOOK_STEP_GPIO); dirty = 1; }
+        if (read_pin(PIN_LOOK_LEFT))  { look(&g, -LOOK_STEP_GPIO, 0.0f); dirty = 1; }
+        if (read_pin(PIN_LOOK_RIGHT)) { look(&g,  LOOK_STEP_GPIO, 0.0f); dirty = 1; }
 
         // drain every waiting UART byte before rendering, so a burst of
         // key-repeat becomes one render instead of one per keypress
@@ -592,11 +602,11 @@ int main() {
             if (feed_byte(&g, c))
                 dirty = 1;
         }
+
         if (dirty) {
             render_frame(&g);
             present_frame(&g);
             dirty = 0;
         }
-
     }
 }
