@@ -74,7 +74,7 @@ module uart_controller #(
   assign write_buffer_advance_head = !tx_ready_prev && tx_ready && state == FREE && write_state == WAIT_TX && write_buffer_out_valid;
   wire fifo_reset = i_reset | state == IDLE;
   fifo #(
-    .BUFFER_SIZE(128),
+    .BUFFER_SIZE(1024),
     .DATA_WIDTH (8)
   ) uart_write_buffer (
     .clk                (clk),
@@ -95,7 +95,7 @@ module uart_controller #(
   enum logic {READ_IDLE, READ_REGISTER}       read_state;
   assign read_buffer_advance_head = read_state == READ_REGISTER;
   fifo #(
-    .BUFFER_SIZE(128  /* default 256 * 4 */),
+    .BUFFER_SIZE(1024  /* default 256 * 4 */),
     .DATA_WIDTH (8  /* default 32 */)
   ) uart_read_buffer (
     .clk                (clk),

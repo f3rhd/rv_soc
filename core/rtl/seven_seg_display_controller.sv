@@ -66,7 +66,7 @@ module seven_seg_display_controller (
     endcase
   end
 
-`ifdef ACTIVE_LOW
+`ifndef ACTIVE_LOW
   assign o_an  = ~raw_anode;
   assign o_seg = ~raw_seg;
 `else
