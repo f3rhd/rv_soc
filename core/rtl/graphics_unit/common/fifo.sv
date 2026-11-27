@@ -60,7 +60,7 @@ module fifo #(
     else begin
       o_data_is_valid <= (fill_count != 0);
       read_entry      <= instruction_buffer[head];
-      if (i_advance_head) begin
+      if (i_advance_head & (fill_count != 0)) begin
         head            <= head + 1;
         o_data_is_valid <= 0;
       end

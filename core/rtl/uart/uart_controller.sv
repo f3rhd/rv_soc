@@ -71,7 +71,7 @@ module uart_controller #(
   logic                                  [7:0] write_buffer_out;
   logic                                        write_buffer_out_valid;
   enum logic [1:0] {SEND_WRITE, WAIT_TX}       write_state;
-  assign write_buffer_advance_head = !tx_ready_prev && tx_ready && state == FREE;
+  assign write_buffer_advance_head = !tx_ready_prev && tx_ready && state == FREE && write_state == WAIT_TX && write_buffer_out_valid;
   wire fifo_reset = i_reset | state == IDLE;
   fifo #(
     .BUFFER_SIZE(128),
