@@ -6,4 +6,5 @@
 void rv_soc_serial_send(char byte);
 SERIAL_READ  rv_soc_serial_read();
 void rv_soc_serial_send_fmt(const char* fmt, ...);
+int rv_soc_serial_scan_fmt(const char* fmt, ...);
 #endif
