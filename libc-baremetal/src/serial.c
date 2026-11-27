@@ -9,6 +9,7 @@ SERIAL_READ rv_soc_serial_read() {
     volatile int* addr = (volatile int*)UART_READ_ADDR;
     return *addr;
 }
+#include <limits.h>
 #include <stdarg.h>
 #include <stdint.h>
 
@@ -61,59 +62,59 @@ void rv_soc_serial_send_fmt(const char* fmt, ...) {
         fmt++;
 
         switch (*fmt) {
-            case 'c': {
-                char c = (char)va_arg(args, int);
-                rv_soc_serial_send(c);
-                break;
-            }
+        case 'c': {
+            char c = (char)va_arg(args, int);
+            rv_soc_serial_send(c);
+            break;
+        }
 
-            case 's': {
-                const char* str = va_arg(args, const char*);
-                serial_send_string(str ? str : "(null)");
-                break;
-            }
+        case 's': {
+            const char* str = va_arg(args, const char*);
+            serial_send_string(str ? str : "(null)");
+            break;
+        }
 
-            case 'd':
-            case 'i': {
-                int32_t value = va_arg(args, int);
-                serial_send_signed(value);
-                break;
-            }
+        case 'd':
+        case 'i': {
+            int32_t value = va_arg(args, int);
+            serial_send_signed(value);
+            break;
+        }
 
-            case 'u': {
-                uint32_t value = va_arg(args, unsigned int);
-                serial_send_unsigned(value, 10);
-                break;
-            }
+        case 'u': {
+            uint32_t value = va_arg(args, unsigned int);
+            serial_send_unsigned(value, 10);
+            break;
+        }
 
-            case 'x':
-            case 'X': {
-                uint32_t value = va_arg(args, unsigned int);
-                serial_send_unsigned(value, 16);
-                break;
-            }
+        case 'x':
+        case 'X': {
+            uint32_t value = va_arg(args, unsigned int);
+            serial_send_unsigned(value, 16);
+            break;
+        }
 
-            case 'b': {
-                uint32_t value = va_arg(args, unsigned int);
-                serial_send_unsigned(value, 2);
-                break;
-            }
+        case 'b': {
+            uint32_t value = va_arg(args, unsigned int);
+            serial_send_unsigned(value, 2);
+            break;
+        }
 
-            case 'p': {
-                uintptr_t value = (uintptr_t)va_arg(args, void*);
-                serial_send_string("0x");
-                serial_send_unsigned((uint32_t)value, 16);
-                break;
-            }
+        case 'p': {
+            uintptr_t value = (uintptr_t)va_arg(args, void*);
+            serial_send_string("0x");
+            serial_send_unsigned((uint32_t)value, 16);
+            break;
+        }
 
-            case '%':
-                rv_soc_serial_send('%');
-                break;
+        case '%':
+            rv_soc_serial_send('%');
+            break;
 
-            default:
-                rv_soc_serial_send('%');
-                rv_soc_serial_send(*fmt);
-                break;
+        default:
+            rv_soc_serial_send('%');
+            rv_soc_serial_send(*fmt);
+            break;
         }
 
         fmt++;
@@ -121,11 +122,15 @@ void rv_soc_serial_send_fmt(const char* fmt, ...) {
 
     va_end(args);
 }
-#include <stdarg.h>
-#include <stdint.h>
 
 static char serial_read_char(void) {
-    return (char)rv_soc_serial_read();
+    SERIAL_READ result;
+
+    do {
+        result = rv_soc_serial_read();
+    } while (!SERIAL_READ_VALID(result));
+
+    return SERIAL_RESULT_BYTE(result);
 }
 
 static void serial_skip_whitespace(void) {
@@ -140,10 +145,21 @@ static int serial_is_digit(char c) {
     return c >= '0' && c <= '9';
 }
 
+static int serial_is_whitespace(char c) {
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v' ||
+           c == '\f';
+}
+
 static int serial_digit_value(char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    if (c >= '0' && c <= '9')
+        return c - '0';
+
+    if (c >= 'a' && c <= 'f')
+        return c - 'a' + 10;
+
+    if (c >= 'A' && c <= 'F')
+        return c - 'A' + 10;
+
     return -1;
 }
 
@@ -154,9 +170,9 @@ static int serial_read_integer(int base, int is_signed, int32_t* result) {
     int32_t value = 0;
     int read_any = 0;
 
-    serial_skip_whitespace();
-
-    c = serial_read_char();
+    do {
+        c = serial_read_char();
+    } while (serial_is_whitespace(c));
 
     if (is_signed && (c == '-' || c == '+')) {
         negative = (c == '-');
@@ -166,6 +182,7 @@ static int serial_read_integer(int base, int is_signed, int32_t* result) {
     while ((digit = serial_digit_value(c)) >= 0 && digit < base) {
         value = value * base + digit;
         read_any = 1;
+
         c = serial_read_char();
     }
 
@@ -179,15 +196,15 @@ static int serial_read_integer(int base, int is_signed, int32_t* result) {
     return 1;
 }
 
-static int serial_read_string(char* buffer) {
+static int serial_read_string(char* buffer, int width) {
     char c;
     int length = 0;
 
-    serial_skip_whitespace();
+    do {
+        c = serial_read_char();
+    } while (serial_is_whitespace(c));
 
-    c = serial_read_char();
-
-    while (c != ' ' && c != '\t' && c != '\n' && c != '\r') {
+    while (!serial_is_whitespace(c) && length < width) {
         buffer[length++] = c;
         c = serial_read_char();
     }
@@ -210,58 +227,69 @@ int rv_soc_serial_scan_fmt(const char* fmt, ...) {
 
         fmt++;
 
+        int width = 0;
+
+        while (*fmt >= '0' && *fmt <= '9') {
+            width = width * 10 + (*fmt - '0');
+            fmt++;
+        }
+
         switch (*fmt) {
-            case 'd':
-            case 'i': {
-                int32_t value;
+        case 'd':
+        case 'i': {
+            int32_t value;
 
-                if (!serial_read_integer(10, 1, &value))
-                    goto done;
+            if (!serial_read_integer(10, 1, &value))
+                goto done;
 
-                *va_arg(args, int*) = value;
-                assigned++;
-                break;
-            }
+            *va_arg(args, int*) = value;
+            assigned++;
+            break;
+        }
 
-            case 'u': {
-                int32_t value;
+        case 'u': {
+            int32_t value;
 
-                if (!serial_read_integer(10, 0, &value))
-                    goto done;
+            if (!serial_read_integer(10, 0, &value))
+                goto done;
 
-                *va_arg(args, unsigned int*) = (unsigned int)value;
-                assigned++;
-                break;
-            }
+            *va_arg(args, unsigned int*) = (unsigned int)value;
+            assigned++;
+            break;
+        }
 
-            case 'x':
-            case 'X': {
-                int32_t value;
+        case 'x':
+        case 'X': {
+            int32_t value;
 
-                if (!serial_read_integer(16, 0, &value))
-                    goto done;
+            if (!serial_read_integer(16, 0, &value))
+                goto done;
 
-                *va_arg(args, unsigned int*) = (unsigned int)value;
-                assigned++;
-                break;
-            }
+            *va_arg(args, unsigned int*) = (unsigned int)value;
+            assigned++;
+            break;
+        }
 
-            case 'c': {
-                char* ptr = va_arg(args, char*);
-                *ptr = serial_read_char();
-                assigned++;
-                break;
-            }
+        case 'c': {
+            char* ptr = va_arg(args, char*);
+            *ptr = serial_read_char();
+            assigned++;
+            break;
+        }
 
-            case 's': {
-                char* ptr = va_arg(args, char*);
-                serial_read_string(ptr);
-                assigned++;
-                break;
-            }
+        case 's': {
+            char* ptr = va_arg(args, char*);
 
-            default:
-                break;
+            if (width == 0)
+                width = INT_MAX;
+
+            serial_read_string(ptr, width);
+            assigned++;
+            break;
+        }
+
+        default:
+            break;
         }
 
         fmt++;
